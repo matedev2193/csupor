@@ -6,13 +6,13 @@
     <div class="section-heading">
       <div>
         <h2>{{ _('Assign leave limits to active contracts') }}</h2>
-        <p>{{ _('Select employee, contract, and calendar year before entering leave limits.') }}</p>
+        <p>{{ _('Select an employee and contract to edit one contract, or choose only a year to manage year availability and defaults.') }}</p>
       </div>
     </div>
 
     <form method="get" class="grid-form">
-      <label for="user_id">{{ _('Employee *') }}</label>
-      <select id="user_id" name="user_id" required>
+      <label for="user_id">{{ _('Employee') }}</label>
+      <select id="user_id" name="user_id">
         <option value="">{{ _('Select employee') }}</option>
         {% for user in users %}
         <option value="{{ user.id }}" {% if selected_user and selected_user.id == user.id %}selected{% endif %}>
@@ -21,7 +21,7 @@
         {% endfor %}
       </select>
 
-      <label for="contract_id">{{ _('Contract *') }}</label>
+      <label for="contract_id">{{ _('Contract') }}</label>
       <select id="contract_id" name="contract_id" {% if not selected_user %}disabled{% endif %}>
         <option value="">{{ _('Select contract') }}</option>
         {% for contract in all_contracts %}
@@ -38,14 +38,82 @@
       <small class="help-text">{{ _('Select an employee first to load available contracts.') }}</small>
       {% endif %}
 
-      <label for="calendar_year">{{ _('Calendar year *') }}</label>
+      <label for="calendar_year">{{ _('Calendar year') }}</label>
       <input id="calendar_year" name="calendar_year" type="number" min="1970" max="2100" value="{{ selected_year }}" required>
 
       <div class="button-row">
-        <button type="submit">{{ _('Load leave categories') }}</button>
+        <button type="submit">{{ _('Load') }}</button>
       </div>
     </form>
   </section>
+
+  {% if not selected_contract %}
+  <section class="form-shell span-12">
+    <div class="section-heading">
+      <div>
+        <h2>{{ _('Year availability') }}</h2>
+        <p>
+          {% if is_leave_year_open %}
+          {{ selected_year }} is open for employee leave requests.
+          {% else %}
+          {{ selected_year }} is closed. Employees cannot request leave in this year until HR opens it.
+          {% endif %}
+        </p>
+      </div>
+    </div>
+    <form method="post" class="grid-form">
+      <label for="availability_calendar_year">{{ _('Calendar year') }}</label>
+      <input id="availability_calendar_year" name="calendar_year" type="number" min="1970" max="2100" value="{{ selected_year }}" required>
+      <div class="button-row">
+        <button type="submit" name="action" value="open_year">
+          {{ _('Open year') }}
+        </button>
+      </div>
+    </form>
+
+    <h3>{{ _('Opened years') }}</h3>
+    {% if opened_leave_years %}
+    <div class="table-wrap">
+      <table class="leave-limits-table leave-years-table">
+        <thead>
+          <tr>
+            <th>{{ _('Calendar year') }}</th>
+            <th>{{ _('Status') }}</th>
+            <th>{{ _('Actions') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for opened_year in opened_leave_years %}
+          <tr>
+            <td>{{ opened_year.year }}</td>
+            <td>{{ _('Open') if opened_year.is_open else _('Locked') }}</td>
+            <td>
+              <form method="post" class="button-row">
+                <input type="hidden" name="calendar_year" value="{{ opened_year.year }}">
+                {% if opened_year.is_open %}
+                <button type="submit" name="action" value="lock_year" class="button-secondary">
+                  {{ _('Lock year') }}
+                </button>
+                {% else %}
+                <button type="submit" name="action" value="open_year">
+                  {{ _('Reopen year') }}
+                </button>
+                {% endif %}
+                <button type="submit" name="action" value="load_year_defaults" class="button-secondary">
+                  {{ _('Load default values for all employees') }}
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">{{ _('No years have been opened yet.') }}</div>
+    {% endif %}
+  </section>
+  {% endif %}
 
   {% if selected_contract %}
   <section class="table-card span-12 leave-limits-card">
@@ -62,7 +130,22 @@
     </div>
 
     {% if is_contract_active_in_year(selected_contract, selected_year) %}
+    <form method="post" class="button-row">
+      <input type="hidden" name="user_id" value="{{ selected_user.id }}">
+      <input type="hidden" name="contract_id" value="{{ selected_contract.id }}">
+      <input type="hidden" name="calendar_year" value="{{ selected_year }}">
+      {% if has_imported_contract_limits %}
+      <button type="submit" name="action" value="undo_contract_import" class="button-secondary">
+        {{ _('Revert imported values for this contract') }}
+      </button>
+      {% else %}
+      <button type="submit" name="action" value="load_contract_defaults" class="button-secondary">
+        {{ _('Load default values for this contract') }}
+      </button>
+      {% endif %}
+    </form>
     <form method="post" class="grid-form">
+      <input type="hidden" name="action" value="save">
       <input type="hidden" name="user_id" value="{{ selected_user.id }}">
       <input type="hidden" name="contract_id" value="{{ selected_contract.id }}">
       <input type="hidden" name="calendar_year" value="{{ selected_year }}">

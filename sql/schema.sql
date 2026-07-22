@@ -242,6 +242,11 @@ CREATE TABLE IF NOT EXISTS contract_leave_limits (
   limit_days INT NOT NULL,
   period_start DATE NULL,
   period_end DATE NULL,
+  imported TINYINT(1) NOT NULL DEFAULT 0,
+  previous_limit_days INT NULL,
+  previous_period_start DATE NULL,
+  previous_period_end DATE NULL,
+  previous_imported TINYINT(1) NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
@@ -255,6 +260,20 @@ CREATE TABLE IF NOT EXISTS contract_leave_limits (
     CHECK (limit_days >= 0),
   CONSTRAINT chk_contract_leave_limits_date_order
     CHECK (period_end IS NULL OR period_start IS NULL OR period_end >= period_start)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS leave_years (
+  year SMALLINT UNSIGNED NOT NULL,
+  is_open TINYINT(1) NOT NULL DEFAULT 0,
+  imported_by_id INT UNSIGNED NULL,
+  imported_at DATETIME NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (year),
+  CONSTRAINT fk_leave_years_imported_by_id
+    FOREIGN KEY (imported_by_id) REFERENCES users(id)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS leave_requests (

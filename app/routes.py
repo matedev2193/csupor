@@ -22,6 +22,7 @@ from .models import (
     LeadershipPosition,
     LegalEntity,
     LeaveRequest,
+    LeaveYear,
     LeaveRequestCategory,
     LeaveRequestStatus,
     LeaveType,
@@ -475,7 +476,326 @@ def _paid_leave_used_days(contract: Contract, year: int) -> int:
 
 
 def _paid_leave_remaining_days(contract: Contract, year: int) -> int:
-    return max(_paid_leave_available_days(contract, year) - _paid_leave_used_days(contract, year), 0)
+    return sum(_paid_leave_remaining_by_limit(contract, year).values())
+
+
+def _is_leave_year_open(year: int) -> bool:
+    leave_year = db.session.get(LeaveYear, year)
+    return bool(leave_year and leave_year.is_open)
+
+
+def _paid_leave_limits_by_expiry(contract: Contract, year: int) -> list[ContractLeaveLimit]:
+    year_start, year_end = _leave_request_year_bounds(year)
+    limits = []
+    for limit in contract.leave_limits:
+        if limit.leave_type not in PAID_LEAVE_LIMIT_TYPES or limit.limit_days <= 0:
+            continue
+        period_start = limit.period_start or date(limit.calendar_year, 1, 1)
+        period_end = limit.period_end or date(limit.calendar_year, 12, 31)
+        if period_start <= year_end and period_end >= year_start:
+            limits.append(limit)
+    return sorted(
+        limits,
+        key=lambda limit: (
+            limit.period_end or date(limit.calendar_year, 12, 31),
+            limit.period_start or date(limit.calendar_year, 1, 1),
+            limit.id or 0,
+        ),
+    )
+
+
+def _consume_paid_leave_days(
+    capacity_by_limit: dict[int, int],
+    limits: list[ContractLeaveLimit],
+    start_date: date,
+    end_date: date,
+) -> bool:
+    overrides_by_day = _working_day_overrides(start_date, end_date)
+    for day in _iter_dates(start_date, end_date):
+        if not _is_working_day(day, overrides_by_day):
+            continue
+        matching_limit = next(
+            (
+                limit
+                for limit in limits
+                if capacity_by_limit.get(limit.id, 0) > 0
+                and (limit.period_start or date(limit.calendar_year, 1, 1)) <= day
+                and (limit.period_end or date(limit.calendar_year, 12, 31)) >= day
+            ),
+            None,
+        )
+        if matching_limit is None:
+            return False
+        capacity_by_limit[matching_limit.id] -= 1
+    return True
+
+
+def _paid_leave_remaining_by_limit(
+    contract: Contract,
+    year: int,
+    excluding_request_id: int | None = None,
+) -> dict[int, int]:
+    year_start, year_end = _leave_request_year_bounds(year)
+    limits = _paid_leave_limits_by_expiry(contract, year)
+    capacity_by_limit = {limit.id: limit.limit_days for limit in limits if limit.id is not None}
+    query = LeaveRequest.query.filter(
+        LeaveRequest.contract_id == contract.id,
+        LeaveRequest.category == LeaveRequestCategory.paid_leave,
+        LeaveRequest.status.in_(BLOCKING_LEAVE_REQUEST_STATUSES),
+        LeaveRequest.start_date <= year_end,
+        db.or_(LeaveRequest.end_date.is_(None), LeaveRequest.end_date >= year_start),
+    )
+    if excluding_request_id is not None:
+        query = query.filter(LeaveRequest.id != excluding_request_id)
+    requests = query.order_by(LeaveRequest.start_date.asc(), LeaveRequest.id.asc()).all()
+    for leave_request in requests:
+        request_start = max(leave_request.start_date, year_start)
+        request_end = min(_leave_request_end_date(leave_request), year_end)
+        _consume_paid_leave_days(capacity_by_limit, limits, request_start, request_end)
+    return {limit_id: max(remaining, 0) for limit_id, remaining in capacity_by_limit.items()}
+
+
+def _paid_leave_request_has_capacity(contract: Contract, start_date: date, end_date: date) -> bool:
+    capacity_by_limit = _paid_leave_remaining_by_limit(contract, start_date.year)
+    return _consume_paid_leave_days(
+        capacity_by_limit,
+        _paid_leave_limits_by_expiry(contract, start_date.year),
+        start_date,
+        end_date,
+    )
+
+
+def _age_on_year_end(birth_date: date | None, year: int) -> int | None:
+    if birth_date is None:
+        return None
+    return year - birth_date.year
+
+
+def _age_supplement_days(age: int | None) -> int:
+    if age is None or age <= 25:
+        return 0
+    thresholds = [
+        (45, 10),
+        (43, 9),
+        (41, 8),
+        (39, 7),
+        (37, 6),
+        (35, 5),
+        (33, 4),
+        (31, 3),
+        (28, 2),
+        (25, 1),
+    ]
+    return next(days for threshold, days in thresholds if age > threshold)
+
+
+def _round_half_up(numerator: int, denominator: int) -> int:
+    if denominator <= 0:
+        return 0
+    return (2 * numerator + denominator) // (2 * denominator)
+
+
+def _contract_calendar_days_in_year(contract: Contract, year: int) -> int:
+    year_start, year_end = _leave_request_year_bounds(year)
+    start = max(contract.start_date, year_start)
+    end = min(contract.end_date or year_end, year_end)
+    if start > end:
+        return 0
+    return _calendar_day_count(start, end)
+
+
+def _prorate_annual_days(full_year_days: int, contract: Contract, year: int) -> int:
+    return _round_half_up(
+        full_year_days * _contract_calendar_days_in_year(contract, year),
+        _calendar_day_count(date(year, 1, 1), date(year, 12, 31)),
+    )
+
+
+def _distribute_prorated_paid_leave_days(
+    full_year_limits: dict[LeaveType, int],
+    contract: Contract,
+    year: int,
+) -> dict[LeaveType, int]:
+    full_year_total = sum(full_year_limits.values())
+    prorated_total = _prorate_annual_days(full_year_total, contract, year)
+    if full_year_total <= 0 or prorated_total <= 0:
+        return {leave_type: 0 for leave_type in full_year_limits}
+
+    distributed = {}
+    remainders = []
+    assigned = 0
+    for index, (leave_type, full_year_days) in enumerate(full_year_limits.items()):
+        numerator = prorated_total * full_year_days
+        days = numerator // full_year_total
+        distributed[leave_type] = days
+        assigned += days
+        remainders.append((numerator % full_year_total, full_year_days, -index, leave_type))
+
+    for _, _, _, leave_type in sorted(remainders, reverse=True)[: prorated_total - assigned]:
+        distributed[leave_type] += 1
+    return distributed
+
+
+def _calculated_calendar_leave_limits(contract: Contract, year: int) -> dict[LeaveType, int]:
+    user = contract.user
+    profile = user.profile
+    age = _age_on_year_end(profile.date_of_birth if profile else None, year)
+    status_law = contract.contract_type != ContractType.employee_under_the_labour_code
+    children = [
+        dependent
+        for dependent in user.dependents
+        if dependent.dependent_type == DependentType.child
+        and _age_on_year_end(dependent.date_of_birth, year) is not None
+        and _age_on_year_end(dependent.date_of_birth, year) <= 16
+    ]
+    children_count = len(children)
+    paid_full_year_limits = {
+        LeaveType.basic_leave: 35 if status_law else 20,
+        LeaveType.supplementary_leave_based_on_age: 0 if status_law else _age_supplement_days(age),
+        LeaveType.supplementary_leave_for_children: (
+            7 if children_count >= 3 else 4 if children_count == 2 else 2 if children_count == 1 else 0
+        ),
+        LeaveType.supplementary_leave_for_children_with_disability: (
+            sum(1 for child in children if child.disability) * 2
+        ),
+        LeaveType.supplementary_leave_for_young_employees: 5 if age is not None and age <= 18 else 0,
+        LeaveType.supplementary_leave_for_reduced_working_capacity: 5 if profile and profile.disability else 0,
+    }
+    limits = _distribute_prorated_paid_leave_days(paid_full_year_limits, contract, year)
+    limits[LeaveType.sick_leave] = _prorate_annual_days(15, contract, year)
+    limits[LeaveType.leave_carried_over_from_previous_year] = _paid_leave_remaining_days(contract, year - 1)
+    return limits
+
+
+def _store_previous_leave_limit_values(record: ContractLeaveLimit) -> None:
+    if record.imported:
+        return
+    record.previous_limit_days = record.limit_days
+    record.previous_period_start = record.period_start
+    record.previous_period_end = record.period_end
+    record.previous_imported = record.imported
+
+
+def _clear_previous_leave_limit_values(record: ContractLeaveLimit) -> None:
+    record.previous_limit_days = None
+    record.previous_period_start = None
+    record.previous_period_end = None
+    record.previous_imported = None
+
+
+def _upsert_leave_limit(contract: Contract, year: int, leave_type: LeaveType, days: int, start: date, end: date) -> None:
+    record = ContractLeaveLimit.query.filter_by(contract_id=contract.id, calendar_year=year, leave_type=leave_type).first()
+    if record is None:
+        record = ContractLeaveLimit(contract_id=contract.id, calendar_year=year, leave_type=leave_type)
+    else:
+        _store_previous_leave_limit_values(record)
+    record.limit_days = max(days, 0)
+    record.period_start = start
+    record.period_end = end
+    record.imported = True
+    db.session.add(record)
+
+
+def _set_leave_year_open(year: int, is_open: bool, imported_by: User | None = None) -> None:
+    leave_year = db.session.get(LeaveYear, year) or LeaveYear(year=year)
+    leave_year.is_open = is_open
+    if is_open:
+        leave_year.imported_by_id = imported_by.id if imported_by else None
+        leave_year.imported_at = datetime.utcnow()
+    db.session.add(leave_year)
+
+
+def _import_default_leave_limits_for_contract(contract: Contract, year: int) -> None:
+    if not _is_contract_active_in_year(contract, year):
+        return
+    for leave_type, days in _calculated_calendar_leave_limits(contract, year).items():
+        if _leave_type_available_for_contract(leave_type, contract.contract_type, contract.user):
+            end = (
+                date(year, 1, 31)
+                if leave_type == LeaveType.leave_carried_over_from_previous_year
+                else date(year, 12, 31)
+            )
+            _upsert_leave_limit(contract, year, leave_type, days, date(year, 1, 1), end)
+
+
+def _import_default_leave_limits_for_year(year: int) -> None:
+    for contract in Contract.query.all():
+        _import_default_leave_limits_for_contract(contract, year)
+
+
+def _copy_range_limits_for_year(year: int) -> None:
+    for contract in Contract.query.all():
+        if not _is_contract_active_in_year(contract, year):
+            continue
+        for previous in ContractLeaveLimit.query.filter(
+            ContractLeaveLimit.contract_id == contract.id,
+            ContractLeaveLimit.leave_type.in_(RANGE_BASED_LEAVE_TYPES),
+            ContractLeaveLimit.period_end >= date(year, 1, 1),
+            ContractLeaveLimit.period_start <= date(year, 12, 31),
+        ).all():
+            exists = ContractLeaveLimit.query.filter_by(
+                contract_id=contract.id,
+                calendar_year=year,
+                leave_type=previous.leave_type,
+                period_start=previous.period_start,
+                period_end=previous.period_end,
+            ).first()
+            if exists is None:
+                db.session.add(
+                    ContractLeaveLimit(
+                        contract_id=contract.id,
+                        calendar_year=year,
+                        leave_type=previous.leave_type,
+                        limit_days=previous.limit_days,
+                        period_start=previous.period_start,
+                        period_end=previous.period_end,
+                        imported=True,
+                    )
+                )
+
+
+def _has_imported_leave_limits_for_contract(contract: Contract, year: int) -> bool:
+    return db.session.query(ContractLeaveLimit.id).filter_by(
+        contract_id=contract.id,
+        calendar_year=year,
+        imported=True,
+    ).first() is not None
+
+
+def _has_imported_leave_limits_for_year(year: int) -> bool:
+    return (
+        db.session.query(ContractLeaveLimit.id)
+        .filter_by(calendar_year=year, imported=True)
+        .first()
+        is not None
+    )
+
+
+def _revert_imported_leave_limit(record: ContractLeaveLimit) -> None:
+    if record.previous_limit_days is None:
+        db.session.delete(record)
+        return
+    record.limit_days = record.previous_limit_days
+    record.period_start = record.previous_period_start
+    record.period_end = record.previous_period_end
+    record.imported = bool(record.previous_imported)
+    _clear_previous_leave_limit_values(record)
+    db.session.add(record)
+
+
+def _remove_imported_leave_limits_for_contract(contract: Contract, year: int) -> None:
+    records = ContractLeaveLimit.query.filter_by(
+        contract_id=contract.id,
+        calendar_year=year,
+        imported=True,
+    ).all()
+    for record in records:
+        _revert_imported_leave_limit(record)
+
+
+def _remove_imported_leave_limits_for_year(year: int) -> None:
+    for record in ContractLeaveLimit.query.filter_by(calendar_year=year, imported=True).all():
+        _revert_imported_leave_limit(record)
 
 
 def _leave_usage_summary(
@@ -1060,6 +1380,11 @@ def init_routes(app):
                 return redirect(
                     url_for("leaves", contract_id=selected_contract.id, year=selected_year, month=selected_month)
                 )
+            if not _is_leave_year_open(start_date.year):
+                flash("This calendar year is not open for leave requests yet. Please contact HR.", "error")
+                return redirect(
+                    url_for("leaves", contract_id=selected_contract.id, year=selected_year, month=selected_month)
+                )
             if end_date is not None and not _is_contract_active_on(selected_contract, end_date):
                 flash("The request end date must fall within the selected active contract.", "error")
                 return redirect(
@@ -1088,9 +1413,9 @@ def init_routes(app):
                 request_end_date = end_date or start_date
                 requested_days = _working_day_count(start_date, request_end_date)
                 remaining_days = _paid_leave_remaining_days(selected_contract, start_date.year)
-                if requested_days > remaining_days:
+                if requested_days > remaining_days or not _paid_leave_request_has_capacity(selected_contract, start_date, request_end_date):
                     flash(
-                        f"Paid leave request needs {requested_days} available days, but only {remaining_days} remain.",
+                        f"Paid leave request needs {requested_days} available days within the requested validity interval, but only {remaining_days} remain.",
                         "error",
                     )
                     return redirect(
@@ -1713,9 +2038,10 @@ def init_routes(app):
     @app.route("/leave-limits", methods=["GET", "POST"])
     @privilege_manager_required
     def manage_leave_limits():
-        selected_user_id = request.values.get("user_id", type=int)
-        selected_contract_id = request.values.get("contract_id", type=int)
-        selected_year = request.values.get("calendar_year", type=int) or date.today().year
+        request_data = request.form if request.method == "POST" else request.args
+        selected_user_id = request_data.get("user_id", type=int)
+        selected_contract_id = request_data.get("contract_id", type=int)
+        selected_year = request_data.get("calendar_year", type=int) or date.today().year
 
         users = User.query.order_by(User.username.asc()).all()
         all_contracts = (
@@ -1738,14 +2064,39 @@ def init_routes(app):
                 selected_user_id = selected_user.id
 
         if request.method == "POST":
+            action = request.form.get("action", "save")
+            if selected_year < 1970 or selected_year > 2100:
+                flash("Please provide a valid calendar year.", "error")
+                return redirect(url_for("manage_leave_limits", calendar_year=selected_year))
+            if action == "open_year":
+                _set_leave_year_open(selected_year, True, current_user)
+                db.session.commit()
+                flash(f"{selected_year} is now open for employee leave requests.", "success")
+                return redirect(url_for("manage_leave_limits", calendar_year=selected_year))
+            if action == "lock_year":
+                _set_leave_year_open(selected_year, False)
+                db.session.commit()
+                flash(f"{selected_year} is now locked for employee leave requests.", "success")
+                return redirect(url_for("manage_leave_limits", calendar_year=selected_year))
+            if action == "load_year_defaults":
+                _import_default_leave_limits_for_year(selected_year)
+                _copy_range_limits_for_year(selected_year)
+                db.session.commit()
+                flash(f"Default leave limits were loaded for active contracts in {selected_year}.", "success")
+                return redirect(url_for("manage_leave_limits", calendar_year=selected_year))
+            if action == "undo_year_import":
+                _remove_imported_leave_limits_for_year(selected_year)
+                db.session.commit()
+                flash(f"Imported leave limits for {selected_year} were removed.", "success")
+                return redirect(url_for("manage_leave_limits", calendar_year=selected_year))
             if selected_user is None:
                 flash("Please select an employee first.", "error")
                 return redirect(url_for("manage_leave_limits"))
             if selected_contract is None:
                 flash("Please select a valid contract.", "error")
                 return redirect(url_for("manage_leave_limits", user_id=selected_user_id, calendar_year=selected_year))
-            if selected_year < 1970 or selected_year > 2100:
-                flash("Please provide a valid calendar year.", "error")
+            if not _is_contract_active_in_year(selected_contract, selected_year):
+                flash("The selected contract is not active in the selected calendar year.", "error")
                 return redirect(
                     url_for(
                         "manage_leave_limits",
@@ -1754,8 +2105,23 @@ def init_routes(app):
                         calendar_year=selected_year,
                     )
                 )
-            if not _is_contract_active_in_year(selected_contract, selected_year):
-                flash("The selected contract is not active in the selected calendar year.", "error")
+
+            if action == "load_contract_defaults":
+                _import_default_leave_limits_for_contract(selected_contract, selected_year)
+                db.session.commit()
+                flash("Default leave limits were loaded for the selected contract.", "success")
+                return redirect(
+                    url_for(
+                        "manage_leave_limits",
+                        user_id=selected_user_id,
+                        contract_id=selected_contract_id,
+                        calendar_year=selected_year,
+                    )
+                )
+            if action == "undo_contract_import":
+                _remove_imported_leave_limits_for_contract(selected_contract, selected_year)
+                db.session.commit()
+                flash("Imported leave limits were removed for the selected contract.", "success")
                 return redirect(
                     url_for(
                         "manage_leave_limits",
@@ -1802,6 +2168,8 @@ def init_routes(app):
                 record.limit_days = limit_days
                 record.period_start = first_day
                 record.period_end = last_day
+                record.imported = False
+                _clear_previous_leave_limit_values(record)
                 db.session.add(record)
 
             available_range_leave_types = {
@@ -1896,6 +2264,7 @@ def init_routes(app):
                         limit_days=limit_days,
                         period_start=start_value,
                         period_end=end_value,
+                        imported=False,
                     )
                 )
 
@@ -1939,6 +2308,8 @@ def init_routes(app):
                     range_existing_limits.setdefault(record.leave_type, []).append(record)
                 elif record.leave_type not in existing_limits:
                     existing_limits[record.leave_type] = record
+        leave_year = db.session.get(LeaveYear, selected_year)
+        opened_leave_years = LeaveYear.query.order_by(LeaveYear.year.desc()).all()
 
         return render_template(
             "manage_leave_limits.html",
@@ -1955,6 +2326,15 @@ def init_routes(app):
             is_contract_active_in_year=_is_contract_active_in_year,
             leave_type_available_for_contract=_leave_type_available_for_contract,
             contract_display_name=_contract_display_name,
+            leave_year=leave_year,
+            opened_leave_years=opened_leave_years,
+            is_leave_year_open=_is_leave_year_open(selected_year),
+            has_imported_year_limits=_has_imported_leave_limits_for_year(selected_year),
+            has_imported_contract_limits=(
+                _has_imported_leave_limits_for_contract(selected_contract, selected_year)
+                if selected_contract is not None
+                else False
+            ),
         )
 
     @app.route("/leadership", methods=["GET", "POST"])
