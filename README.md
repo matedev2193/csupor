@@ -61,6 +61,10 @@ mysql -u root -p < sql/schema.sql
 
 Tables are created automatically on startup.
 
+## Interface
+
+The portal uses a responsive light interface with sidebar navigation, a mobile menu, and shared styling for employee and management screens. See [the design preview and verification notes](docs/design/README.md) for screenshots. Front-end assets are served locally by Flask; no additional build step or CDN is required.
+
 ## Manual portal testing
 
 For an end-to-end, role-based checklist covering every portal screen and workflow, see [the manual portal test guide](PORTAL_TESTING.md).

@@ -4,12 +4,12 @@
 <section class="form-shell">
   <div class="section-heading">
     <div>
-      <h2>{{ 'Create contract' if mode == 'create' else 'Edit contract' }} for {{ target_user.username }}</h2>
+      <h2>{{ _('Create contract') if mode == 'create' else _('Edit contract') }} · {{ target_user.username }}</h2>
       <p>{{ _('Fill in contract details. Fields marked with * are required.') }}</p>
     </div>
   </div>
 
-  <form method="post" class="grid-form">
+  <form method="post" class="grid-form contract-fields">
     <div>
       <label for="contract_type">{{ _('Contract type *') }}</label>
       <select id="contract_type" name="contract_type" required>
@@ -92,7 +92,7 @@
     </div>
 
     <div class="button-row">
-      <button type="submit">{{ 'Create contract' if mode == 'create' else 'Save changes' }}</button>
+      <button type="submit">{{ _('Create contract') if mode == 'create' else _('Save changes') }}</button>
       <a class="button button-secondary" href="{{ url_for('manage_contracts') }}">{{ _("Cancel") }}</a>
     </div>
   </form>

@@ -1,836 +1,125 @@
+{% from '_icons.html' import icon %}
+{% macro nav_item(endpoint, label, symbol, related=[]) -%}
+  {% set active = request.endpoint == endpoint or request.endpoint in related %}
+  <a class="nav-link{% if active %} active{% endif %}" href="{{ url_for(endpoint) }}"{% if active %} aria-current="page"{% endif %}>
+    {{ icon(symbol) }}<span>{{ label }}</span>{% if active %}<span class="nav-dot" aria-hidden="true"></span>{% endif %}
+  </a>
+{%- endmacro %}
 <!doctype html>
 <html lang="{{ current_locale }}">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>{% block title %}{{ _("CSUPOR User System") }}{% endblock %}</title>
-    <style>
-      :root {
-        color-scheme: light;
-        --bg: #0f172a;
-        --bg-accent: #111827;
-        --surface: rgba(255, 255, 255, 0.88);
-        --surface-strong: rgba(255, 255, 255, 0.96);
-        --surface-muted: rgba(148, 163, 184, 0.12);
-        --text: #0f172a;
-        --text-soft: #475569;
-        --text-on-dark: #e2e8f0;
-        --primary: #ea580c;
-        --primary-strong: #c2410c;
-        --secondary: #fb923c;
-        --success-bg: rgba(34, 197, 94, 0.12);
-        --success-text: #166534;
-        --error-bg: rgba(239, 68, 68, 0.12);
-        --error-text: #b91c1c;
-        --border: rgba(148, 163, 184, 0.22);
-        --shadow: 0 24px 50px rgba(15, 23, 42, 0.18);
-        --radius-lg: 24px;
-        --radius-md: 18px;
-        --radius-sm: 12px;
-      }
-
-      * { box-sizing: border-box; }
-
-      body {
-        margin: 0;
-        min-height: 100vh;
-        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        color: var(--text);
-        background:
-          radial-gradient(circle at top left, rgba(251, 146, 60, 0.32), transparent 26%),
-          radial-gradient(circle at top right, rgba(234, 88, 12, 0.3), transparent 28%),
-          linear-gradient(160deg, var(--bg) 0%, #c2410c 45%, #fff7ed 100%);
-      }
-
-      a {
-        color: inherit;
-        text-decoration: none;
-      }
-
-      .page-shell {
-        width: min(1180px, calc(100% - 32px));
-        margin: 0 auto;
-        padding: 32px 0 56px;
-      }
-
-      .topbar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 20px;
-        padding: 18px 22px;
-        margin-bottom: 28px;
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        border-radius: 999px;
-        background: rgba(15, 23, 42, 0.58);
-        backdrop-filter: blur(22px);
-        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.24);
-      }
-
-      .brand {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        color: var(--text-on-dark);
-      }
-
-      .brand-mark {
-        width: 42px;
-        height: 42px;
-        display: grid;
-        place-items: center;
-        border-radius: 14px;
-        font-weight: 800;
-        letter-spacing: 0.08em;
-        background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);
-        color: white;
-        box-shadow: 0 12px 28px rgba(234, 88, 12, 0.3);
-      }
-
-      .brand-copy small,
-      .nav-meta,
-      .hero-copy p,
-      .section-heading p,
-      .empty-state,
-      .help-text,
-      .stat-copy span,
-      .data-list dd,
-      .table-card tbody,
-      .muted {
-        color: var(--text-soft);
-      }
-
-      .brand-copy strong,
-      .hero-copy h1,
-      .section-heading h2,
-      .section-heading h3,
-      .stat-copy strong,
-      .card h3,
-      th,
-      label,
-      .eyebrow {
-        letter-spacing: -0.02em;
-      }
-
-      .brand-copy strong {
-        display: block;
-        font-size: 1rem;
-      }
-
-      .nav-links {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: flex-end;
-        gap: 10px;
-      }
-
-      .nav-group {
-        position: relative;
-      }
-
-      .nav-group > summary {
-        list-style: none;
-      }
-
-      .nav-group > summary::-webkit-details-marker {
-        display: none;
-      }
-
-      .nav-group-menu {
-        position: absolute;
-        right: 0;
-        top: calc(100% + 8px);
-        min-width: 220px;
-        padding: 10px;
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.22);
-        background: rgba(15, 23, 42, 0.96);
-        box-shadow: 0 22px 34px rgba(15, 23, 42, 0.35);
-        display: grid;
-        gap: 8px;
-        z-index: 10;
-      }
-
-      .nav-group:not([open]) .nav-group-menu {
-        display: none;
-      }
-
-      .nav-link {
-        padding: 10px 16px;
-        border-radius: 999px;
-        color: rgba(226, 232, 240, 0.92);
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid transparent;
-        transition: 180ms ease;
-      }
-
-      .nav-link:hover,
-      .nav-link.active {
-        color: white;
-        border-color: rgba(255, 255, 255, 0.22);
-        background: rgba(255, 255, 255, 0.16);
-        transform: translateY(-1px);
-      }
-
-      .hero {
-        display: grid;
-        grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.9fr);
-        gap: 22px;
-        padding: 30px;
-        border-radius: var(--radius-lg);
-        background: linear-gradient(140deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 237, 213, 0.9) 100%);
-        border: 1px solid rgba(255, 255, 255, 0.45);
-        box-shadow: var(--shadow);
-      }
-
-      .hero-copy h1 {
-        margin: 8px 0 12px;
-        font-size: clamp(2rem, 4vw, 3.4rem);
-        line-height: 1.05;
-      }
-
-      .hero-copy p {
-        max-width: 58ch;
-        margin: 0;
-        font-size: 1.02rem;
-        line-height: 1.7;
-      }
-
-      .eyebrow {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 7px 12px;
-        border-radius: 999px;
-        font-size: 0.82rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        color: var(--primary);
-        background: rgba(234, 88, 12, 0.14);
-      }
-
-      .hero-actions,
-      .button-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-top: 24px;
-      }
-
-      .hero-panel,
-      .card,
-      .table-card,
-      .form-shell {
-        border-radius: var(--radius-md);
-        background: var(--surface);
-        border: 1px solid var(--border);
-        box-shadow: var(--shadow);
-      }
-
-      .hero-panel {
-        padding: 22px;
-        background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.92));
-        color: var(--text-on-dark);
-        display: grid;
-        gap: 14px;
-      }
-
-      .hero-panel ul {
-        margin: 0;
-        padding-left: 18px;
-        line-height: 1.7;
-      }
-
-      .badge,
-      .pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 12px;
-        border-radius: 999px;
-        font-size: 0.85rem;
-        font-weight: 700;
-      }
-
-      .badge {
-        color: var(--primary-strong);
-        background: rgba(234, 88, 12, 0.14);
-      }
-
-      .pill {
-        color: #0f766e;
-        background: rgba(45, 212, 191, 0.12);
-      }
-
-      .button,
-      button,
-      input,
-      select,
-      textarea {
-        font: inherit;
-      }
-
-      .button,
-      button {
-        appearance: none;
-        border: 0;
-        cursor: pointer;
-        padding: 12px 18px;
-        border-radius: 14px;
-        font-weight: 700;
-        transition: 180ms ease;
-      }
-
-      .button-primary,
-      button[type="submit"] {
-        color: white;
-        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-        box-shadow: 0 12px 24px rgba(79, 70, 229, 0.28);
-      }
-
-      .button-primary:hover,
-      button[type="submit"]:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 18px 28px rgba(79, 70, 229, 0.34);
-      }
-
-      .button-secondary {
-        color: var(--text);
-        background: rgba(148, 163, 184, 0.12);
-        border: 1px solid rgba(148, 163, 184, 0.22);
-      }
-
-      .layout-stack {
-        display: grid;
-        gap: 22px;
-        margin-top: 26px;
-      }
-
-      .dashboard-grid {
-        display: grid;
-        grid-template-columns: repeat(12, minmax(0, 1fr));
-        gap: 22px;
-      }
-
-      .span-12 { grid-column: span 12; }
-      .span-8 { grid-column: span 8; }
-      .span-7 { grid-column: span 7; }
-      .span-6 { grid-column: span 6; }
-      .span-5 { grid-column: span 5; }
-      .span-4 { grid-column: span 4; }
-
-      .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 18px;
-        margin-top: 24px;
-      }
-
-      .stat-card,
-      .mini-card {
-        padding: 18px;
-        border-radius: var(--radius-md);
-        border: 1px solid var(--border);
-        background: rgba(255, 255, 255, 0.72);
-      }
-
-      .stat-card {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-      }
-
-      .stat-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 16px;
-        display: grid;
-        place-items: center;
-        font-size: 1.2rem;
-        background: linear-gradient(135deg, rgba(79, 70, 229, 0.16), rgba(34, 211, 238, 0.18));
-      }
-
-      .stat-copy strong {
-        display: block;
-        font-size: 1.45rem;
-      }
-
-      .card,
-      .table-card,
-      .form-shell {
-        padding: 24px;
-      }
-
-      .section-heading {
-        display: flex;
-        align-items: start;
-        justify-content: space-between;
-        gap: 18px;
-        margin-bottom: 20px;
-      }
-
-      .section-heading h2,
-      .section-heading h3 {
-        margin: 0;
-        font-size: 1.35rem;
-      }
-
-      .section-heading p {
-        margin: 6px 0 0;
-        line-height: 1.6;
-      }
-
-      .data-list {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 16px 18px;
-        margin: 0;
-      }
-
-      .data-list div {
-        padding: 14px 16px;
-        border-radius: 14px;
-        background: rgba(148, 163, 184, 0.1);
-      }
-
-      .data-list dt {
-        font-size: 0.84rem;
-        font-weight: 700;
-        color: var(--text-soft);
-        margin-bottom: 6px;
-      }
-
-      .data-list dd {
-        margin: 0;
-        font-size: 1rem;
-      }
-
-      .info-stack {
-        display: grid;
-        gap: 16px;
-      }
-
-      .record-list {
-        display: grid;
-        gap: 14px;
-      }
-
-      .record-item {
-        padding: 18px;
-        border-radius: 16px;
-        border: 1px solid rgba(148, 163, 184, 0.18);
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(248, 250, 252, 0.88));
-      }
-
-      .record-item-header {
-        display: flex;
-        align-items: start;
-        justify-content: space-between;
-        gap: 14px;
-        margin-bottom: 10px;
-      }
-
-      .record-item h3,
-      .record-item p {
-        margin: 0;
-      }
-
-      .record-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 12px;
-      }
-
-      .empty-state {
-        padding: 18px;
-        border-radius: 16px;
-        border: 1px dashed rgba(148, 163, 184, 0.5);
-        background: rgba(248, 250, 252, 0.7);
-        line-height: 1.7;
-      }
-
-      .table-card {
-        overflow: hidden;
-      }
-
-      .table-wrap {
-        overflow-x: auto;
-        margin-top: 18px;
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-
-      th,
-      td {
-        padding: 14px 16px;
-        text-align: left;
-        vertical-align: top;
-        border-bottom: 1px solid rgba(148, 163, 184, 0.16);
-      }
-
-      th {
-        font-size: 0.82rem;
-        text-transform: uppercase;
-        color: var(--text-soft);
-      }
-
-      tr:last-child td {
-        border-bottom: 0;
-      }
-
-      .leave-usage-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.9rem;
-      }
-
-      .leave-usage-table th,
-      .leave-usage-table td {
-        padding: 0.55rem 0.35rem;
-      }
-
-      .leave-usage-table th:nth-child(2),
-      .leave-usage-table th:nth-child(3),
-      .leave-usage-table td:nth-child(2),
-      .leave-usage-table td:nth-child(3) {
-        text-align: right;
-        white-space: nowrap;
-      }
-
-      .leave-usage-dashboard .table-wrap {
-        margin-top: 0;
-      }
-
-      .compact-heading {
-        margin-bottom: 0;
-      }
-
-      .flash-stack {
-        display: grid;
-        gap: 12px;
-        margin: 20px 0 0;
-      }
-
-      .flash {
-        padding: 14px 18px;
-        border-radius: 16px;
-        border: 1px solid transparent;
-        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
-      }
-
-      .flash-error {
-        color: var(--error-text);
-        background: var(--error-bg);
-        border-color: rgba(239, 68, 68, 0.18);
-      }
-
-      .flash-success {
-        color: var(--success-text);
-        background: var(--success-bg);
-        border-color: rgba(34, 197, 94, 0.18);
-      }
-
-      .form-page {
-        display: grid;
-        grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.15fr);
-        gap: 22px;
-        margin-top: 26px;
-      }
-
-      .form-sidebar {
-        padding: 24px;
-        border-radius: var(--radius-lg);
-        color: var(--text-on-dark);
-        background: linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(30, 41, 59, 0.92));
-        box-shadow: var(--shadow);
-      }
-
-      .form-sidebar h2 {
-        margin: 12px 0;
-        font-size: 1.7rem;
-      }
-
-      .form-sidebar p,
-      .form-sidebar li {
-        color: rgba(226, 232, 240, 0.82);
-        line-height: 1.7;
-      }
-
-      .form-sidebar ul {
-        padding-left: 18px;
-        margin: 18px 0 0;
-      }
-
-      .form-shell {
-        background: var(--surface-strong);
-      }
-
-      form {
-        display: grid;
-        gap: 18px;
-      }
-
-      .form-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 16px;
-      }
-
-      .field,
-      .checkbox-field {
-        display: grid;
-        gap: 8px;
-      }
-
-      .field-full {
-        grid-column: 1 / -1;
-      }
-
-      label {
-        font-size: 0.95rem;
-        font-weight: 700;
-      }
-
-      input,
-      select,
-      textarea {
-        width: 100%;
-        padding: 13px 14px;
-        border-radius: 14px;
-        border: 1px solid rgba(148, 163, 184, 0.28);
-        background: rgba(255, 255, 255, 0.95);
-        color: var(--text);
-        transition: 180ms ease;
-      }
-
-      input:focus,
-      select:focus,
-      textarea:focus {
-        outline: none;
-        border-color: rgba(79, 70, 229, 0.5);
-        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
-      }
-
-      textarea {
-        min-height: 116px;
-        resize: vertical;
-      }
-
-      .checkbox-field {
-        grid-template-columns: auto 1fr;
-        align-items: center;
-        gap: 12px;
-        padding: 14px 16px;
-        border-radius: 14px;
-        background: rgba(148, 163, 184, 0.08);
-      }
-
-      .checkbox-field input {
-        width: 18px;
-        height: 18px;
-        margin: 0;
-      }
-
-      .auth-shell {
-        width: min(980px, 100%);
-        margin: 26px auto 0;
-      }
-
-      .auth-grid {
-        display: grid;
-        grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-        gap: 22px;
-      }
-
-      .auth-panel,
-      .auth-form {
-        border-radius: var(--radius-lg);
-        box-shadow: var(--shadow);
-      }
-
-      .auth-panel {
-        padding: 28px;
-        color: var(--text-on-dark);
-        background: linear-gradient(160deg, rgba(15, 23, 42, 0.98), rgba(37, 99, 235, 0.82));
-      }
-
-      .auth-form {
-        padding: 28px;
-        background: rgba(255, 255, 255, 0.95);
-        border: 1px solid rgba(255, 255, 255, 0.55);
-      }
-
-      .inline-form {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      .inline-form input[type="hidden"] {
-        display: none;
-      }
-
-      .inline-form select {
-        min-width: 140px;
-      }
-
-      .language-form {
-        display: flex;
-        align-items: center;
-      }
-
-      .language-form select {
-        min-width: 112px;
-        padding: 10px 34px 10px 14px;
-        border-radius: 999px;
-        color: rgba(226, 232, 240, 0.92);
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.16);
-      }
-
-      .sr-only {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-        border: 0;
-      }
-
-      @media (max-width: 960px) {
-        .hero,
-        .form-page,
-        .auth-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .dashboard-grid,
-        .stats-grid,
-        .data-list,
-        .form-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .span-8,
-        .span-7,
-        .span-6,
-        .span-5,
-        .span-4 {
-          grid-column: span 12;
-        }
-      }
-
-      @media (max-width: 720px) {
-        .page-shell {
-          width: min(100% - 20px, 1180px);
-          padding-top: 20px;
-        }
-
-        .topbar {
-          border-radius: 28px;
-          padding: 18px;
-        }
-
-        .topbar,
-        .section-heading,
-        .record-item-header {
-          flex-direction: column;
-          align-items: stretch;
-        }
-
-        .nav-links {
-          justify-content: flex-start;
-        }
-
-        .hero,
-        .card,
-        .table-card,
-        .form-shell,
-        .auth-panel,
-        .auth-form,
-        .form-sidebar {
-          padding: 20px;
-        }
-
-        .inline-form {
-          flex-direction: column;
-          align-items: stretch;
-        }
-      }
-    </style>
+    <meta name="theme-color" content="#faf9f6">
+    <title>{% block title %}{{ _('CSUPOR Portal') }}{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/portal.css') }}">
+    <script>document.documentElement.classList.add('js');</script>
+    <script defer src="{{ url_for('static', filename='js/portal.js') }}"></script>
   </head>
-  <body>
-    <div class="page-shell">
-      <nav class="topbar">
-        <a class="brand" href="{{ url_for('dashboard' if current_user.is_authenticated else 'login') }}">
-          <span class="brand-mark">C</span>
-          <span class="brand-copy">
-            <strong>{{ _("CSUPOR Portal") }}</strong>
-            <small>{{ _("Modern employee records and profile management") }}</small>
-          </span>
+  <body class="{{ 'portal-page' if current_user.is_authenticated else 'public-page' }}">
+    <a class="skip-link" href="#main-content">{{ _('Skip to content') }}</a>
+    {% if current_user.is_authenticated %}
+    <aside class="sidebar" id="main-navigation" aria-label="{{ _('Main navigation') }}">
+      <div class="sidebar-brand-row">
+        <a class="brand" href="{{ url_for('dashboard') }}" aria-label="{{ _('CSUPOR Portal') }}">
+          <span class="brand-mark">{{ icon('cup') }}</span>
+          <span class="brand-copy"><strong>csupor<span>.</span></strong><small>{{ _('Employee portal') }}</small></span>
         </a>
+        <button type="button" class="icon-button sidebar-close" data-menu-close aria-label="{{ _('Close menu') }}">{{ icon('close') }}</button>
+      </div>
+      <nav class="sidebar-nav" aria-label="{{ _('Main navigation') }}">
+        <p class="nav-label">{{ _('My workspace') }}</p>
+        {{ nav_item('dashboard', _('Dashboard'), 'home') }}
+        {{ nav_item('leaves', _('Leave calendar'), 'calendar') }}
+        {{ nav_item('edit_profile', _('My profile'), 'user') }}
+        <p class="nav-label">{{ _('My records') }}</p>
+        {{ nav_item('add_dependent', _('Dependents'), 'users') }}
+        {{ nav_item('add_qualification', _('Qualifications'), 'graduate') }}
+        {{ nav_item('professional_exam', _('Professional exam'), 'award') }}
+        {% if current_user.privilege.value in ['hr', 'ceo', 'developer'] or can_manage_leaves_global %}
+        {% set management_pages = ['manage_user_profiles', 'edit_user_profile', 'manage_privileges', 'manage_contracts', 'create_contract', 'edit_contract', 'manage_legal_entities', 'manage_places_of_work', 'manage_leadership', 'manage_leave_limits', 'manage_working_days', 'manage_leaves'] %}
+        <details class="nav-group"{% if request.endpoint in management_pages %} open{% endif %}>
+          <summary class="nav-label">{{ _('Management') }} {{ icon('chevron') }}</summary>
+          <div class="nav-group-menu">
+            {% if current_user.privilege.value in ['hr', 'ceo'] %}
+            {{ nav_item('manage_user_profiles', _('User profiles'), 'users', ['edit_user_profile']) }}
+            {{ nav_item('manage_contracts', _('Contracts'), 'briefcase', ['create_contract', 'edit_contract']) }}
+            {{ nav_item('manage_leave_limits', _('Leave limits'), 'calendar') }}
+            {{ nav_item('manage_working_days', _('Working days'), 'calendar') }}
+            {% endif %}
+            {% if can_manage_leaves_global %}{{ nav_item('manage_leaves', _('Leave approvals'), 'check') }}{% endif %}
+            {% if current_user.privilege.value in ['hr', 'ceo'] %}
+            {{ nav_item('manage_leadership', _('Leadership'), 'award') }}
+            {{ nav_item('manage_legal_entities', _('Legal entities'), 'building') }}
+            {{ nav_item('manage_places_of_work', _('Workplaces'), 'building') }}
+            {% endif %}
+            {% if current_user.privilege.value in ['hr', 'ceo', 'developer'] %}{{ nav_item('manage_privileges', _('Privileges'), 'lock') }}{% endif %}
+          </div>
+        </details>
+        {% endif %}
+      </nav>
+      <div class="sidebar-footer">
+        {{ nav_item('change_password', _('Change password'), 'lock') }}
+        {{ nav_item('logout', _('Logout'), 'logout') }}
+        <div class="sidebar-account">
+          <span class="avatar">{{ (current_user.profile.full_name if current_user.profile and current_user.profile.full_name else current_user.username)[:1]|upper }}</span>
+          <div><strong>{{ current_user.username }}</strong><small>{{ _(current_user.privilege.value)|capitalize }}</small></div>
+        </div>
+      </div>
+    </aside>
+    <button type="button" class="menu-backdrop" data-menu-close tabindex="-1" aria-label="{{ _('Close menu') }}" hidden></button>
+    {% endif %}
 
-        <div class="nav-links">
-          {% if current_user.is_authenticated %}
-          <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">{{ _("Dashboard") }}</a>
-          <a class="nav-link {% if request.endpoint == 'leaves' %}active{% endif %}" href="{{ url_for('leaves') }}">{{ _("Leave calendar") }}</a>
-          <a class="nav-link {% if request.endpoint == 'edit_profile' %}active{% endif %}" href="{{ url_for('edit_profile') }}">{{ _("Edit profile") }}</a>
-          <a class="nav-link {% if request.endpoint == 'change_password' %}active{% endif %}" href="{{ url_for('change_password') }}">{{ _("Change password") }}</a>
-          {% if current_user.privilege.value in ['hr', 'ceo'] or can_manage_leaves_global %}
-          <details class="nav-group">
-            <summary
-              class="nav-link {% if request.endpoint in ['manage_user_profiles', 'edit_user_profile', 'manage_privileges', 'manage_contracts', 'create_contract', 'edit_contract', 'manage_legal_entities', 'manage_places_of_work', 'manage_leadership', 'manage_leave_limits', 'manage_working_days', 'manage_leaves'] %}active{% endif %}"
-            >
-              {{ _("Management") }}
-            </summary>
-            <div class="nav-group-menu">
-              {% if current_user.privilege.value in ['hr', 'ceo'] %}<a class="nav-link {% if request.endpoint in ['manage_user_profiles', 'edit_user_profile'] %}active{% endif %}" href="{{ url_for('manage_user_profiles') }}">{{ _("User profiles") }}</a>{% endif %}
-              {% if current_user.privilege.value in ['hr', 'ceo'] %}<a class="nav-link {% if request.endpoint == 'manage_privileges' %}active{% endif %}" href="{{ url_for('manage_privileges') }}">{{ _("Privileges") }}</a>{% endif %}
-              {% if current_user.privilege.value in ['hr', 'ceo'] %}<a class="nav-link {% if request.endpoint in ['manage_contracts', 'create_contract', 'edit_contract'] %}active{% endif %}" href="{{ url_for('manage_contracts') }}">{{ _("Contracts") }}</a>{% endif %}
-              {% if current_user.privilege.value in ['hr', 'ceo'] %}<a class="nav-link {% if request.endpoint == 'manage_leave_limits' %}active{% endif %}" href="{{ url_for('manage_leave_limits') }}">{{ _("Leave limits") }}</a>{% endif %}
-              {% if current_user.privilege.value in ['hr', 'ceo'] %}<a class="nav-link {% if request.endpoint == 'manage_working_days' %}active{% endif %}" href="{{ url_for('manage_working_days') }}">{{ _("Working days") }}</a>{% endif %}
-              {% if can_manage_leaves_global %}<a class="nav-link {% if request.endpoint == 'manage_leaves' %}active{% endif %}" href="{{ url_for('manage_leaves') }}">{{ _("Leave approvals") }}</a>{% endif %}
-              {% if current_user.privilege.value in ['hr', 'ceo'] %}<a class="nav-link {% if request.endpoint == 'manage_leadership' %}active{% endif %}" href="{{ url_for('manage_leadership') }}">{{ _("Leadership") }}</a>{% endif %}
-              {% if current_user.privilege.value in ['hr', 'ceo'] %}<a class="nav-link {% if request.endpoint == 'manage_legal_entities' %}active{% endif %}" href="{{ url_for('manage_legal_entities') }}">{{ _("Legal entities") }}</a>{% endif %}
-              {% if current_user.privilege.value in ['hr', 'ceo'] %}<a class="nav-link {% if request.endpoint == 'manage_places_of_work' %}active{% endif %}" href="{{ url_for('manage_places_of_work') }}">{{ _("Workplaces") }}</a>{% endif %}
-            </div>
-          </details>
-          {% endif %}
-          <a class="nav-link" href="{{ url_for('logout') }}">{{ _("Logout") }}</a>
-          {% else %}
-          <a class="nav-link {% if request.endpoint == 'login' %}active{% endif %}" href="{{ url_for('login') }}">{{ _("Login") }}</a>
-          <a class="nav-link {% if request.endpoint == 'register' %}active{% endif %}" href="{{ url_for('register') }}">{{ _("Register") }}</a>
-          {% endif %}
+    <div class="page-shell">
+      <header class="topbar">
+        {% if current_user.is_authenticated %}
+        <div class="topbar-location">
+          <button class="icon-button menu-toggle" type="button" aria-controls="main-navigation" aria-expanded="false" aria-label="{{ _('Open menu') }}">{{ icon('menu') }}</button>
+          <span class="breadcrumb-root">{{ _('My workspace') }}</span>{{ icon('chevron', 'breadcrumb-chevron') }}
+          <span class="breadcrumb-current">{{ self.title().split(' · ')[0] }}</span>
+        </div>
+        {% else %}
+        <a class="brand" href="{{ url_for('login') }}" aria-label="{{ _('CSUPOR Portal') }}">
+          <span class="brand-mark">{{ icon('cup') }}</span>
+          <span class="brand-copy"><strong>csupor<span>.</span></strong><small>{{ _('Employee portal') }}</small></span>
+        </a>
+        {% endif %}
+        <div class="topbar-actions">
           <form class="language-form" action="{{ url_for('set_language') }}" method="post">
             <input type="hidden" name="next" value="{{ request.full_path if request.query_string else request.path }}">
-            <label class="sr-only" for="locale-select">{{ _("Language") }}</label>
-            <select id="locale-select" name="locale" aria-label="{{ _('Language') }}" onchange="this.form.submit()">
+            {{ icon('globe') }}
+            <label class="sr-only" for="locale-select">{{ _('Language') }}</label>
+            <select id="locale-select" name="locale" onchange="this.form.submit()">
               {% for locale_code, locale_name in supported_locales.items() %}
-              <option value="{{ locale_code }}" {% if locale_code == current_locale %}selected{% endif %}>{{ locale_name }}</option>
+              <option value="{{ locale_code }}"{% if locale_code == current_locale %} selected{% endif %}>{{ locale_name }}</option>
               {% endfor %}
             </select>
+            <noscript><button type="submit">{{ _('Save') }}</button></noscript>
           </form>
+          {% if current_user.is_authenticated %}
+          <a class="avatar topbar-avatar" href="{{ url_for('edit_profile') }}" aria-label="{{ _('My profile') }}">{{ (current_user.profile.full_name if current_user.profile and current_user.profile.full_name else current_user.username)[:1]|upper }}</a>
+          {% else %}
+          <a class="button button-secondary public-account-link" href="{{ url_for('register' if request.endpoint == 'login' else 'login') }}">{{ _('Create an account') if request.endpoint == 'login' else _('Login') }} {{ icon('arrow') }}</a>
+          {% endif %}
         </div>
-      </nav>
-
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <div class="flash-stack">
-          {% for category, message in messages %}
-          <div class="flash flash-{{ category }}">{{ message }}</div>
-          {% endfor %}
-        </div>
-        {% endif %}
-      {% endwith %}
-
-      {% block content %}{% endblock %}
+      </header>
+      <main id="main-content" class="main-content" tabindex="-1">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+          <div class="flash-stack">
+            {% for category, message in messages %}
+            <div class="flash flash-{{ category }}" role="{{ 'alert' if category == 'error' else 'status' }}">
+              <span>{{ message }}</span>
+              <button type="button" class="icon-button" data-dismiss-flash aria-label="{{ _('Dismiss message') }}">{{ icon('close') }}</button>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+        <footer class="page-footer"><span>csupor.</span> {{ _('Your everyday workspace.') }}</footer>
+      </main>
     </div>
   </body>
 </html>

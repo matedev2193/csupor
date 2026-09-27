@@ -1277,6 +1277,7 @@ def init_routes(app):
             if _can_manage_leaves(current_user)
             else [],
             profile_status_label=_profile_status_label(current_user.profile),
+            profile_completion_percentage=_profile_completion_percentage(current_user.profile),
             dashboard_leave_contract=current_contract,
             dashboard_leave_usage_summary=dashboard_leave_usage_summary,
             dashboard_leave_usage_year=today.year,

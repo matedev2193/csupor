@@ -1,42 +1,35 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% block title %}{{ _('Login · CSUPOR Portal') }}{% endblock %}
 {% block content %}
 <section class="auth-shell">
   <div class="auth-grid">
     <aside class="auth-panel">
-      <span class="eyebrow">{{ _("Secure access") }}</span>
-      <h1>{{ _("Welcome back to CSUPOR.", name="CSUPOR") }}</h1>
-      <p>
-        {{ _('Sign in to manage employee records with a cleaner, more intuitive portal experience built for daily administrative work.') }}
-      </p>
-      <ul>
-        <li>{{ _("Access your profile, dependents, and qualification records from one dashboard.") }}</li>
-        <li>{{ _("Review important status information immediately after login.") }}</li>
-        <li>{{ _("Keep HR workflows efficient with a calmer and more readable interface.") }}</li>
-      </ul>
+      <span class="eyebrow">{{ icon('cup') }} {{ _('Your everyday workspace.') }}</span>
+      <h1>{{ _('A little more clarity. Every day.') }}</h1>
+      <p>{{ _('Your profile, records and time away. Together in one place, with more room for what matters.') }}</p>
+      {% include '_auth_art.html' %}
+      <ul class="auth-points"><li>{{ icon('check') }} {{ _('Personal records') }}</li><li>{{ icon('check') }} {{ _('Leave planning') }}</li></ul>
     </aside>
-
     <section class="auth-form">
-      <div class="section-heading">
-        <div>
-          <h2>{{ _('Login') }}</h2>
-          <p>{{ _("Use your e-mail address or username and your password to continue.") }}</p>
-        </div>
-      </div>
+      <div class="section-heading"><div>
+        <h2>{{ _('Welcome back.') }}</h2>
+        <p>{{ _('Use your e-mail address or username and your password to continue.') }}</p>
+      </div></div>
       <form method="post">
-        <div class="field field-full">
-          <label for="login">{{ _("E-mail or username") }}</label>
-          <input id="login" name="login" required placeholder="{{ _('name@example.com or username') }}">
+        <div class="field">
+          <label for="login">{{ _('E-mail or username') }}</label>
+          <input id="login" name="login" required autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="{{ _('name@example.com or username') }}">
         </div>
-        <div class="field field-full">
-          <label for="password">{{ _("Password") }}</label>
-          <input id="password" type="password" name="password" required placeholder="{{ _('Enter your password') }}">
+        <div class="field">
+          <label for="password">{{ _('Password') }}</label>
+          <div class="password-field">
+            <input id="password" type="password" name="password" required autocomplete="current-password" placeholder="{{ _('Enter your password') }}">
+            <button type="button" class="icon-button password-toggle" data-password-toggle="password" aria-controls="password" aria-pressed="false" aria-label="{{ _('Show password') }}" data-show-label="{{ _('Show password') }}" data-hide-label="{{ _('Hide password') }}">{{ icon('eye') }}</button>
+          </div>
         </div>
-        <div class="button-row">
-          <button type="submit">{{ _('Login') }}</button>
-          <a class="button button-secondary" href="{{ url_for('register') }}">{{ _("Create an account") }}</a>
-        </div>
+        <div class="button-row"><button type="submit">{{ _('Login') }} {{ icon('arrow') }}</button></div>
       </form>
+      <p class="auth-switch">{{ _('New to CSUPOR?') }} <a href="{{ url_for('register') }}">{{ _('Create an account') }}</a></p>
     </section>
   </div>
 </section>

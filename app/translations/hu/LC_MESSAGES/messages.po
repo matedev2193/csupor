@@ -620,11 +620,11 @@ msgstr "Szabadságtervezés"
 
 #: app/templates/leaves.html:7
 msgid "Plan time away with confidence."
-msgstr "Tervezze távollétét magabiztosan."
+msgstr "Tervezd meg a szabadságodat."
 
 #: app/templates/leaves.html:8
 msgid "Select an active contract, review your leave calendar instantly, and submit a request that starts in pending approval."
-msgstr "Válasszon aktív szerződést, tekintse meg havi szabadságnaptárát, és igényeljen szabadságot egy kifinomult önkiszolgáló folyamatban."
+msgstr "Válassz dátumot a naptárban, töltsd ki az igénylést, majd küldd el jóváhagyásra."
 
 #: app/templates/leaves.html:11
 msgid "Request statuses"
@@ -686,7 +686,7 @@ msgstr "Fizetett szabadság esetén kötelező. Minden más szabadságtípusnál
 
 #: app/templates/leaves.html:75
 msgid "Tip: click a day in the calendar to choose the start date, then click another day to choose the end date."
-msgstr "Tipp: kattintson egy napra a naptárban a kezdő dátum kiválasztásához, majd egy másik napra a záró dátum kiválasztásához."
+msgstr "Tipp: a kezdő- és zárónapot a naptárban is kiválaszthatod."
 
 #: app/templates/leaves.html:77
 msgid "Note"
@@ -746,11 +746,11 @@ msgstr "Erre a hónapra még nincs ütemezett szabadságigény."
 
 #: app/templates/leaves.html:164
 msgid "No active contract found"
-msgstr "Nem található aktív szerződés"
+msgstr "Nincs aktív szerződés"
 
 #: app/templates/leaves.html:165
 msgid "You can apply for leave once HR records an active contract for your account."
-msgstr "Akkor igényelhet szabadságot, ha a HR aktív szerződést rögzít a fiókjához."
+msgstr "Amint a HR rögzíti az aktív szerződésedet, itt igényelhetsz szabadságot."
 
 #: app/templates/login.html:2
 msgid "Login · CSUPOR Portal"
@@ -782,7 +782,7 @@ msgstr "Tartsa hatékonyan a HR-folyamatokat egy nyugodtabb és olvashatóbb fel
 
 #: app/templates/login.html:23
 msgid "Use your e-mail address or username and your password to continue."
-msgstr "A folytatáshoz használja e-mail-címét vagy felhasználónevét és jelszavát."
+msgstr "A belépéshez add meg az e-mail-címedet vagy felhasználónevedet és a jelszavadat."
 
 #: app/templates/login.html:28
 msgid "E-mail or username"
@@ -794,11 +794,11 @@ msgstr "nev@example.com vagy felhasználónév"
 
 #: app/templates/login.html:32 app/templates/register.html:36
 msgid "Password"
-msgstr "Jelszó módosítása"
+msgstr "Jelszó"
 
 #: app/templates/login.html:33
 msgid "Enter your password"
-msgstr "Jelszó módosítása"
+msgstr "Add meg a jelszavad"
 
 #: app/templates/login.html:37
 msgid "Create an account"
@@ -1228,7 +1228,7 @@ msgstr "Munkavállalói, HR-, vezérigazgatói vagy fejlesztői hozzáférést r
 
 #: app/templates/manage_privileges.html:35 app/templates/register.html:32
 msgid "Username"
-msgstr "Név"
+msgstr "Felhasználónév"
 
 #: app/templates/manage_privileges.html:36
 #: app/templates/manage_user_profiles.html:35 app/templates/register.html:28
@@ -1289,11 +1289,11 @@ msgstr "Válasszon alább egy felhasználót az adott munkavállaló profiladata
 
 #: app/templates/manage_user_profiles.html:37
 msgid "Action"
-msgstr "Képesítés"
+msgstr "Művelet"
 
 #: app/templates/manage_user_profiles.html:47
 msgid "Profile started"
-msgstr "Profil állapota"
+msgstr "Adatok rögzítve"
 
 #: app/templates/manage_user_profiles.html:49
 msgid "Needs details"
@@ -1546,3 +1546,246 @@ msgstr "Hozzon létre erős jelszót"
 #: app/templates/register.html:41
 msgid "Back to login"
 msgstr "Vissza a bejelentkezéshez"
+
+# Modern portal interface
+msgid "Skip to content"
+msgstr "Ugrás a tartalomra"
+
+msgid "Main navigation"
+msgstr "Főmenü"
+
+msgid "Employee portal"
+msgstr "Munkatársi portál"
+
+msgid "Close menu"
+msgstr "Menü bezárása"
+
+msgid "Open menu"
+msgstr "Menü megnyitása"
+
+msgid "My workspace"
+msgstr "Saját felület"
+
+msgid "My profile"
+msgstr "Saját profil"
+
+msgid "My records"
+msgstr "Nyilvántartásaim"
+
+msgid "Dismiss message"
+msgstr "Üzenet bezárása"
+
+msgid "Your everyday workspace."
+msgstr "A mindennapokhoz, egy helyen."
+
+msgid "A little more clarity. Every day."
+msgstr "Átláthatóbb mindennapok."
+
+msgid "Your profile, records and time away. Together in one place, with more room for what matters."
+msgstr "Személyes adatok, dokumentumok és szabadságok. Minden egy helyen, hogy több idő maradjon a fontos dolgokra."
+
+msgid "Personal records"
+msgstr "Személyes adatok"
+
+msgid "Professional records"
+msgstr "Szakmai adatok"
+
+msgid "Welcome back."
+msgstr "Örülünk, hogy itt vagy!"
+
+msgid "Show password"
+msgstr "Jelszó megjelenítése"
+
+msgid "Hide password"
+msgstr "Jelszó elrejtése"
+
+msgid "New to CSUPOR?"
+msgstr "Még nincs fiókod?"
+
+msgid "Your place in the team."
+msgstr "A csapat tagja vagy."
+
+msgid "Create your account, then add your personal details. HR will set up the access you need."
+msgstr "Hozd létre a fiókodat, majd töltsd ki a személyes adataidat. A szükséges hozzáféréseket a HR állítja be."
+
+msgid "Already have an account?"
+msgstr "Már van fiókod?"
+
+msgid "Everything you need for your working day: your details, your records and your next time away."
+msgstr "A munkanapodhoz szükséges adatok, nyilvántartások és a következő szabadságod – egy helyen."
+
+msgid "Your personal and contact details."
+msgstr "Személyes adataid és elérhetőségeid."
+
+msgid "Your time away, at a glance."
+msgstr "Szabadságaid rövid áttekintése."
+
+msgid "Family details for your employee records."
+msgstr "Családi adatok a munkavállalói nyilvántartáshoz."
+
+msgid "Your education and certificates."
+msgstr "Tanulmányaid és bizonyítványaid."
+
+msgid "Quick access to your administrative tools."
+msgstr "Gyors elérés az adminisztrációs feladatokhoz."
+
+#, python-format
+msgid "Employee record: %(name)s"
+msgstr "Munkatársi adatlap: %(name)s"
+
+msgid "Review and update the selected employee’s personal details."
+msgstr "Ellenőrizd és frissítsd a kiválasztott munkatárs személyes adatait."
+
+msgid "Keep your personal details and contact information up to date."
+msgstr "Tartsd naprakészen a személyes adataidat és elérhetőségeidet."
+
+msgid "Account"
+msgstr "Fiók"
+
+msgid "Save profile"
+msgstr "Profil mentése"
+
+msgid "Add family details needed for benefits and leave entitlements."
+msgstr "Add meg a juttatásokhoz és szabadságjogosultságokhoz szükséges családi adatokat."
+
+msgid "Add the details shown on your diploma or certificate."
+msgstr "Add meg az okleveleden vagy bizonyítványodon szereplő adatokat."
+
+msgid "Keep your professional exam details together with your qualifications."
+msgstr "Rögzítsd a szakvizsgád adatait a végzettségeid mellett."
+
+msgid "Find an employee and open their profile to update personal details."
+msgstr "Válassz ki egy munkatársat, majd nyisd meg az adatlapját a személyes adatok frissítéséhez."
+
+msgid "Choose the access each team member needs for their work."
+msgstr "Állítsd be a munkatársak feladataihoz szükséges hozzáféréseket."
+
+msgid "Open-ended or single day"
+msgstr "Nyitott végű vagy egynapos"
+
+msgid "Personal details"
+msgstr "Személyes adatok"
+
+msgid "Official identifiers"
+msgstr "Hivatalos azonosítók"
+
+msgid "Address and other details"
+msgstr "Lakcím és további adatok"
+
+msgid "Save changes"
+msgstr "Módosítások mentése"
+
+msgid "male"
+msgstr "férfi"
+
+msgid "female"
+msgstr "nő"
+
+msgid "other"
+msgstr "egyéb"
+
+msgid "single"
+msgstr "egyedülálló"
+
+msgid "married"
+msgstr "házas"
+
+msgid "divorced"
+msgstr "elvált"
+
+msgid "widowed"
+msgstr "özvegy"
+
+msgid "civil partnership"
+msgstr "bejegyzett élettársi kapcsolat"
+
+msgid "paid leave"
+msgstr "fizetett szabadság"
+
+msgid "health leave"
+msgstr "egészségügyi távollét"
+
+msgid "childcare sickness benefit"
+msgstr "gyermekápolási táppénz"
+
+msgid "childbirth leave"
+msgstr "szülési szabadság"
+
+msgid "exemption from obligation to work"
+msgstr "munkavégzési kötelezettség alóli mentesítés"
+
+msgid "unpaid leave"
+msgstr "fizetés nélküli szabadság"
+
+msgid "pending approval"
+msgstr "jóváhagyásra vár"
+
+msgid "approved"
+msgstr "jóváhagyva"
+
+msgid "rejected"
+msgstr "elutasítva"
+
+msgid "pending cancellation"
+msgstr "visszavonásra vár"
+
+msgid "cancelled"
+msgstr "visszavonva"
+
+#, python-format
+msgid "Leave used in %(year)s"
+msgstr "Szabadságok %(year)s-ben"
+
+msgid "Leave type"
+msgstr "Távollét típusa"
+
+msgid "Used"
+msgstr "Felhasznált"
+
+msgid "Available"
+msgstr "Elérhető"
+
+msgid "Paid leave"
+msgstr "Fizetett szabadság"
+
+msgid "Health leave"
+msgstr "Egészségügyi távollét"
+
+msgid "Childcare sickness benefit"
+msgstr "Gyermekápolási táppénz"
+
+msgid "Childbirth leave"
+msgstr "Szülési szabadság"
+
+msgid "Exemption from obligation to work"
+msgstr "Munkavégzés alóli mentesítés"
+
+msgid "Unpaid leave"
+msgstr "Fizetés nélküli szabadság"
+
+msgid "Pending approval, approved, and pending cancellation requests are included."
+msgstr "A jóváhagyásra vagy visszavonásra váró és a jóváhagyott igényeket is tartalmazza."
+
+msgid "Basic leave, supplementary leaves, parental leave, paternity leave, and leave carry-over."
+msgstr "Alapszabadság, pótszabadságok, szülői és apasági szabadság, valamint áthozott szabadság."
+
+msgid "Sick leave and sickness benefit."
+msgstr "Betegszabadság és táppénz."
+
+msgid "Available when a child dependent is recorded on your profile."
+msgstr "Akkor érhető el, ha az eltartottak között gyermek is szerepel."
+
+msgid "Maternity leave, childcare fee, and childcare allowance."
+msgstr "Szülési szabadság, gyermekgondozási díj és gyermekgondozást segítő ellátás."
+
+msgid "Request time away under an exemption from work obligation."
+msgstr "Távollét igénylése munkavégzési kötelezettség alóli mentesítés alapján."
+
+msgid "Available once paid leave days are exhausted for the selected year."
+msgstr "A kiválasztott év fizetett szabadságának felhasználása után érhető el."
+
+msgid "Ongoing"
+msgstr "Folyamatban"
+
+msgid "Working days"
+msgstr "Munkanapok"

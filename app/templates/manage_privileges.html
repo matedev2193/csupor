@@ -1,22 +1,14 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Manage Privileges · CSUPOR Portal') }}{% endblock %}
 {% block content %}
-<section class="hero">
+<section class="hero management-hero">
   <div class="hero-copy">
     <span class="eyebrow">{{ _('Administrative controls') }}</span>
-    <h1>{{ _('Manage user privileges with confidence.') }}</h1>
+    <h1>{{ _('Privilege management') }}</h1>
     <p>
-      Review registered users and assign supported privileges through a streamlined interface built for HR and executive workflows.
+      {{ _('Choose the access each team member needs for their work.') }}
     </p>
   </div>
-  <aside class="hero-panel">
-    <span class="badge">{{ _('Access rules') }}</span>
-    <ul>
-      <li>{{ _('Users with the') }} <strong>{{ _('hr') }}</strong>, <strong>{{ _('ceo') }}</strong>, {{ _('or') }} <strong>{{ _('developer') }}</strong> {{ _('privilege can access this page.') }}</li>
-      <li>{{ _('Changes take effect as soon as the new privilege is saved.') }}</li>
-      <li>{{ _('Use this page after registration to elevate or revise user access.') }}</li>
-    </ul>
-  </aside>
 </section>
 
 <section class="layout-stack">
@@ -24,7 +16,7 @@
     <div class="section-heading">
       <div>
         <h2>{{ _('User privilege management') }}</h2>
-        <p>{{ _('Assign employee, HR, CEO, or developer access from a modernized table layout.') }}</p>
+        <p>{{ _('Choose the access each team member needs for their work.') }}</p>
       </div>
     </div>
     <div class="table-wrap">
