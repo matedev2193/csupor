@@ -68,6 +68,8 @@ def create_app() -> Flask:
     routes.init_routes(app)
 
     with app.app_context():
-        db.create_all()
+        from .schema import create_missing_tables
+
+        create_missing_tables(db.engine, db.metadata)
 
     return app

@@ -59,7 +59,7 @@ mysql -u root -p < sql/schema.sql
    python run.py
    ```
 
-Tables are created automatically on startup.
+Missing tables are created automatically on startup. On MySQL/MariaDB, new integer foreign keys inherit the actual referenced column type, supporting both SQL-script installations with unsigned user IDs and older ORM-created installations with signed IDs. Existing tables and data are not altered; column changes still require the applicable scripts in `sql/migrations/`.
 
 ## Interface
 
@@ -98,3 +98,28 @@ Use one of these approaches:
    ```
 
 `DATABASE_URL` takes precedence when both are set.
+
+### MySQL error 1005 / errno 150 when creating `leave_years`
+
+The SQL schema defines `users.id` as `INT UNSIGNED`, while older ORM-created databases use signed `INT`. Creating `leave_years.imported_by_id` with a different size or signedness causes MySQL to reject the foreign key.
+
+Update the application code and restart it. Startup now reads the referenced column type and applies it to the missing table's creation statement. This supports both existing variants without converting IDs, disabling foreign-key checks, or deleting tables.
+
+If the error remains, collect the definitions and latest InnoDB foreign-key error:
+
+```sql
+SHOW CREATE TABLE users;
+SHOW ENGINE INNODB STATUS;
+```
+
+This fix creates missing tables; it does not apply pending column migrations to existing tables.
+
+## Schema regression checks
+
+With `requirements.txt` installed, run:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+The checks cover generated MySQL DDL for signed/unsigned identifiers, fresh and existing schemas, and an actual SQLite create/restart cycle that preserves stored records. MySQL DDL tests use SQLAlchemy's dialect and a reflected-schema fixture; they do not require or modify a live MySQL server.
