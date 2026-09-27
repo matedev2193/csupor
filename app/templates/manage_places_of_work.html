@@ -1,50 +1,11 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% block title %}{{ _('Places of work · CSUPOR Portal') }}{% endblock %}
 {% block content %}
-<section class="dashboard-grid">
-  <section class="form-shell span-5">
-    <div class="section-heading"><h2>{{ _('Edit place of work') if editing_place else _('Add place of work') }}</h2></div>
-    <form method="post" class="grid-form">
-      {% if editing_place %}
-      <input type="hidden" name="place_id" value="{{ editing_place.id }}">
-      {% endif %}
-      <label for="legal_entity_id">{{ _('Legal entity *') }}</label>
-      <select id="legal_entity_id" name="legal_entity_id" required>
-        <option value="">{{ _('Select legal entity') }}</option>
-        {% for entity in entities %}
-        <option value="{{ entity.id }}" {% if editing_place and editing_place.legal_entity_id == entity.id %}selected{% endif %}>{{ entity.name }}</option>
-        {% endfor %}
-      </select>
-      <label for="address">{{ _('Address *') }}</label>
-      <input id="address" name="address" value="{{ editing_place.address if editing_place else '' }}" required>
-      <div class="button-row">
-        <button type="submit">{{ _('Update place of work') if editing_place else _('Save place of work') }}</button>
-        {% if editing_place %}
-        <a class="button button-secondary" href="{{ url_for('manage_places_of_work') }}">{{ _('Cancel edit') }}</a>
-        {% endif %}
-      </div>
-    </form>
-  </section>
-
-  <section class="table-card span-7">
-    <div class="section-heading"><h2>{{ _('Existing places of work') }}</h2></div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>{{ _('Legal entity') }}</th><th>{{ _('Address') }}</th><th>{{ _('Display format') }}</th><th>{{ _('Edit') }}</th></tr></thead>
-        <tbody>
-          {% for place in places %}
-          <tr>
-            <td>{{ place.legal_entity.name }}</td>
-            <td>{{ place.address }}</td>
-            <td>{{ place.legal_entity.name }} - {{ place.address }}</td>
-            <td>
-              <a class="button button-secondary" href="{{ url_for('manage_places_of_work', edit=place.id) }}">{{ _('Edit') }}</a>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </section>
+<section class="table-card">
+  <div class="section-heading"><div><h1>{{ _('Workplaces') }}</h1><p>{{ _('Manage workplaces and their legal entities.') }}</p></div><a class="button button-primary" href="{{ url_for('create_place_of_work') }}">{{ icon('plus') }} {{ _('Add place of work') }}</a></div>
+  {% if places %}<div class="table-wrap"><table>
+    <thead><tr><th>{{ _('Legal entity') }}</th><th>{{ _('Address') }}</th><th>{{ _('Actions') }}</th></tr></thead>
+    <tbody>{% for place in places %}<tr><td><strong>{{ place.legal_entity.name }}</strong></td><td>{{ place.address }}</td><td><a class="button button-secondary" href="{{ url_for('edit_place_of_work', place_id=place.id) }}">{{ _('Edit') }}</a></td></tr>{% endfor %}</tbody>
+  </table></div>{% else %}<div class="empty-state">{{ _('No workplaces have been added yet.') }}</div>{% endif %}
 </section>
 {% endblock %}

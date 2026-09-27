@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Edit legal entity') if entity else _('Add legal entity') }} · {{ _('CSUPOR Portal') }}{% endblock %}
+{% block content %}
+<section class="form-shell">
+  <div class="section-heading"><div><h1>{{ _('Edit legal entity') if entity else _('Add legal entity') }}</h1><p>{{ _('Fields marked with * are required.') }}</p></div></div>
+  <form method="post" class="form-grid">
+    <div class="field"><label for="name">{{ _('Name *') }}</label><input id="name" name="name" maxlength="120" value="{{ request.form.get('name', entity.name if entity else '') }}" required></div>
+    <div class="field"><label for="address">{{ _('Address *') }}</label><input id="address" name="address" maxlength="255" value="{{ request.form.get('address', entity.address if entity else '') }}" required></div>
+    <div class="field"><label for="om_id">{{ _('OM id (6 digits) *') }}</label><input id="om_id" name="om_id" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" value="{{ request.form.get('om_id', entity.om_id if entity else '') }}" required></div>
+    <div class="field"><label for="tax_number">{{ _('Tax number (format: 12345678-9-01) *') }}</label><input id="tax_number" name="tax_number" pattern="[0-9]{8}-[0-9]-[0-9]{2}|[0-9]{11}" maxlength="13" value="{{ request.form.get('tax_number', format_legal_entity_tax_number(entity.tax_number) if entity else '') }}" placeholder="12345678-9-01" required></div>
+    <div class="button-row field-full"><button type="submit">{{ _('Save changes') if entity else _('Save legal entity') }}</button><a class="button button-secondary" href="{{ url_for('manage_legal_entities') }}">{{ _('Cancel') }}</a></div>
+  </form>
+</section>
+{% endblock %}

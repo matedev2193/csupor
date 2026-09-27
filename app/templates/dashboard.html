@@ -15,7 +15,7 @@
     <span class="avatar">{{ (current_user.profile.full_name if current_user.profile and current_user.profile.full_name else current_user.username)[:1]|upper }}</span>
     <strong>{{ current_user.username }}</strong>
     <p>{{ current_user.email }}</p>
-    <div class="nav-meta"><span class="badge">{{ _(current_user.privilege.value)|capitalize }}</span><span>{{ _('User ID') }} #{{ current_user.id }}</span></div>
+    <div class="nav-meta"><span class="badge">{{ enum_label(current_user.privilege) }}</span><span>{{ _('User ID') }} #{{ current_user.id }}</span></div>
   </aside>
 </section>
 
@@ -45,11 +45,11 @@
     <div class="record-list">
       {% for leave_request in pending_leave_requests %}
       <article class="record-item">
-        <div class="record-item-header"><div><h3>{{ leave_request.user.profile.full_name if leave_request.user.profile and leave_request.user.profile.full_name else leave_request.user.username }}</h3><p>{{ leave_request.contract.employer.name }} · {{ _(leave_request.category.value)|capitalize }} · {{ leave_request.start_date }}{% if leave_request.end_date %} → {{ leave_request.end_date }}{% endif %}</p></div><span class="status-pill status-{{ leave_request.status.value|replace(' ', '-') }}">{{ _(leave_request.status.value)|capitalize }}</span></div>
+        <div class="record-item-header"><div><h3>{{ leave_request.user.profile.full_name if leave_request.user.profile and leave_request.user.profile.full_name else leave_request.user.username }}</h3><p>{{ leave_request.contract.employer.name }} · {{ enum_label(leave_request.category) }} · {{ leave_request.start_date }}{% if leave_request.end_date %} → {{ leave_request.end_date }}{% endif %}</p></div><span class="status-pill status-{{ leave_request.status.value|replace(' ', '-') }}">{{ enum_label(leave_request.status) }}</span></div>
         <form method="post" action="{{ url_for('manage_leaves') }}" class="inline-form">
           <input type="hidden" name="leave_request_id" value="{{ leave_request.id }}"><input type="hidden" name="return_to" value="dashboard">
           {% if leave_request.status.value == 'pending approval' %}<button type="submit" name="action" value="approve">{{ _('Approve') }}</button><button type="submit" name="action" value="reject" class="button-secondary">{{ _('Reject') }}</button>
-          {% elif leave_request.status.value == 'pending cancellation' %}<button type="submit" name="action" value="cancel" class="button-secondary">{{ _('Cancel') }}</button><button type="submit" name="action" value="reject" class="button-secondary">{{ _('Reject') }}</button>{% endif %}
+          {% elif leave_request.status.value == 'pending cancellation' %}<button type="submit" name="action" value="cancel" class="button-secondary">{{ _('Cancel leave') }}</button><button type="submit" name="action" value="reject" class="button-secondary">{{ _('Reject') }}</button>{% endif %}
         </form>
       </article>
       {% endfor %}
@@ -68,7 +68,7 @@
         <div><dt>{{ _('Date of birth') }}</dt><dd>{{ current_user.profile.date_of_birth or '—' }}</dd></div>
         <div><dt>{{ _('Place of birth') }}</dt><dd>{{ current_user.profile.place_of_birth or '—' }}</dd></div>
         <div><dt>{{ _('Phone') }}</dt><dd>{{ current_user.profile.phone_number or '—' }}</dd></div>
-        <div><dt>{{ _('Marital status') }}</dt><dd>{{ _(current_user.profile.marital_status.value)|capitalize if current_user.profile.marital_status else '—' }}</dd></div>
+        <div><dt>{{ _('Marital status') }}</dt><dd>{{ enum_label(current_user.profile.marital_status) if current_user.profile.marital_status else '—' }}</dd></div>
       </dl>
       {% else %}<div class="empty-state">{{ icon('user') }}{{ _('Your profile has not been completed yet. Add your personal and contact information to make the portal more useful.') }}</div>{% endif %}
     </section>
@@ -80,7 +80,7 @@
         <div class="section-heading compact-heading"><div><h3>{{ _('Leave used in %(year)s', year=dashboard_leave_usage_year) }}</h3><p>{{ dashboard_leave_contract.job_title }} · {{ dashboard_leave_contract.employer.name if dashboard_leave_contract.employer else _('Employer not set') }}</p></div></div>
         <div class="table-wrap"><table class="leave-usage-table">
           <thead><tr><th>{{ _('Leave type') }}</th><th>{{ _('Used') }}</th><th>{{ _('Available') }}</th></tr></thead>
-          <tbody>{% for item in dashboard_leave_usage_summary %}<tr><td>{{ _(item.label) }}</td><td>{{ item.used_days }}</td><td>{% if item.available_days is not none %}{{ item.remaining_days }} / {{ item.available_days }}{% else %}—{% endif %}</td></tr>{% endfor %}</tbody>
+          <tbody>{% for item in dashboard_leave_usage_summary %}<tr><td>{{ item.label }}</td><td>{{ item.used_days }}</td><td>{% if item.available_days is not none %}{{ item.remaining_days }} / {{ item.available_days }}{% else %}—{% endif %}</td></tr>{% endfor %}</tbody>
         </table></div>
         <p class="help-text">{{ _('Pending approval, approved, and pending cancellation requests are included.') }}</p>
       </div>
@@ -90,7 +90,7 @@
     <section class="table-card span-7">
       <div class="section-heading"><div><h2 class="heading-icon">{{ icon('users') }} {{ _('Dependents') }}</h2><p>{{ _('Family details for your employee records.') }}</p></div><a class="button button-secondary" href="{{ url_for('add_dependent') }}">{{ icon('plus') }} {{ _('Add dependent') }}</a></div>
       {% if current_user.dependents %}
-      <div class="table-wrap"><table><thead><tr><th>{{ _('Name') }}</th><th>{{ _('Date of birth') }}</th><th>{{ _('SSN') }}</th><th>{{ _('Dependency start') }}</th><th>{{ _('Disability') }}</th></tr></thead><tbody>
+      <div class="table-wrap"><table><thead><tr><th>{{ _('Name') }}</th><th>{{ _('Date of birth') }}</th><th>{{ _('SSN') }}</th><th>{{ _('Dependency start') }}</th><th>{{ _('Disability, long-term illness') }}</th></tr></thead><tbody>
       {% for dep in current_user.dependents %}<tr><td><strong>{{ dep.name }}</strong></td><td>{{ dep.date_of_birth }}</td><td>{{ dep.social_security_number }}</td><td>{{ dep.dependency_start }}</td><td>{{ dep.disability or '—' }}</td></tr>{% endfor %}
       </tbody></table></div>
       {% else %}<div class="empty-state">{{ icon('users') }}{{ _('No dependents have been added yet. Add one to keep benefit-related records complete.') }}</div>{% endif %}

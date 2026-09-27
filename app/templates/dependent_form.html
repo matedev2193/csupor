@@ -13,7 +13,7 @@
       <li>{{ _("Choose whether this dependent is a child or another dependent type.") }}</li>
       <li>{{ _("Enter the social security number using exactly nine digits.") }}</li>
       <li>{{ _("Use the dependency start date that matches your official records.") }}</li>
-      <li>{{ _("Optional disability information can be added for context.") }}</li>
+      <li>{{ _("You can optionally add information about a disability or long-term illness.") }}</li>
     </ul>
   </aside>
 
@@ -35,7 +35,7 @@
           <select id="dependent_type" name="dependent_type" required>
             <option value="">{{ _("Select dependent type") }}</option>
             {% for dependent_type in dependent_types %}
-            <option value="{{ dependent_type.value }}">{{ dependent_type.value }}</option>
+            <option value="{{ dependent_type.value }}">{{ enum_label(dependent_type) }}</option>
             {% endfor %}
           </select>
         </div>
@@ -52,7 +52,7 @@
           <input id="dependency_start" type="date" name="dependency_start" required>
         </div>
         <div class="field">
-          <label for="disability">{{ _('Disability') }}</label>
+          <label for="disability">{{ _('Disability, long-term illness') }}</label>
           <input id="disability" name="disability" placeholder="{{ _('Optional note') }}">
         </div>
       </div>

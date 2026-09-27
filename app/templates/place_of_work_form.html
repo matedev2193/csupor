@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Edit place of work') if place else _('Add place of work') }} · {{ _('CSUPOR Portal') }}{% endblock %}
+{% block content %}
+<section class="form-shell">
+  <div class="section-heading"><div><h1>{{ _('Edit place of work') if place else _('Add place of work') }}</h1><p>{{ _('Fields marked with * are required.') }}</p></div></div>
+  {% if entities %}
+  <form method="post" class="form-grid">
+    <div class="field"><label for="legal_entity_id">{{ _('Legal entity *') }}</label>
+      <select id="legal_entity_id" name="legal_entity_id" required><option value="">{{ _('Select legal entity') }}</option>
+        {% for entity in entities %}<option value="{{ entity.id }}"{% if request.form.get('legal_entity_id', (place.legal_entity_id|string) if place else '') == entity.id|string %} selected{% endif %}>{{ entity.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field"><label for="address">{{ _('Address *') }}</label><input id="address" name="address" maxlength="255" value="{{ request.form.get('address', place.address if place else '') }}" required></div>
+    <div class="button-row field-full"><button type="submit">{{ _('Save changes') if place else _('Save place of work') }}</button><a class="button button-secondary" href="{{ url_for('manage_places_of_work') }}">{{ _('Cancel') }}</a></div>
+  </form>
+  {% else %}<div class="empty-state">{{ _('Add a legal entity before creating a workplace.') }} <a class="text-link" href="{{ url_for('create_legal_entity') }}">{{ _('Add legal entity') }}</a></div>{% endif %}
+</section>
+{% endblock %}

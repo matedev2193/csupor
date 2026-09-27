@@ -7,6 +7,8 @@ from flask_babel import Babel
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 
+from .i18n import LOGIN_MESSAGE
+
 
 load_dotenv()
 
@@ -15,6 +17,8 @@ db = SQLAlchemy()
 babel = Babel()
 login_manager = LoginManager()
 login_manager.login_view = "login"
+login_manager.login_message = LOGIN_MESSAGE
+login_manager.localize_callback = str
 
 SUPPORTED_LOCALES = {
     "en": "English",

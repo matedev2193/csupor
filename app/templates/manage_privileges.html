@@ -36,13 +36,13 @@
             <td>{{ user.id }}</td>
             <td><strong>{{ user.username }}</strong></td>
             <td>{{ user.email }}</td>
-            <td><span class="badge">{{ user.privilege.value }}</span></td>
+            <td><span class="badge">{{ enum_label(user.privilege) }}</span></td>
             <td>
               <form method="post" class="inline-form">
                 <input type="hidden" name="user_id" value="{{ user.id }}">
                 <select name="privilege">
                   {% for privilege in privileges %}
-                  <option value="{{ privilege.value }}" {% if user.privilege == privilege %}selected{% endif %}>{{ privilege.value }}</option>
+                  <option value="{{ privilege.value }}" {% if user.privilege == privilege %}selected{% endif %}>{{ enum_label(privilege) }}</option>
                   {% endfor %}
                 </select>
                 <button type="submit">{{ _('Save') }}</button>

@@ -14,18 +14,22 @@ Flask-based login and personnel data management system backed by MySQL schema `c
 - Educational qualifications management (multiple records supported).
 - Optional teacher professional exam record.
 
-## Internationalization
+## Internationalisation
 
-The application is prepared for Flask-Babel based translations. English (`en`) is the default locale and Hungarian (`hu`) is registered as an additional supported locale. Users can switch languages from the header language selector; the selected locale is stored in the session and otherwise falls back to the browser's `Accept-Language` header.
+The application uses Flask-Babel translations. English (`en`) is the default locale and Hungarian (`hu`) is registered as an additional supported locale. Users can switch languages from the header language selector; the selected locale is stored in the session and otherwise falls back to the browser's `Accept-Language` header.
 
-Translation extraction is configured in `babel.cfg`. After adding or updating translatable strings, generate and compile catalogs with Flask-Babel tooling, for example:
+Translation extraction is configured in `babel.cfg`. After adding or updating translatable strings, update the existing catalogue, fill in the new Hungarian translations, and compile it:
 
 ```bash
-pybabel extract -F babel.cfg -o messages.pot .
-pybabel init -i messages.pot -d app/translations -l hu
+pybabel extract -k lazy_gettext -F babel.cfg -o messages.pot .
+pybabel update --no-fuzzy-matching -i messages.pot -d app/translations -l hu
+# Fill in the new msgstr entries in app/translations/hu/LC_MESSAGES/messages.po.
 pybabel compile -d app/translations
 ```
 
+Enum display labels live in `app/i18n.py`; keep the stored enum values unchanged. The `lazy_gettext` extraction keyword also includes approval-policy labels. Translation coverage is checked by `tests/test_admin_localisation.py`.
+
+See [Hungarian administration and contract lists](docs/design/admin-localisation.md) for the updated workflows and previews.
 
 ## SQL schema file
 

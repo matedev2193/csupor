@@ -1,50 +1,13 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% block title %}{{ _('Legal entities · CSUPOR Portal') }}{% endblock %}
 {% block content %}
-<section class="dashboard-grid">
-  <section class="form-shell span-5">
-    <div class="section-heading"><h2>{{ _('Edit legal entity') if editing_entity else _('Add legal entity') }}</h2></div>
-    <form method="post" class="grid-form">
-      {% if editing_entity %}
-      <input type="hidden" name="entity_id" value="{{ editing_entity.id }}">
-      {% endif %}
-      <label for="name">{{ _('Name *') }}</label>
-      <input id="name" name="name" value="{{ editing_entity.name if editing_entity else '' }}" required>
-      <label for="address">{{ _('Address *') }}</label>
-      <input id="address" name="address" value="{{ editing_entity.address if editing_entity else '' }}" required>
-      <label for="om_id">{{ _('OM id (6 digits) *') }}</label>
-      <input id="om_id" name="om_id" pattern="\d{6}" value="{{ editing_entity.om_id if editing_entity else '' }}" required>
-      <label for="tax_number">{{ _('Tax number (format: 12345678-9-01) *') }}</label>
-      <input id="tax_number" name="tax_number" pattern="\d{8}-\d-\d{2}" value="{{ format_legal_entity_tax_number(editing_entity.tax_number) if editing_entity else '' }}" placeholder="12345678-9-01" required>
-      <div class="button-row">
-        <button type="submit">{{ _('Update legal entity') if editing_entity else _('Save legal entity') }}</button>
-        {% if editing_entity %}
-        <a class="button button-secondary" href="{{ url_for('manage_legal_entities') }}">{{ _('Cancel edit') }}</a>
-        {% endif %}
-      </div>
-    </form>
-  </section>
-
-  <section class="table-card span-7">
-    <div class="section-heading"><h2>{{ _('Existing legal entities') }}</h2></div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>{{ _('Name') }}</th><th>{{ _('Address') }}</th><th>{{ _('OM id') }}</th><th>{{ _('Tax number') }}</th><th>{{ _('Edit') }}</th></tr></thead>
-        <tbody>
-          {% for entity in entities %}
-          <tr>
-            <td>{{ entity.name }}</td>
-            <td>{{ entity.address }}</td>
-            <td>{{ entity.om_id }}</td>
-            <td>{{ format_legal_entity_tax_number(entity.tax_number) }}</td>
-            <td>
-              <a class="button button-secondary" href="{{ url_for('manage_legal_entities', edit=entity.id) }}">{{ _('Edit') }}</a>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </section>
+<section class="table-card">
+  <div class="section-heading"><div><h1>{{ _('Legal entities') }}</h1><p>{{ _('Manage the employers used in contracts.') }}</p></div><a class="button button-primary" href="{{ url_for('create_legal_entity') }}">{{ icon('plus') }} {{ _('Add legal entity') }}</a></div>
+  {% if entities %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>{{ _('Name') }}</th><th>{{ _('Address') }}</th><th>{{ _('OM id') }}</th><th>{{ _('Tax number') }}</th><th>{{ _('Actions') }}</th></tr></thead>
+    <tbody>{% for entity in entities %}<tr><td><strong>{{ entity.name }}</strong></td><td>{{ entity.address }}</td><td>{{ entity.om_id }}</td><td class="nowrap">{{ format_legal_entity_tax_number(entity.tax_number) }}</td><td><a class="button button-secondary" href="{{ url_for('edit_legal_entity', entity_id=entity.id) }}">{{ _('Edit') }}</a></td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="empty-state">{{ _('No legal entities have been added yet.') }}</div>{% endif %}
 </section>
 {% endblock %}

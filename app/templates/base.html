@@ -38,13 +38,13 @@
         {{ nav_item('add_qualification', _('Qualifications'), 'graduate') }}
         {{ nav_item('professional_exam', _('Professional exam'), 'award') }}
         {% if current_user.privilege.value in ['hr', 'ceo', 'developer'] or can_manage_leaves_global %}
-        {% set management_pages = ['manage_user_profiles', 'edit_user_profile', 'manage_privileges', 'manage_contracts', 'create_contract', 'edit_contract', 'manage_legal_entities', 'manage_places_of_work', 'manage_leadership', 'manage_leave_limits', 'manage_working_days', 'manage_leaves', 'leave_approval_settings'] %}
+        {% set management_pages = ['manage_user_profiles', 'edit_user_profile', 'manage_privileges', 'manage_contracts', 'create_contract', 'edit_contract', 'manage_legal_entities', 'create_legal_entity', 'edit_legal_entity', 'manage_places_of_work', 'create_place_of_work', 'edit_place_of_work', 'select_contract_employee', 'manage_leadership', 'manage_leave_limits', 'manage_working_days', 'manage_leaves', 'leave_approval_settings'] %}
         <details class="nav-group"{% if request.endpoint in management_pages %} open{% endif %}>
           <summary class="nav-label">{{ _('Management') }} {{ icon('chevron') }}</summary>
           <div class="nav-group-menu">
             {% if current_user.privilege.value in ['hr', 'ceo'] %}
             {{ nav_item('manage_user_profiles', _('User profiles'), 'users', ['edit_user_profile']) }}
-            {{ nav_item('manage_contracts', _('Contracts'), 'briefcase', ['create_contract', 'edit_contract']) }}
+            {{ nav_item('manage_contracts', _('Contracts'), 'briefcase', ['create_contract', 'edit_contract', 'select_contract_employee']) }}
             {{ nav_item('manage_leave_limits', _('Leave limits'), 'calendar') }}
             {{ nav_item('manage_working_days', _('Working days'), 'calendar') }}
             {% endif %}
@@ -52,8 +52,8 @@
             {% if current_user.privilege.value == 'ceo' %}{{ nav_item('leave_approval_settings', _('Approval settings'), 'lock') }}{% endif %}
             {% if current_user.privilege.value in ['hr', 'ceo'] %}
             {{ nav_item('manage_leadership', _('Leadership'), 'award') }}
-            {{ nav_item('manage_legal_entities', _('Legal entities'), 'building') }}
-            {{ nav_item('manage_places_of_work', _('Workplaces'), 'building') }}
+            {{ nav_item('manage_legal_entities', _('Legal entities'), 'building', ['create_legal_entity', 'edit_legal_entity']) }}
+            {{ nav_item('manage_places_of_work', _('Workplaces'), 'building', ['create_place_of_work', 'edit_place_of_work']) }}
             {% endif %}
             {% if current_user.privilege.value in ['hr', 'ceo', 'developer'] %}{{ nav_item('manage_privileges', _('Privileges'), 'lock') }}{% endif %}
           </div>
@@ -65,7 +65,7 @@
         {{ nav_item('logout', _('Logout'), 'logout') }}
         <div class="sidebar-account">
           <span class="avatar">{{ (current_user.profile.full_name if current_user.profile and current_user.profile.full_name else current_user.username)[:1]|upper }}</span>
-          <div><strong>{{ current_user.username }}</strong><small>{{ _(current_user.privilege.value)|capitalize }}</small></div>
+          <div><strong>{{ current_user.username }}</strong><small>{{ enum_label(current_user.privilege) }}</small></div>
         </div>
       </div>
     </aside>

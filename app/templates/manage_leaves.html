@@ -47,7 +47,7 @@
       <select id="status" name="status">
         <option value="">{{ _('All statuses') }}</option>
         {% for status in statuses %}
-        <option value="{{ status.value }}" {% if selected_status == status.value %}selected{% endif %}>{{ status.value|capitalize }}</option>
+        <option value="{{ status.value }}" {% if selected_status == status.value %}selected{% endif %}>{{ enum_label(status) }}</option>
         {% endfor %}
       </select>
     </div>
@@ -90,12 +90,12 @@
             <div class="muted">{{ leave_request.contract.place_of_work.address }}</div>
           </td>
           <td>
-            <strong>{{ leave_request.category.value|capitalize }}</strong>
+            <strong>{{ enum_label(leave_request.category) }}</strong>
             <div class="muted">{{ leave_request.start_date }} → {{ leave_request_end_date(leave_request) }}</div>
             {% if leave_request.note %}<div class="muted">{{ leave_request.note }}</div>{% endif %}
           </td>
           <td>
-            <span class="status-pill status-{{ leave_request.status.value|replace(' ', '-') }}">{{ leave_request.status.value|capitalize }}</span>
+            <span class="status-pill status-{{ leave_request.status.value|replace(' ', '-') }}">{{ enum_label(leave_request.status) }}</span>
           </td>
           <td>
             <strong>{{ workplace_leave_counts[leave_request.id] }}</strong>

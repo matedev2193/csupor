@@ -1,42 +1,34 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% block title %}{{ _('Contracts · CSUPOR Portal') }}{% endblock %}
 {% block content %}
-<section class="card">
-  <div class="section-heading">
-    <div>
-      <h2>{{ _('Contracts') }}</h2>
-      <p>{{ _('HR and CEO users can create and edit employee contracts.') }}</p>
-    </div>
-  </div>
-
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>{{ _('NAME') }}</th>
-          <th>{{ _('Email') }}</th>
-          <th>{{ _('Contracts') }}</th>
-          <th>{{ _('Actions') }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for user in users %}
-        <tr>
-          <td><strong>{{ user.profile.full_name if user.profile and user.profile.full_name else user.username }}</strong></td>
-          <td>{{ user.email }}</td>
-          <td>{{ user.contracts|length }}</td>
-          <td>
-            <a class="button button-secondary" href="{{ url_for('create_contract', user_id=user.id) }}">{{ _('New contract') }}</a>
-            {% if user.contracts %}
-              {% for contract in user.contracts %}
-              <a class="button button-secondary" href="{{ url_for('edit_contract', contract_id=contract.id) }}">{{ _('Edit') }} #{{ contract.id }}</a>
-              {% endfor %}
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+<section class="table-card">
+  <div class="section-heading"><div><h1>{{ _('Contracts') }}</h1><p>{{ _('Each row is one contract. Active contracts are shown by default.') }}</p></div><a class="button button-primary" href="{{ url_for('select_contract_employee') }}">{{ icon('plus') }} {{ _('New contract') }}</a></div>
+  <nav class="contract-tabs" aria-label="{{ _('Filter contracts by status') }}">
+    {% for value, label in [('active', _('Active')), ('upcoming', _('Upcoming')), ('ended', _('Ended')), ('all', _('All contracts'))] %}
+    <a class="contract-tab{% if selected_status == value %} active{% endif %}" href="{{ url_for('manage_contracts', status=value, q=search, legal_entity_id=selected_entity_id) }}"{% if selected_status == value %} aria-current="page"{% endif %}>{{ label }} <span>{{ counts[value] }}</span></a>
+    {% endfor %}
+  </nav>
+  <form method="get" class="contract-filters">
+    <input type="hidden" name="status" value="{{ selected_status }}">
+    <div class="field"><label for="contract-search">{{ _('Search contracts') }}</label><input type="search" id="contract-search" name="q" value="{{ search }}" placeholder="{{ _('Name, job title, employer or contract ID') }}"></div>
+    <div class="field"><label for="legal_entity_id">{{ _('Legal entity') }}</label><select id="legal_entity_id" name="legal_entity_id"><option value="">{{ _('All legal entities') }}</option>{% for entity in legal_entities %}<option value="{{ entity.id }}"{% if selected_entity_id == entity.id %} selected{% endif %}>{{ entity.name }}</option>{% endfor %}</select></div>
+    <div class="button-row"><button type="submit">{{ _('Apply filters') }}</button><a class="button button-secondary" href="{{ url_for('manage_contracts') }}">{{ _('Reset') }}</a></div>
+  </form>
+  {% if contracts %}<div class="table-wrap"><table class="contracts-table">
+    <thead><tr><th>{{ _('Contract') }}</th><th>{{ _('Employee') }}</th><th>{{ _('Job title / contract type') }}</th><th>{{ _('Employer / workplace') }}</th><th>{{ _('Period') }}</th><th>{{ _('Hours/week') }}</th><th>{{ _('Status') }}</th><th>{{ _('Actions') }}</th></tr></thead>
+    <tbody>{% for contract in contracts %}
+      {% set active = contract.start_date <= today and (not contract.end_date or contract.end_date >= today) %}
+      <tr data-contract-id="{{ contract.id }}"{% if contract.end_date and contract.end_date < today %} class="contract-ended"{% endif %}>
+        <td><strong>#{{ contract.id }}</strong></td>
+        <td><strong>{{ user_display_name(contract.user) }}</strong><div class="muted">{{ contract.user.email }}</div></td>
+        <td><strong>{{ contract.job_title }}</strong><div class="muted">{{ enum_label(contract.contract_type) }}</div></td>
+        <td>{{ contract.employer.name }}<div class="muted">{{ contract.place_of_work.address }}</div></td>
+        <td class="nowrap">{{ contract.start_date }}<div class="muted">{{ contract.end_date or _('Open-ended') }}</div></td>
+        <td>{{ contract.working_hours_per_week }}</td>
+        <td><span class="status-pill {{ 'status-approved' if active else 'status-pending-approval' if contract.start_date > today else 'status-cancelled' }}">{{ _('Active') if active else _('Upcoming') if contract.start_date > today else _('Ended') }}</span></td>
+        <td><a class="button button-secondary" href="{{ url_for('edit_contract', contract_id=contract.id) }}">{{ _('Edit') }}</a></td>
+      </tr>
+    {% endfor %}</tbody>
+  </table></div>{% else %}<div class="empty-state">{{ _('No contracts match the selected filters.') }}</div>{% endif %}
 </section>
 {% endblock %}

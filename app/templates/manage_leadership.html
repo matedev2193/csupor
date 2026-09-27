@@ -93,7 +93,7 @@
           <tr>
             <td>{{ leadership.legal_entity.name }}</td>
             <td>{{ leadership.contract.user.profile.full_name if leadership.contract.user.profile and leadership.contract.user.profile.full_name else leadership.contract.user.username }} · {{ leadership.contract.start_date }}</td>
-            <td>{{ leadership.position.value|title }}</td>
+            <td>{{ enum_label(leadership.position) }}</td>
             <td>{{ leadership.start_date }}</td>
             <td>{{ leadership.end_date or '—' }}</td>
             <td>
