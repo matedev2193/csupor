@@ -72,6 +72,28 @@ class LeaveRequestStatus(enum.Enum):
     cancelled = "cancelled"
 
 
+class LeaveApprovalPolicy(enum.Enum):
+    ceo_only = "ceo_only"
+    leadership_only = "leadership_only"
+    both = "both"
+    either = "either"
+
+
+class LeaveApprovalSettings(db.Model):
+    __tablename__ = "leave_approval_settings"
+    __table_args__ = (db.CheckConstraint("id = 1", name="single_leave_approval_settings"),)
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=False)
+    policy = db.Column(
+        db.Enum(LeaveApprovalPolicy, values_callable=_enum_values),
+        nullable=False,
+        default=LeaveApprovalPolicy.both,
+    )
+    updated_by_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    updated_at = db.Column(db.DateTime, nullable=True)
+    updated_by = db.relationship("User")
+
+
 class MaritalStatus(enum.Enum):
     single = "single"
     married = "married"

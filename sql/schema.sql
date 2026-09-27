@@ -262,6 +262,17 @@ CREATE TABLE IF NOT EXISTS contract_leave_limits (
     CHECK (period_end IS NULL OR period_start IS NULL OR period_end >= period_start)
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS leave_approval_settings (
+  id INT NOT NULL,
+  policy ENUM('ceo_only', 'leadership_only', 'both', 'either') NOT NULL DEFAULT 'both',
+  updated_by_id INT UNSIGNED NULL,
+  updated_at DATETIME NULL,
+  PRIMARY KEY (id),
+  CONSTRAINT single_leave_approval_settings CHECK (id = 1),
+  CONSTRAINT fk_leave_approval_settings_updated_by
+    FOREIGN KEY (updated_by_id) REFERENCES users(id)
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS leave_years (
   year SMALLINT UNSIGNED NOT NULL,
   is_open TINYINT(1) NOT NULL DEFAULT 0,

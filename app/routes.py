@@ -1,5 +1,6 @@
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from functools import wraps
+from secrets import compare_digest, token_urlsafe
 from urllib.parse import urlsplit
 
 from flask import abort, flash, redirect, render_template, request, session, url_for
@@ -9,6 +10,13 @@ from flask_login import current_user, login_required, login_user, logout_user
 from . import SUPPORTED_LOCALES, db, get_locale
 
 from .working_calendar import HungaryCalendar
+from .leave_approval import (
+    POLICY_DESCRIPTIONS,
+    POLICY_LABELS,
+    approvals_satisfy_policy,
+    current_leave_approval_policy,
+    get_leave_approval_settings,
+)
 
 from .models import (
     Contract,
@@ -21,6 +29,7 @@ from .models import (
     Leadership,
     LeadershipPosition,
     LegalEntity,
+    LeaveApprovalPolicy,
     LeaveRequest,
     LeaveYear,
     LeaveRequestCategory,
@@ -996,10 +1005,15 @@ def _leave_request_query_for_manager(user: User):
 
 
 def _can_approve_ceo_part(user: User, leave_request: LeaveRequest) -> bool:
-    return user.privilege == UserPrivilege.ceo
+    return (
+        current_leave_approval_policy() != LeaveApprovalPolicy.leadership_only
+        and user.privilege == UserPrivilege.ceo
+    )
 
 
 def _can_approve_leadership_part(user: User, leave_request: LeaveRequest) -> bool:
+    if current_leave_approval_policy() == LeaveApprovalPolicy.ceo_only:
+        return False
     leadership_records = _active_leadership_for_user_entity(
         user,
         leave_request.contract.legal_entity_id,
@@ -1013,16 +1027,20 @@ def _can_approve_leadership_part(user: User, leave_request: LeaveRequest) -> boo
 
 def _apply_automatic_leave_approvals(leave_request: LeaveRequest) -> None:
     applicant = leave_request.user
-    if applicant.privilege == UserPrivilege.ceo:
+    if _can_approve_ceo_part(applicant, leave_request):
         leave_request.ceo_approved_by_id = applicant.id
-    if _is_active_principal_for_entity(applicant, leave_request.contract.legal_entity_id):
+    if (
+        current_leave_approval_policy() != LeaveApprovalPolicy.ceo_only
+        and _is_active_principal_for_entity(applicant, leave_request.contract.legal_entity_id)
+    ):
         leave_request.leadership_approved_by_id = applicant.id
     if _leave_request_is_fully_approved(leave_request):
         leave_request.status = LeaveRequestStatus.approved
+        leave_request.decided_by_id = applicant.id
 
 
 def _leave_request_is_fully_approved(leave_request: LeaveRequest) -> bool:
-    return bool(leave_request.ceo_approved_by_id and leave_request.leadership_approved_by_id)
+    return approvals_satisfy_policy(leave_request, current_leave_approval_policy())
 
 
 def _approve_leave_request(leave_request: LeaveRequest, approver: User) -> list[str]:
@@ -1167,6 +1185,9 @@ def init_routes(app):
             "can_manage_leaves_global": _can_manage_leaves(current_user),
             "current_locale": get_locale(),
             "supported_locales": SUPPORTED_LOCALES,
+            "leave_approval_policy": current_leave_approval_policy() if current_user.is_authenticated else None,
+            "leave_approval_policy_labels": POLICY_LABELS,
+            "leave_approval_policy_descriptions": POLICY_DESCRIPTIONS,
         }
 
 
@@ -1310,6 +1331,8 @@ def init_routes(app):
 
         if request.method == "POST":
             action = request.form.get("action", "submit")
+            # Serialise submissions and decisions with changes to the global rule.
+            get_leave_approval_settings(for_update=True)
             if selected_contract is None:
                 flash("You need an active contract before applying for leave.", "error")
                 return redirect(url_for("leaves"))
@@ -1320,7 +1343,7 @@ def init_routes(app):
                     LeaveRequest.id == leave_request_id,
                     LeaveRequest.user_id == current_user.id,
                     LeaveRequest.contract_id == selected_contract.id,
-                ).first()
+                ).with_for_update().populate_existing().first()
                 if leave_request is None:
                     flash("Leave request not found.", "error")
                 elif action == "cancel":
@@ -1845,6 +1868,57 @@ def init_routes(app):
         )
 
 
+    @app.route("/leaves/approval-settings", methods=["GET", "POST"])
+    @login_required
+    def leave_approval_settings():
+        if current_user.privilege != UserPrivilege.ceo:
+            abort(403)
+
+        if request.method == "POST":
+            csrf_token = session.get("leave_approval_csrf_token")
+            if not csrf_token or not compare_digest(csrf_token.encode(), request.form.get("csrf_token", "").encode()):
+                abort(400)
+            try:
+                policy = LeaveApprovalPolicy(request.form.get("policy"))
+            except ValueError:
+                abort(400)
+            settings = get_leave_approval_settings(for_update=True)
+            if request.form.get("previous_policy") != settings.policy.value:
+                db.session.rollback()
+                flash(_("The approval rule was changed by another CEO. Review the current setting and try again."), "error")
+                return redirect(url_for("leave_approval_settings"))
+            if policy == settings.policy:
+                db.session.rollback()
+                flash(_("The approval rule is unchanged."), "success")
+                return redirect(url_for("leave_approval_settings"))
+
+            settings.policy = policy
+            settings.updated_by_id = current_user.id
+            settings.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+            approved_count = 0
+            pending_requests = (
+                LeaveRequest.query.filter_by(status=LeaveRequestStatus.pending_approval)
+                .with_for_update().populate_existing().all()
+            )
+            for leave_request in pending_requests:
+                if approvals_satisfy_policy(leave_request, policy):
+                    leave_request.status = LeaveRequestStatus.approved
+                    leave_request.decided_by_id = current_user.id
+                    approved_count += 1
+            db.session.commit()
+            flash(_("Approval rule saved. Pending requests approved using recorded approvals: %(count)s.", count=approved_count), "success")
+            return redirect(url_for("leave_approval_settings"))
+
+        settings = get_leave_approval_settings()
+        session.setdefault("leave_approval_csrf_token", token_urlsafe(32))
+        return render_template(
+            "leave_approval_settings.html",
+            settings=settings,
+            policies=LeaveApprovalPolicy,
+            user_display_name=_user_display_name,
+            csrf_token=session["leave_approval_csrf_token"],
+        )
+
     @app.route("/leaves/manage", methods=["GET", "POST"])
     @login_required
     def manage_leaves():
@@ -1857,10 +1931,15 @@ def init_routes(app):
         selected_status = _normalize_optional_text(request.values.get("status"))
 
         if request.method == "POST":
+            get_leave_approval_settings(for_update=True)
             leave_request_id = request.form.get("leave_request_id", type=int)
             action = request.form.get("action")
             return_to = request.form.get("return_to")
-            leave_request = _leave_request_query_for_manager(current_user).filter(LeaveRequest.id == leave_request_id).first()
+            leave_request = (
+                _leave_request_query_for_manager(current_user)
+                .filter(LeaveRequest.id == leave_request_id)
+                .with_for_update().populate_existing().first()
+            )
             if leave_request is None:
                 flash("Leave request not found or not available to you.", "error")
                 return redirect(url_for("dashboard" if return_to == "dashboard" else "manage_leaves"))
@@ -1875,6 +1954,8 @@ def init_routes(app):
                     flash(f"Recorded your {' and '.join(approved_parts)} approval; another approval is still required.", "success")
             elif action == "reject":
                 if leave_request.status == LeaveRequestStatus.pending_approval:
+                    if not (_can_approve_ceo_part(current_user, leave_request) or _can_approve_leadership_part(current_user, leave_request)):
+                        abort(403)
                     leave_request.status = LeaveRequestStatus.rejected
                     leave_request.decided_by_id = current_user.id
                     flash("Leave request rejected.", "success")

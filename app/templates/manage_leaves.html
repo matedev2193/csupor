@@ -7,7 +7,9 @@
       <span class="eyebrow">{{ _('Leave governance') }}</span>
       <h2>{{ _('Manage leave requests') }}</h2>
       <p>{{ _('Filter by legal entity, employee, contract, and status, then approve, reject, or cancel requests directly.') }}</p>
+      <p>{{ _('Current approval rule') }}: <strong>{{ leave_approval_policy_labels[leave_approval_policy] }}</strong>. {{ leave_approval_policy_descriptions[leave_approval_policy] }}</p>
     </div>
+    {% if current_user.privilege.value == 'ceo' %}<a class="button button-secondary" href="{{ url_for('leave_approval_settings') }}">{{ _('Approval settings') }}</a>{% endif %}
   </div>
 
   <form method="get" class="form-grid">
@@ -101,8 +103,15 @@
           </td>
           <td>
             <div class="approval-stack">
-              <span class="badge">CEO: {{ user_display_name(leave_request.ceo_approver) if leave_request.ceo_approver else 'pending' }}</span>
-              <span class="badge">Principal/deputy: {{ user_display_name(leave_request.leadership_approver) if leave_request.leadership_approver else 'pending' }}</span>
+              {% for label, approver, excluded_policy in [('CEO', leave_request.ceo_approver, 'leadership_only'), ('Principal/deputy', leave_request.leadership_approver, 'ceo_only')] %}
+              <span class="badge">{{ _(label) }}:
+                {% if approver %}{{ user_display_name(approver) }}
+                {% elif leave_request.status.value != 'pending approval' %}—
+                {% elif leave_approval_policy.value == excluded_policy %}{{ _('Not required') }}
+                {% elif leave_approval_policy.value == 'either' %}{{ _('Either reviewer') }}
+                {% else %}{{ _('Pending') }}{% endif %}
+              </span>
+              {% endfor %}
             </div>
           </td>
           <td>
@@ -116,7 +125,7 @@
               {% set can_add_leadership = leave_request.leadership_approved_by_id is none and can_approve_leadership_part(current_user, leave_request) %}
               {% if leave_request.status.value == 'pending approval' %}
               <button type="submit" name="action" value="approve" {% if not (can_add_ceo or can_add_leadership) %}disabled{% endif %}>{{ _('Approve') }}</button>
-              <button type="submit" name="action" value="reject" class="button-secondary">{{ _('Reject') }}</button>
+              <button type="submit" name="action" value="reject" class="button-secondary" {% if not (can_approve_ceo_part(current_user, leave_request) or can_approve_leadership_part(current_user, leave_request)) %}disabled{% endif %}>{{ _('Reject') }}</button>
               {% elif leave_request.status.value == 'approved' %}
               <button type="submit" name="action" value="cancel" class="button-secondary">{{ _("Cancel") }}</button>
               {% elif leave_request.status.value == 'pending cancellation' %}
