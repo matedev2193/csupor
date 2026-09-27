@@ -40,13 +40,13 @@ p { line-height: 1.7; }
 
 /* Persistent navigation and quiet utility bar. */
 .sidebar { position: fixed; inset: 0 auto 0 0; width: var(--sidebar-width); background: #fff; border-right: 1px solid var(--border); z-index: 40; display: flex; flex-direction: column; padding: 30px 18px 16px; }
-.sidebar-brand-row { display: flex; align-items: center; justify-content: space-between; padding: 0 14px 31px; }
-.brand { display: inline-flex; align-items: center; gap: 11px; }
-.brand-mark { width: 40px; height: 44px; border-radius: 13px; background: var(--primary); color: #fff; display: grid; place-items: center; }
-.brand-mark .icon { width: 25px; height: 25px; }
-.brand-copy strong { display: block; color: #292d32; font-size: 27px; font-weight: 750; letter-spacing: -.07em; line-height: 1.15; }
-.brand-copy strong span { color: var(--primary); }
-.brand-copy small { display: block; color: var(--text-soft); font-size: 10px; letter-spacing: .03em; margin-top: 4px; }
+.sidebar-brand-row { position: relative; display: flex; align-items: flex-start; justify-content: center; padding: 0 14px 23px; }
+.brand { display: inline-flex; flex-direction: column; align-items: center; gap: 5px; }
+.brand-logo { display: block; width: 125px; height: 128px; object-fit: contain; }
+.brand-copy small { display: block; color: var(--text-soft); font-size: 10px; letter-spacing: .03em; }
+.sidebar-brand-row .sidebar-close { position: absolute; right: 0; top: 0; }
+.public-page .brand { flex-direction: row; gap: 14px; }
+.public-page .brand-logo { width: 78px; height: 80px; }
 .sidebar-nav { flex: 1; overflow-y: auto; scrollbar-width: thin; }
 .nav-label { display: flex; align-items: center; justify-content: space-between; padding: 0 14px; margin: 23px 0 10px; color: #737b8b; font-size: 10px; font-weight: 700; letter-spacing: .105em; text-transform: uppercase; }
 .sidebar-nav > .nav-label:first-child { margin-top: 6px; }
@@ -201,10 +201,8 @@ td .button { white-space: nowrap; font-size: 11px; min-height: 34px; padding: 7p
 .auth-shell { margin: 0 auto; }.auth-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 0; min-height: 560px; background: #fff; border: 1px solid #eae5df; border-radius: 26px; overflow: hidden; box-shadow: 0 12px 45px rgb(49 39 24 / 4%); }
 .auth-panel { position: relative; padding: 47px 43px; background: #f6eadd; display: flex; flex-direction: column; overflow: hidden; }.auth-panel h1 { font-size: clamp(2rem, 3.5vw, 2.9rem); max-width: 12ch; margin: 19px 0; color: #483b30; line-height: 1.15; }.auth-panel > p { max-width: 38ch; margin: 0; color: #7a6b5d; font-size: 13px; }.auth-panel .eyebrow { color: #9c5b32; }.auth-points { display: flex; flex-wrap: wrap; gap: 11px 20px; padding: 0; margin: 26px 0 0; list-style: none; color: #715d4b; font-size: 11px; }.auth-points li { display: flex; gap: 5px; align-items: center; }.auth-points .icon { width: 14px; height: 14px; }
 .auth-form { padding: 55px 48px; align-self: center; }.auth-form .section-heading { margin-bottom: 30px; }.auth-form h2 { font-size: 1.7rem; }.auth-form .section-heading p { font-size: 12px; margin-top: 10px; }.auth-form form { gap: 21px; }.auth-form .button-row { display: grid; gap: 14px; margin-top: 3px; }.auth-form .button-row button { min-height: 46px; }.auth-switch { text-align: center; color: var(--text-soft); font-size: 12px; margin: 22px 0 0; }.auth-switch a { color: var(--primary); font-weight: 650; }.password-field { position: relative; }.password-field input { padding-right: 48px; }.password-toggle { display: none; position: absolute; right: 5px; top: 4px; }.js .password-toggle { display: inline-grid; }.password-toggle[aria-pressed='true'] { color: var(--primary); background: var(--primary-tint); }
-.auth-art { margin: 39px auto 0; width: min(290px, 100%); height: 190px; position: relative; flex: 0 0 auto; }
-.art-sheet { position: absolute; width: 182px; height: 153px; left: 52px; top: 17px; transform: rotate(-7deg); background: #fffaf5; border: 1px solid #e7d2c0; border-radius: 13px; box-shadow: 0 15px 30px rgb(105 76 44 / 9%); padding: 24px; }.art-sheet > .icon { width: 27px; height: 27px; color: #be8057; }.art-line { display: block; height: 6px; border-radius: 3px; background: #efe3d6; margin-top: 14px; }.art-line.short { width: 63%; margin-top: 9px; }.art-line.strong { width: 42%; background: #dfbaa0; margin-top: 19px; }
-.art-calendar { position: absolute; right: 0; bottom: 3px; width: 130px; height: 113px; padding: 17px; background: #fff; border: 1px solid #e7d5c5; border-radius: 12px; transform: rotate(6deg); box-shadow: 0 10px 20px rgb(105 76 44 / 6%); }.art-calendar > .icon { width: 20px; height: 20px; color: #be8057; }.art-calendar-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; margin-top: 10px; }.art-calendar-grid i { height: 9px; border-radius: 3px; background: #f2e8df; }.art-calendar-grid i:nth-child(3n) { background: #dca77e; }
-.art-check { position: absolute; left: 21px; bottom: 15px; display: grid; place-items: center; width: 44px; height: 44px; border: 5px solid #f6eadd; background: #5b8069; color: #fff; border-radius: 50%; }.art-spark { position: absolute; top: 1px; right: 9px; color: #c09165; font-size: 28px; }
+.auth-art { margin: 26px auto 0; width: min(220px, 100%); flex: 0 0 auto; }
+.auth-art img { display: block; width: 100%; height: auto; }
 
 /* Leave planning and the HR working calendar. */
 .leave-hero { display: grid; grid-template-columns: 1.4fr 1fr; gap: 30px; margin-bottom: 24px; align-items: center; }.leave-hero h1 { margin: 11px 0; }.leave-hero p { color: var(--text-soft); font-size: 13px; margin: 0; max-width: 58ch; }.leave-status-panel { padding: 20px; border: 1px solid var(--border); border-radius: 14px; background: #fff; }.leave-status-panel > strong { font-size: 12px; }.status-cloud { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
