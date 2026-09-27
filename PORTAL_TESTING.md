@@ -78,7 +78,7 @@ Log in as `employee1`.
 1. As `employee1`, directly visit `/users/profiles`, `/contracts`, `/legal-entities`, `/places-of-work`, `/leadership`, `/leave-limits`, and `/working-days`. Confirm every request returns **403 Forbidden** and management links are hidden.
 2. As `developer1`, directly visit `/users/privileges`; confirm the privilege page is available and a role change can be saved. Confirm the other HR/CEO management URLs still return 403.
 3. As `hr1`, open **Management → Privileges**, change `employee2` among employee, HR, CEO, and developer, and confirm each change persists. Restore it to employee.
-4. As HR and CEO, confirm all management menu entries appear. Later, after assigning `leader1` a current leadership position, confirm that account sees **Leave approvals** but not HR-only administration.
+4. As HR and CEO, confirm the appropriate management menu entries appear. **Approval settings** is CEO-only; HR, developer and employee accounts must receive 403 on both GET and POST to `/leaves/approval-settings`. Later, after assigning `leader1` a current leadership position, confirm that account sees **Leave approvals** but not HR-only administration or approval settings.
 
 ## 5. HR master data and employee administration
 
@@ -148,7 +148,7 @@ Log in as `employee1`; keep the current leave year open and ensure positive leav
 
 ## 8. Leave approval workflow and filtering
 
-The normal Test School A request requires both a CEO approval and an active principal/deputy approval. Use separate browser profiles or sign out between roles.
+Start with **Both**, the default rule, selected under **Management → Approval settings** as `ceo1`. The normal Test School A request then requires both a CEO approval and an active principal/deputy approval. Use separate browser profiles or sign out between roles.
 
 1. As `ceo1`, confirm pending items appear both on the dashboard and under **Management → Leave approvals**. Test filters for legal entity, employee, contract, and every status, plus **Reset**.
 2. Approve `employee1`'s request as CEO. Confirm it remains pending until leadership approval and records the CEO approval.
@@ -158,6 +158,17 @@ The normal Test School A request requires both a CEO approval and an active prin
 6. Confirm `leader1` cannot see or act on `employee2` requests from the second legal entity. Confirm an unrelated employee receives 403 at `/leaves/manage`.
 7. Check workplace concurrency information in the manager list by creating overlapping approved/pending requests for multiple employees at the same workplace; confirm the displayed maximum absent count is correct.
 8. Test automatic approvals where applicable (for example, when the requester is themselves an eligible CEO or entity leader). Confirm the request records the automatic component and becomes fully approved only when all required components exist.
+
+### Configurable approval rules
+
+1. Save each of the four rules as `ceo1`. Refresh and restart the app to check persistence; confirm the setting and descriptions appear correctly in English and Hungarian.
+2. With **CEO only**, a CEO approval completes a request. Principal/deputy approval and rejection buttons are disabled for pending requests, and direct submissions must not record an approval or rejection.
+3. With **Principal/deputy only**, a relevant principal/deputy approval completes a request. A CEO without a qualifying leadership position cannot approve or reject it.
+4. With **Either**, either eligible group can complete a request with one approval. A subsequent action by the other group must not add another approval or change a completed decision.
+5. Under every rule, check entity boundaries, expired leadership and deputy self-approval restrictions. Test applicants who are a CEO, principal, deputy, or both CEO and principal.
+6. Under **Both**, record just the CEO approval and then switch to **CEO only** or **Either**. The request must become approved on save. Requests without qualifying recorded approvals stay pending. Tightening the rule must not reopen approved requests or change rejected, cancelled or pending-cancellation requests.
+7. Open settings in two CEO browser sessions. Save a different rule in the first; submitting the stale form in the second must display a message and retain the current rule.
+8. Confirm pending dashboard review lists follow the selected rule and cancellation actions continue to work. Restore **Both** when finished.
 
 ## 9. Cross-browser, persistence, and cleanup
 

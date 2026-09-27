@@ -71,5 +71,8 @@ def create_app() -> Flask:
         from .schema import create_missing_tables
 
         create_missing_tables(db.engine, db.metadata)
+        from .leave_approval import initialise_leave_approval_settings
+
+        initialise_leave_approval_settings()
 
     return app

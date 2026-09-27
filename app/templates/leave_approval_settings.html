@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Approval settings') }} · {{ _('CSUPOR Portal') }}{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="hero-copy">
+    <span class="eyebrow">{{ icon('check') }} {{ _('Leave governance') }}</span>
+    <h1>{{ _('Approval settings') }}</h1>
+    <p>{{ _('Choose whose approval is needed for leave requests across all legal entities.') }}</p>
+  </div>
+  <aside class="hero-panel">
+    <span class="eyebrow">{{ _('Current approval rule') }}</span>
+    <h2>{{ leave_approval_policy_labels[settings.policy] }}</h2>
+    <p>{{ _('Only users with CEO privilege can change this setting.') }}</p>
+  </aside>
+</section>
+<section class="form-shell layout-stack">
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="previous_policy" value="{{ settings.policy.value }}">
+    <fieldset class="approval-options" aria-describedby="approval-policy-effect">
+      <legend>{{ _('Required approvals') }}</legend>
+      <div class="form-grid">
+        {% for policy in policies %}
+        <label class="approval-option" for="policy-{{ policy.value }}">
+          <input id="policy-{{ policy.value }}" type="radio" name="policy" value="{{ policy.value }}"{% if settings.policy == policy %} checked{% endif %} required>
+          <span><strong>{{ leave_approval_policy_labels[policy] }}</strong><small>{{ leave_approval_policy_descriptions[policy] }}</small></span>
+        </label>
+        {% endfor %}
+      </div>
+    </fieldset>
+    <div id="approval-policy-effect" class="approval-policy-note">
+      <strong>{{ _('What happens when you save?') }}</strong>
+      <p>{{ _('The rule applies to new and pending requests. Pending requests are approved immediately if their recorded approvals satisfy the new rule. Completed decisions stay unchanged.') }}</p>
+      <p>{{ _('Principals and deputies can review requests only for their own legal entities. Deputies cannot approve their own requests. Existing automatic approvals for CEO and principal applicants follow the selected rule.') }}</p>
+      <p>{{ _('Rejection by an eligible reviewer closes a pending request. Cancellation permissions stay unchanged.') }}</p>
+    </div>
+    {% if settings.updated_by %}<p class="help-text">{{ _('Last changed by %(name)s', name=user_display_name(settings.updated_by)) }}{% if settings.updated_at %} · {{ settings.updated_at.strftime('%Y-%m-%d %H:%M') }} UTC{% endif %}</p>{% endif %}
+    <div class="button-row">
+      <button type="submit">{{ _('Save approval rule') }}</button>
+      <a class="button button-secondary" href="{{ url_for('manage_leaves') }}">{{ _('Open leave manager') }}</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

@@ -40,7 +40,7 @@
 
   {% if can_manage_leaves %}
   <section class="card">
-    <div class="section-heading"><div><h2 class="heading-icon">{{ icon('check') }} {{ _('Pending leave approvals') }}</h2><p>{{ _('Review requests that are waiting for your CEO or principal/deputy principal approval.') }}</p></div><a class="text-link" href="{{ url_for('manage_leaves') }}">{{ _('Open leave manager') }} {{ icon('arrow') }}</a></div>
+    <div class="section-heading"><div><h2 class="heading-icon">{{ icon('check') }} {{ _('Pending leave approvals') }}</h2><p>{{ _('Current approval rule') }}: {{ leave_approval_policy_labels[leave_approval_policy] }}. {{ leave_approval_policy_descriptions[leave_approval_policy] }}</p></div><a class="text-link" href="{{ url_for('manage_leaves') }}">{{ _('Open leave manager') }} {{ icon('arrow') }}</a></div>
     {% if pending_leave_requests %}
     <div class="record-list">
       {% for leave_request in pending_leave_requests %}
@@ -121,6 +121,7 @@
       {% if can_manage_privileges %}<a class="management-shortcut" href="{{ url_for('manage_contracts') }}">{{ icon('briefcase') }}{{ _('Contracts') }}{{ icon('arrow') }}</a>{% endif %}
       {% if can_manage_leave_limits %}<a class="management-shortcut" href="{{ url_for('manage_leave_limits') }}">{{ icon('calendar') }}{{ _('Leave limits') }}{{ icon('arrow') }}</a>{% endif %}
       {% if can_manage_leaves %}<a class="management-shortcut" href="{{ url_for('manage_leaves') }}">{{ icon('check') }}{{ _('Leave approvals') }}{{ icon('arrow') }}</a>{% endif %}
+      {% if current_user.privilege.value == 'ceo' %}<a class="management-shortcut" href="{{ url_for('leave_approval_settings') }}">{{ icon('lock') }}{{ _('Approval settings') }}{{ icon('arrow') }}</a>{% endif %}
       {% if can_manage_privileges %}<a class="management-shortcut" href="{{ url_for('manage_working_days') }}">{{ icon('calendar') }}{{ _('Working days') }}{{ icon('arrow') }}</a>{% endif %}
       {% if can_manage_leadership %}<a class="management-shortcut" href="{{ url_for('manage_leadership') }}">{{ icon('award') }}{{ _('Leadership') }}{{ icon('arrow') }}</a>{% endif %}
       {% if can_manage_privileges %}<a class="management-shortcut" href="{{ url_for('manage_legal_entities') }}">{{ icon('building') }}{{ _('Legal entities') }}{{ icon('arrow') }}</a><a class="management-shortcut" href="{{ url_for('manage_places_of_work') }}">{{ icon('building') }}{{ _('Workplaces') }}{{ icon('arrow') }}</a>{% endif %}

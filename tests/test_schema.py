@@ -63,6 +63,21 @@ class MissingTableTests(unittest.TestCase):
         self.assertIn("reviewer_id INTEGER UNSIGNED", statements[0])
         inspector.get_columns.assert_called_once_with("users", schema=None)
 
+    def test_approval_settings_matches_existing_user_id(self):
+        existing = [name for name in db.metadata.tables if name != "leave_approval_settings"]
+        for reference_type, expected in [
+            (mysql.INTEGER(unsigned=True), "INTEGER UNSIGNED"),
+            (mysql.INTEGER(), "INTEGER"),
+        ]:
+            with self.subTest(reference_type=expected):
+                statements, inspector = self.compile_missing_tables(
+                    db.metadata, existing, {"users": {"id": reference_type}}
+                )
+                self.assertEqual(len(statements), 1)
+                self.assertIn("CREATE TABLE leave_approval_settings", statements[0])
+                self.assertIn(f"updated_by_id {expected},", statements[0])
+                self.assertIn("FOREIGN KEY(updated_by_id) REFERENCES users (id)", statements[0])
+
     def test_fresh_mysql_database_has_compatible_foreign_keys(self):
         statements, inspector = self.compile_missing_tables(db.metadata, [], {})
         table_statements = [sql for sql in statements if "CREATE TABLE" in sql]

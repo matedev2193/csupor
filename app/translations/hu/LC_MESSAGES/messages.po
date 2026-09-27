@@ -1789,3 +1789,90 @@ msgstr "Folyamatban"
 
 msgid "Working days"
 msgstr "Munkanapok"
+
+msgid "CEO only"
+msgstr "Csak az ügyvezető"
+
+msgid "Principal/deputy only"
+msgstr "Csak az igazgató vagy helyettese"
+
+msgid "Both"
+msgstr "Mindkettő"
+
+msgid "Either"
+msgstr "Bármelyik"
+
+msgid "A CEO approval is sufficient. Principal/deputy approval is not required."
+msgstr "Az ügyvezető jóváhagyása elegendő. Igazgatói vagy igazgatóhelyettesi jóváhagyás nem szükséges."
+
+msgid "Approval from the relevant principal or deputy is sufficient. CEO approval is not required."
+msgstr "Az érintett igazgató vagy helyettese jóváhagyása elegendő. Ügyvezetői jóváhagyás nem szükséges."
+
+msgid "Approval from both the CEO and the relevant principal/deputy is required."
+msgstr "Az ügyvezető és az érintett igazgató vagy helyettese jóváhagyása egyaránt szükséges."
+
+msgid "One approval from either the CEO or the relevant principal/deputy is sufficient."
+msgstr "Az ügyvezető vagy az érintett igazgató, illetve helyettese egyetlen jóváhagyása elegendő."
+
+msgid "Approval settings"
+msgstr "Jóváhagyási beállítások"
+
+msgid "Choose whose approval is needed for leave requests across all legal entities."
+msgstr "Válaszd ki, kinek a jóváhagyása szükséges a szabadságigényekhez az összes jogi személynél."
+
+msgid "Current approval rule"
+msgstr "Érvényes jóváhagyási szabály"
+
+msgid "Only users with CEO privilege can change this setting."
+msgstr "Ezt a beállítást csak ügyvezetői jogosultsággal lehet módosítani."
+
+msgid "Required approvals"
+msgstr "Szükséges jóváhagyások"
+
+msgid "What happens when you save?"
+msgstr "Mi történik a mentéskor?"
+
+msgid "The rule applies to new and pending requests. Pending requests are approved immediately if their recorded approvals satisfy the new rule. Completed decisions stay unchanged."
+msgstr "A szabály az új és a függőben lévő igényekre vonatkozik. A függőben lévő igények azonnal jóváhagyást kapnak, ha a már rögzített jóváhagyások megfelelnek az új szabálynak. A lezárt döntések változatlanok maradnak."
+
+msgid "Principals and deputies can review requests only for their own legal entities. Deputies cannot approve their own requests. Existing automatic approvals for CEO and principal applicants follow the selected rule."
+msgstr "Az igazgatók és helyetteseik csak a saját jogi személyükhöz tartozó igényekről dönthetnek. A helyettesek nem hagyhatják jóvá a saját igényüket. Az ügyvezetők és igazgatók saját igényeinek automatikus jóváhagyása a kiválasztott szabályt követi."
+
+msgid "Rejection by an eligible reviewer closes a pending request. Cancellation permissions stay unchanged."
+msgstr "Egy jogosult döntéshozó elutasítása lezárja a függőben lévő igényt. A visszavonási jogosultságok változatlanok maradnak."
+
+msgid "Last changed by %(name)s"
+msgstr "Utoljára módosította: %(name)s"
+
+msgid "Save approval rule"
+msgstr "Jóváhagyási szabály mentése"
+
+msgid "The approval rule was changed by another CEO. Review the current setting and try again."
+msgstr "Egy másik ügyvezető módosította a jóváhagyási szabályt. Ellenőrizd az aktuális beállítást, és próbáld újra."
+
+msgid "The approval rule is unchanged."
+msgstr "A jóváhagyási szabály nem változott."
+
+msgid "Approval rule saved. Pending requests approved using recorded approvals: %(count)s."
+msgstr "A jóváhagyási szabály mentve. A már rögzített jóváhagyások alapján jóváhagyott függő igények száma: %(count)s."
+
+msgid "Select an active contract, review your leave calendar and submit a request."
+msgstr "Válassz egy aktív szerződést, tekintsd át a szabadságnaptárad, és küldd be az igényed."
+
+msgid "Requests stay pending until the required approvals are recorded."
+msgstr "Az igények a szükséges jóváhagyások rögzítéséig függőben maradnak."
+
+msgid "CEO"
+msgstr "Ügyvezető"
+
+msgid "Principal/deputy"
+msgstr "Igazgató vagy helyettese"
+
+msgid "Not required"
+msgstr "Nem szükséges"
+
+msgid "Either reviewer"
+msgstr "Bármelyik jóváhagyhatja"
+
+msgid "Pending"
+msgstr "Függőben"
