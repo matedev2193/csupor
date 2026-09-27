@@ -54,9 +54,9 @@
         <h2>{{ _('Year availability') }}</h2>
         <p>
           {% if is_leave_year_open %}
-          {{ selected_year }} is open for employee leave requests.
+          {{ _('%(year)s is open for employee leave requests.', year=selected_year) }}
           {% else %}
-          {{ selected_year }} is closed. Employees cannot request leave in this year until HR opens it.
+          {{ _('%(year)s is closed. Employees cannot request leave in this year until HR opens it.', year=selected_year) }}
           {% endif %}
         </p>
       </div>
@@ -119,9 +119,9 @@
   <section class="table-card span-12 leave-limits-card">
     <div class="section-heading">
       <div>
-        <h2>Leave limits for {{ selected_year }}</h2>
+        <h2>{{ _('Leave limits for %(year)s', year=selected_year) }}</h2>
         <p>
-          Contract: {{ contract_display_name(selected_contract) }}
+          {{ _('Contract: %(contract)s', contract=contract_display_name(selected_contract)) }}
           {% if not is_contract_active_in_year(selected_contract, selected_year) %}
           <strong>{{ _('· Not active in selected year') }}</strong>
           {% endif %}
@@ -165,7 +165,7 @@
               {% if leave_type_available_for_contract(leave_type, selected_contract.contract_type, selected_contract.user) %}
               {% set existing = existing_limits.get(leave_type) %}
               <tr>
-                <td class="leave-category-column">{{ leave_type.value|capitalize }}</td>
+                <td class="leave-category-column">{{ enum_label(leave_type) }}</td>
                 <td>
                   <input
                     type="number"
@@ -183,7 +183,7 @@
       </div>
 
       <h3>{{ _('Categories with custom start/end date') }}</h3>
-      <p class="help-text">Use “Add another” when one employee has multiple eligible instances of the same category in {{ selected_year }}.</p>
+      <p class="help-text">{{ _('Use “Add another” when one employee has multiple eligible instances of the same category in %(year)s.', year=selected_year) }}</p>
       <div class="table-wrap">
         <table class="leave-limits-table leave-limits-table-range">
           <thead>
@@ -202,7 +202,7 @@
                 {% for existing in existing_records %}
                 <tr data-range-row="{{ leave_type.name }}">
                   <td class="leave-category-column">
-                    {{ leave_type.value|capitalize }}
+                    {{ enum_label(leave_type) }}
                     <input type="hidden" name="range_leave_type" value="{{ leave_type.name }}">
                   </td>
                   <td>
@@ -221,7 +221,7 @@
                 {% endfor %}
                 <tr data-range-row="{{ leave_type.name }}">
                   <td class="leave-category-column">
-                    {{ leave_type.value|capitalize }}
+                    {{ enum_label(leave_type) }}
                     <input type="hidden" name="range_leave_type" value="{{ leave_type.name }}">
                   </td>
                   <td>
@@ -238,7 +238,7 @@
                       type="button"
                       class="button-secondary add-range-row"
                       data-leave-type-name="{{ leave_type.name }}"
-                      data-leave-type-label="{{ leave_type.value|capitalize }}"
+                      data-leave-type-label="{{ enum_label(leave_type) }}"
                     >{{ _('Add another') }}</button>
                   </td>
                 </tr>
@@ -251,7 +251,7 @@
       <h3>{{ _('Categories without assigned limit') }}</h3>
       <ul>
         {% for leave_name in leave_types_without_limit %}
-        <li>{{ leave_name|capitalize }}</li>
+        <li>{{ enum_label(leave_name) }}</li>
         {% endfor %}
       </ul>
 
@@ -261,7 +261,7 @@
     </form>
     {% else %}
     <div class="empty-state">
-      The selected contract is not active in {{ selected_year }}. Choose an active contract-year combination to assign limits.
+      {{ _('The selected contract is not active in %(year)s. Choose an active contract-year combination to assign limits.', year=selected_year) }}
     </div>
     {% endif %}
   </section>

@@ -6,10 +6,12 @@ from urllib.parse import urlsplit
 from flask import abort, flash, redirect, render_template, request, session, url_for
 from flask_babel import _
 from flask_login import current_user, login_required, login_user, logout_user
+from sqlalchemy.orm import joinedload
 
 from . import SUPPORTED_LOCALES, db, get_locale
 
 from .working_calendar import HungaryCalendar
+from .i18n import enum_label
 from .leave_approval import (
     POLICY_DESCRIPTIONS,
     POLICY_LABELS,
@@ -127,7 +129,7 @@ def _validate_digit_field(label: str, value: str | None, length: int) -> str | N
     if not normalized:
         return None
     if not normalized.isdigit() or len(normalized) != length:
-        return f"{label} must be exactly {length} digits."
+        return _("%(label)s must be exactly %(length)s digits.", label=label, length=length)
     return None
 
 
@@ -150,11 +152,14 @@ def _save_profile_from_form(profile: UserProfile) -> list[str]:
     tax_number = _normalize_optional_text(request.form.get("tax_number"))
     education_number = _normalize_optional_text(request.form.get("education_number"))
 
+    teacher_id_card_number = _normalize_optional_text(request.form.get("teacher_id_card_number"))
     errors = [
-        _validate_digit_field("Social security number", social_security_number, 9),
-        _validate_digit_field("Tax number", tax_number, 10),
-        _validate_digit_field("Education number", education_number, 11),
+        _validate_digit_field(_("Social security number"), social_security_number, 9),
+        _validate_digit_field(_("Personal tax identification number"), tax_number, 10),
+        _validate_digit_field(_("Education number"), education_number, 11),
     ]
+    if teacher_id_card_number and len(teacher_id_card_number) > 64:
+        errors.append(_("Teacher ID card number must be at most %(length)s characters.", length=64))
     errors = [err for err in errors if err]
     if errors:
         return errors
@@ -170,7 +175,7 @@ def _save_profile_from_form(profile: UserProfile) -> list[str]:
     profile.social_security_number = social_security_number
     profile.tax_number = tax_number
     profile.education_number = education_number
-    profile.teacher_id_card_number = _normalize_optional_text(request.form.get("teacher_id_card_number"))
+    profile.teacher_id_card_number = teacher_id_card_number
     profile.permanent_residence = _normalize_optional_text(request.form.get("permanent_residence"))
     profile.temporary_address = _normalize_optional_text(request.form.get("temporary_address"))
     profile.phone_number = _normalize_optional_text(request.form.get("phone_number"))
@@ -197,7 +202,7 @@ def _render_profile_editor(profile: UserProfile, target_user: User, *, manager_m
 def _validate_om_id(value: str | None) -> str | None:
     normalized = _normalize_optional_text(value)
     if not normalized or not normalized.isdigit() or len(normalized) != 6:
-        return "OM id must be exactly 6 digits."
+        return _("OM id must be exactly 6 digits.")
     return None
 
 
@@ -206,60 +211,66 @@ def _contract_place_label(place: PlaceOfWork) -> str:
 
 
 def _save_contract_from_form(contract: Contract) -> list[str]:
-    contract_type_raw = _normalize_optional_text(request.form.get("contract_type"))
-    teacher_classification_raw = _normalize_optional_text(request.form.get("teacher_classification"))
-    legal_entity_id = request.form.get("legal_entity_id", type=int)
-    place_of_work_id = request.form.get("place_of_work_id", type=int)
-
-    if not contract_type_raw:
-        return ["Contract type is required."]
-
-    try:
-        contract.contract_type = ContractType(contract_type_raw)
-    except ValueError:
-        return ["Invalid contract type selected."]
-
-    if not legal_entity_id:
-        return ["Employer is required."]
-    if not place_of_work_id:
-        return ["Place of work is required."]
-
-    contract.legal_entity_id = legal_entity_id
-    contract.place_of_work_id = place_of_work_id
-
-    contract.start_date = parse_iso_date(request.form.get("start_date"))
-    contract.end_date = parse_iso_date(request.form.get("end_date"))
-    contract.certificate_of_good_conduct_number = _normalize_optional_text(
-        request.form.get("certificate_of_good_conduct_number")
-    )
-    contract.certificate_of_good_conduct_date = parse_iso_date(request.form.get("certificate_of_good_conduct_date"))
-    contract.job_title = _normalize_optional_text(request.form.get("job_title"))
-    contract.working_hours_per_week = request.form.get("working_hours_per_week", type=int)
-    contract.teacher_classification = (
-        TeacherClassification(teacher_classification_raw) if teacher_classification_raw else None
-    )
-    contract.classification_start_date = parse_iso_date(request.form.get("classification_start_date"))
-
+    # Validate before assigning: queries below must not autoflush invalid edits.
     errors = []
-    if contract.start_date is None:
-        errors.append("Start date is required.")
-    if not contract.job_title:
-        errors.append("Job title is required.")
-    if contract.working_hours_per_week is None:
-        errors.append("Working hours per week is required.")
-    elif contract.working_hours_per_week < 1:
-        errors.append("Working hours per week must be greater than 0.")
+    values = {}
+    contract_type_raw = _normalize_optional_text(request.form.get("contract_type"))
+    if not contract_type_raw:
+        errors.append(_("Contract type is required."))
+    else:
+        try:
+            values["contract_type"] = ContractType(contract_type_raw)
+        except ValueError:
+            errors.append(_("Invalid contract type selected."))
 
-    if contract.end_date and contract.start_date and contract.end_date < contract.start_date:
-        errors.append("End date cannot be earlier than the start date.")
+    classification = _normalize_optional_text(request.form.get("teacher_classification"))
+    try:
+        values["teacher_classification"] = TeacherClassification(classification) if classification else None
+    except ValueError:
+        errors.append(_("Invalid teacher classification selected."))
 
-    if contract.place_of_work_id and contract.legal_entity_id:
-        place = db.session.get(PlaceOfWork, contract.place_of_work_id)
+    for field in ("start_date", "end_date", "certificate_of_good_conduct_date", "classification_start_date"):
+        try:
+            values[field] = parse_iso_date(request.form.get(field))
+        except ValueError:
+            errors.append(_("Enter valid dates in the contract form."))
+            values[field] = None
+    if values["start_date"] is None:
+        errors.append(_("Start date is required."))
+    if values["end_date"] and values["start_date"] and values["end_date"] < values["start_date"]:
+        errors.append(_("End date cannot be earlier than the start date."))
+
+    values["job_title"] = _normalize_optional_text(request.form.get("job_title"))
+    if not values["job_title"]:
+        errors.append(_("Job title is required."))
+    elif len(values["job_title"]) > 120:
+        errors.append(_("Job title must be at most 120 characters."))
+    values["certificate_of_good_conduct_number"] = _normalize_optional_text(request.form.get("certificate_of_good_conduct_number"))
+    if values["certificate_of_good_conduct_number"] and len(values["certificate_of_good_conduct_number"]) > 64:
+        errors.append(_("Certificate of good conduct number must be at most 64 characters."))
+    values["working_hours_per_week"] = request.form.get("working_hours_per_week", type=int)
+    if values["working_hours_per_week"] is None:
+        errors.append(_("Working hours per week is required."))
+    elif values["working_hours_per_week"] < 1:
+        errors.append(_("Working hours per week must be greater than 0."))
+
+    values["legal_entity_id"] = request.form.get("legal_entity_id", type=int)
+    values["place_of_work_id"] = request.form.get("place_of_work_id", type=int)
+    if not values["legal_entity_id"]:
+        errors.append(_("Employer is required."))
+    elif db.session.get(LegalEntity, values["legal_entity_id"]) is None:
+        errors.append(_("Selected employer does not exist."))
+    if not values["place_of_work_id"]:
+        errors.append(_("Place of work is required."))
+    else:
+        place = db.session.get(PlaceOfWork, values["place_of_work_id"])
         if place is None:
-            errors.append("Selected place of work does not exist.")
-        elif place.legal_entity_id != contract.legal_entity_id:
-            errors.append("Selected place of work does not belong to the selected employer.")
-
+            errors.append(_("Selected place of work does not exist."))
+        elif place.legal_entity_id != values["legal_entity_id"]:
+            errors.append(_("Selected place of work does not belong to the selected employer."))
+    if not errors:
+        for field, value in values.items():
+            setattr(contract, field, value)
     return errors
 
 
@@ -276,29 +287,29 @@ def _save_leadership_from_form(leadership: Leadership) -> list[str]:
 
     errors = []
     if not legal_entity_id:
-        errors.append("Legal entity is required.")
+        errors.append(_("Legal entity is required."))
     if not contract_id:
-        errors.append("Contract is required.")
+        errors.append(_("Contract is required."))
     if leadership.position is None:
-        errors.append("Leadership position is required.")
+        errors.append(_("Leadership position is required."))
     if leadership.start_date is None:
-        errors.append("Start date is required.")
+        errors.append(_("Start date is required."))
     if leadership.end_date and leadership.start_date and leadership.end_date < leadership.start_date:
-        errors.append("End date cannot be earlier than the start date.")
+        errors.append(_("End date cannot be earlier than the start date."))
 
     if contract_id:
         contract = db.session.get(Contract, contract_id)
         if contract is None:
-            errors.append("Selected contract does not exist.")
+            errors.append(_("Selected contract does not exist."))
         elif legal_entity_id and contract.legal_entity_id != legal_entity_id:
-            errors.append("Selected contract does not belong to the selected legal entity.")
+            errors.append(_("Selected contract does not belong to the selected legal entity."))
 
     return errors
 
 
 def _contract_display_name(contract: Contract) -> str:
     display_name = contract.user.profile.full_name if contract.user.profile and contract.user.profile.full_name else contract.user.username
-    return f"{display_name} · {contract.contract_type.value} · {contract.start_date} → {contract.end_date or 'ongoing'}"
+    return f"{display_name} · {enum_label(contract.contract_type)} · {contract.start_date} → {contract.end_date or _('Ongoing')}"
 
 
 def _is_contract_active_in_year(contract: Contract, calendar_year: int) -> bool:
@@ -826,7 +837,7 @@ def _leave_usage_summary(
     return [
         {
             "category": category,
-            "label": category.value.capitalize(),
+            "label": enum_label(category),
             "used_days": used_by_category[category],
             "available_days": _paid_leave_available_days(contract, year)
             if category == LeaveRequestCategory.paid_leave
@@ -843,14 +854,14 @@ def _available_leave_request_categories(user: User, contract: Contract, year: in
     categories = [
         {
             "category": LeaveRequestCategory.paid_leave,
-            "label": "Paid leave",
-            "description": "Basic leave, supplementary leaves, parental leave, paternity leave, and leave carry-over.",
+            "label": _("Paid leave"),
+            "description": _("Basic leave, supplementary leaves, parental leave, paternity leave, and leave carry-over."),
             "end_required": True,
         },
         {
             "category": LeaveRequestCategory.health_leave,
-            "label": "Health leave",
-            "description": "Sick leave and sickness benefit.",
+            "label": _("Health leave"),
+            "description": _("Sick leave and sickness benefit."),
             "end_required": False,
         },
     ]
@@ -858,8 +869,8 @@ def _available_leave_request_categories(user: User, contract: Contract, year: in
         categories.append(
             {
                 "category": LeaveRequestCategory.childcare_sickness_benefit,
-                "label": "Childcare sickness benefit",
-                "description": "Available when a child dependent is recorded on your profile.",
+                "label": _("Childcare sickness benefit"),
+                "description": _("Available when a child dependent is recorded on your profile."),
                 "end_required": False,
             }
         )
@@ -872,16 +883,16 @@ def _available_leave_request_categories(user: User, contract: Contract, year: in
         categories.append(
             {
                 "category": LeaveRequestCategory.childbirth_leave,
-                "label": "Childbirth leave",
-                "description": "Maternity leave, childcare fee, and childcare allowance.",
+                "label": _("Childbirth leave"),
+                "description": _("Maternity leave, childcare fee, and childcare allowance."),
                 "end_required": False,
             }
         )
     categories.append(
         {
             "category": LeaveRequestCategory.exemption_from_obligation_to_work,
-            "label": "Exemption from obligation to work",
-            "description": "Request time away under an exemption from work obligation.",
+            "label": _("Exemption from obligation to work"),
+            "description": _("Request time away under an exemption from work obligation."),
             "end_required": False,
         }
     )
@@ -889,8 +900,8 @@ def _available_leave_request_categories(user: User, contract: Contract, year: in
         categories.append(
             {
                 "category": LeaveRequestCategory.unpaid_leave,
-                "label": "Unpaid leave",
-                "description": "Available once paid leave days are exhausted for the selected year.",
+                "label": _("Unpaid leave"),
+                "description": _("Available once paid leave days are exhausted for the selected year."),
                 "end_required": False,
             }
         )
@@ -1179,6 +1190,8 @@ def privilege_assignment_required(view_func):
 
 
 def init_routes(app):
+    app.jinja_env.globals["enum_label"] = enum_label
+
     @app.context_processor
     def inject_global_template_context():
         return {
@@ -1220,11 +1233,11 @@ def init_routes(app):
             password = request.form.get("password", "")
 
             if not email or not username or not password:
-                flash("Email, username and password are required.", "error")
+                flash(_("Email, username and password are required."), "error")
                 return render_template("register.html")
 
             if User.query.filter((User.email == email) | (User.username == username)).first():
-                flash("Email or username already exists.", "error")
+                flash(_("Email or username already exists."), "error")
                 return render_template("register.html")
 
             user = User(email=email, username=username, privilege=UserPrivilege.employee)
@@ -1237,7 +1250,7 @@ def init_routes(app):
             db.session.commit()
 
             login_user(user)
-            flash("Registration successful. Your privilege is set to employee until HR or the CEO updates it.", "success")
+            flash(_("Registration successful. Your privilege is set to employee until HR or the CEO updates it."), "success")
             return redirect(url_for("edit_profile"))
 
         return render_template("register.html")
@@ -1253,11 +1266,11 @@ def init_routes(app):
             ).first()
 
             if not user or not user.check_password(password):
-                flash("Invalid credentials.", "error")
+                flash(_("Invalid credentials."), "error")
                 return render_template("login.html")
 
             login_user(user)
-            flash("Logged in successfully.", "success")
+            flash(_("Logged in successfully."), "success")
             return redirect(url_for("dashboard"))
 
         return render_template("login.html")
@@ -1266,7 +1279,7 @@ def init_routes(app):
     @login_required
     def logout():
         logout_user()
-        flash("Logged out.", "success")
+        flash(_("Logged out."), "success")
         return redirect(url_for("login"))
 
     @app.route("/dashboard")
@@ -1318,7 +1331,7 @@ def init_routes(app):
                 None,
             )
             if selected_contract is None:
-                flash("Please select one of your active contracts.", "error")
+                flash(_("Please select one of your active contracts."), "error")
         if selected_contract is None:
             selected_contract = current_contract
 
@@ -1334,7 +1347,7 @@ def init_routes(app):
             # Serialise submissions and decisions with changes to the global rule.
             get_leave_approval_settings(for_update=True)
             if selected_contract is None:
-                flash("You need an active contract before applying for leave.", "error")
+                flash(_("You need an active contract before applying for leave."), "error")
                 return redirect(url_for("leaves"))
 
             if action in {"cancel", "undo_cancel"}:
@@ -1345,30 +1358,30 @@ def init_routes(app):
                     LeaveRequest.contract_id == selected_contract.id,
                 ).with_for_update().populate_existing().first()
                 if leave_request is None:
-                    flash("Leave request not found.", "error")
+                    flash(_("Leave request not found."), "error")
                 elif action == "cancel":
                     if leave_request.status == LeaveRequestStatus.pending_approval:
                         leave_request.status = LeaveRequestStatus.cancelled
                         leave_request.decided_by_id = current_user.id
                         db.session.commit()
-                        flash("Pending leave request cancelled.", "success")
+                        flash(_("Pending leave request cancelled."), "success")
                     elif leave_request.status == LeaveRequestStatus.approved:
                         leave_request.status = LeaveRequestStatus.pending_cancellation
                         db.session.commit()
-                        flash("Leave cancellation requested.", "success")
+                        flash(_("Leave cancellation requested."), "success")
                     else:
-                        flash("Only approved or pending approval leaves can be cancelled here.", "error")
+                        flash(_("Only approved or pending approval leaves can be cancelled here."), "error")
                 elif leave_request.status == LeaveRequestStatus.pending_cancellation:
                     leave_request.status = LeaveRequestStatus.approved
                     db.session.commit()
-                    flash("Leave cancellation request undone.", "success")
+                    flash(_("Leave cancellation request undone."), "success")
                 else:
-                    flash("Only pending cancellation leaves can be undone.", "error")
+                    flash(_("Only pending cancellation leaves can be undone."), "error")
                 return redirect(
                     url_for("leaves", contract_id=selected_contract.id, year=selected_year, month=selected_month)
                 )
             if action != "submit":
-                flash("Invalid leave action.", "error")
+                flash(_("Invalid leave action."), "error")
                 return redirect(
                     url_for("leaves", contract_id=selected_contract.id, year=selected_year, month=selected_month)
                 )
@@ -1377,7 +1390,7 @@ def init_routes(app):
             start_date = parse_iso_date(request.form.get("start_date"))
             end_date = parse_iso_date(request.form.get("end_date"))
             if start_date is None:
-                flash("Start date is required.", "error")
+                flash(_("Start date is required."), "error")
                 return redirect(
                     url_for("leaves", contract_id=selected_contract.id, year=selected_year, month=selected_month)
                 )
@@ -1385,32 +1398,32 @@ def init_routes(app):
             available_by_value = {item["category"].value: item for item in available_categories}
             category_definition = available_by_value.get(category_value)
             if category_definition is None:
-                flash("Please choose an available leave type.", "error")
+                flash(_("Please choose an available leave type."), "error")
                 return redirect(
                     url_for("leaves", contract_id=selected_contract.id, year=selected_year, month=selected_month)
                 )
             if category_definition["end_required"] and end_date is None:
-                flash("Paid leave requests require both start and end date.", "error")
+                flash(_("Paid leave requests require both start and end date."), "error")
                 return redirect(
                     url_for("leaves", contract_id=selected_contract.id, year=selected_year, month=selected_month)
                 )
             if end_date is not None and end_date < start_date:
-                flash("End date cannot be earlier than the start date.", "error")
+                flash(_("End date cannot be earlier than the start date."), "error")
                 return redirect(
                     url_for("leaves", contract_id=selected_contract.id, year=selected_year, month=selected_month)
                 )
             if not _is_contract_active_on(selected_contract, start_date):
-                flash("The request start date must fall within the selected active contract.", "error")
+                flash(_("The request start date must fall within the selected active contract."), "error")
                 return redirect(
                     url_for("leaves", contract_id=selected_contract.id, year=selected_year, month=selected_month)
                 )
             if not _is_leave_year_open(start_date.year):
-                flash("This calendar year is not open for leave requests yet. Please contact HR.", "error")
+                flash(_("This calendar year is not open for leave requests yet. Please contact HR."), "error")
                 return redirect(
                     url_for("leaves", contract_id=selected_contract.id, year=selected_year, month=selected_month)
                 )
             if end_date is not None and not _is_contract_active_on(selected_contract, end_date):
-                flash("The request end date must fall within the selected active contract.", "error")
+                flash(_("The request end date must fall within the selected active contract."), "error")
                 return redirect(
                     url_for("leaves", contract_id=selected_contract.id, year=selected_year, month=selected_month)
                 )
@@ -1424,9 +1437,7 @@ def init_routes(app):
             if conflicting_request is not None:
                 conflicting_end_date = conflicting_request.end_date or conflicting_request.start_date
                 flash(
-                    "This request overlaps with an existing "
-                    f"{conflicting_request.status.value} leave request "
-                    f"({conflicting_request.start_date} → {conflicting_end_date}).",
+                    _("This request overlaps with an existing %(status)s leave request (%(start)s → %(end)s).", status=enum_label(conflicting_request.status), start=conflicting_request.start_date, end=conflicting_end_date),
                     "error",
                 )
                 return redirect(
@@ -1439,7 +1450,7 @@ def init_routes(app):
                 remaining_days = _paid_leave_remaining_days(selected_contract, start_date.year)
                 if requested_days > remaining_days or not _paid_leave_request_has_capacity(selected_contract, start_date, request_end_date):
                     flash(
-                        f"Paid leave request needs {requested_days} available days within the requested validity interval, but only {remaining_days} remain.",
+                        _("Paid leave request needs %(requested)s available days within the requested validity interval, but only %(remaining)s remain.", requested=requested_days, remaining=remaining_days),
                         "error",
                     )
                     return redirect(
@@ -1460,9 +1471,9 @@ def init_routes(app):
             _apply_automatic_leave_approvals(leave_request)
             db.session.commit()
             if leave_request.status == LeaveRequestStatus.approved:
-                flash("Leave request submitted and automatically approved.", "success")
+                flash(_("Leave request submitted and automatically approved."), "success")
             else:
-                flash("Leave request submitted and marked as pending approval.", "success")
+                flash(_("Leave request submitted and marked as pending approval."), "success")
             return redirect(
                 url_for("leaves", contract_id=selected_contract.id, year=start_date.year, month=start_date.month)
             )
@@ -1530,22 +1541,22 @@ def init_routes(app):
             user = db.session.get(User, user_id)
 
             if user is None:
-                flash("User not found.", "error")
+                flash(_("User not found."), "error")
                 return redirect(url_for("manage_privileges"))
 
             try:
                 privilege = UserPrivilege(privilege_raw)
             except ValueError:
-                flash("Invalid privilege selected.", "error")
+                flash(_("Invalid privilege selected."), "error")
                 return redirect(url_for("manage_privileges"))
 
             if privilege not in MANAGEABLE_PRIVILEGES:
-                flash("That privilege cannot be assigned here.", "error")
+                flash(_("That privilege cannot be assigned here."), "error")
                 return redirect(url_for("manage_privileges"))
 
             user.privilege = privilege
             db.session.commit()
-            flash(f"Updated {user.username} to {privilege.value} privilege.", "success")
+            flash(_("Updated %(username)s to %(privilege)s privilege.", username=user.username, privilege=enum_label(privilege)), "success")
             return redirect(url_for("manage_privileges"))
 
         users = User.query.order_by(User.id.asc()).all()
@@ -1564,21 +1575,21 @@ def init_routes(app):
             new_password_confirm = request.form.get("new_password_confirm", "")
 
             if not current_user.check_password(current_password):
-                flash("Current password is incorrect.", "error")
+                flash(_("Current password is incorrect."), "error")
                 return render_template("change_password.html")
 
             if not new_password:
-                flash("New password is required.", "error")
+                flash(_("New password is required."), "error")
                 return render_template("change_password.html")
 
             if new_password != new_password_confirm:
-                flash("New password and confirmation do not match.", "error")
+                flash(_("New password and confirmation do not match."), "error")
                 return render_template("change_password.html")
 
             current_user.set_password(new_password)
             db.session.add(current_user)
             db.session.commit()
-            flash("Password updated successfully.", "success")
+            flash(_("Password updated successfully."), "success")
             return redirect(url_for("dashboard"))
 
         return render_template("change_password.html")
@@ -1596,7 +1607,7 @@ def init_routes(app):
 
             db.session.add(profile)
             db.session.commit()
-            flash("Profile updated.", "success")
+            flash(_("Profile updated."), "success")
             return redirect(url_for("dashboard"))
 
         return _render_profile_editor(profile, current_user)
@@ -1612,7 +1623,7 @@ def init_routes(app):
     def edit_user_profile(user_id: int):
         target_user = db.session.get(User, user_id)
         if target_user is None:
-            flash("User not found.", "error")
+            flash(_("User not found."), "error")
             return redirect(url_for("manage_user_profiles"))
 
         profile = target_user.profile or UserProfile(user_id=target_user.id)
@@ -1625,7 +1636,7 @@ def init_routes(app):
 
             db.session.add(profile)
             db.session.commit()
-            flash(f"Updated profile for {target_user.username}.", "success")
+            flash(_("Updated profile for %(username)s.", username=target_user.username), "success")
             return redirect(url_for("manage_user_profiles"))
 
         return _render_profile_editor(profile, target_user, manager_mode=True)
@@ -1638,13 +1649,13 @@ def init_routes(app):
             dependent_type_raw = request.form.get("dependent_type", "").strip()
             social_security_number = request.form.get("social_security_number", "").strip()
             if not name:
-                flash("Dependent name is required.", "error")
+                flash(_("Dependent name is required."), "error")
                 return render_template("dependent_form.html", dependent_types=DependentType)
             if dependent_type_raw not in {item.value for item in DependentType}:
-                flash("Dependent type is required.", "error")
+                flash(_("Dependent type is required."), "error")
                 return render_template("dependent_form.html", dependent_types=DependentType)
             validation_error = _validate_digit_field(
-                "Dependent social security number", social_security_number, 9
+                _("Dependent social security number"), social_security_number, 9
             )
             if validation_error:
                 flash(validation_error, "error")
@@ -1661,7 +1672,7 @@ def init_routes(app):
             )
             db.session.add(dependent)
             db.session.commit()
-            flash("Dependent added.", "success")
+            flash(_("Dependent added."), "success")
             return redirect(url_for("dashboard"))
 
         return render_template("dependent_form.html", dependent_types=DependentType)
@@ -1673,7 +1684,7 @@ def init_routes(app):
             try:
                 year_obtained = int(request.form.get("year_obtained", "0"))
             except ValueError:
-                flash("Year obtained must be a number.", "error")
+                flash(_("Year obtained must be a number."), "error")
                 return render_template("qualification_form.html")
 
             qualification = EducationalQualification(
@@ -1691,121 +1702,163 @@ def init_routes(app):
                 )
             db.session.add(qualification)
             db.session.commit()
-            flash("Educational qualification added.", "success")
+            flash(_("Educational qualification added."), "success")
             return redirect(url_for("dashboard"))
 
         return render_template("qualification_form.html")
 
 
 
-    @app.route("/legal-entities", methods=["GET", "POST"])
+    @app.route("/legal-entities")
     @privilege_manager_required
     def manage_legal_entities():
-        editing_entity_id = request.args.get("edit", type=int)
+        editing_id = request.args.get("edit", type=int)
+        if editing_id:
+            return redirect(url_for("edit_legal_entity", entity_id=editing_id))
+        return render_template(
+            "manage_legal_entities.html",
+            entities=LegalEntity.query.order_by(LegalEntity.name.asc()).all(),
+            format_legal_entity_tax_number=_format_legal_entity_tax_number,
+        )
+
+    def legal_entity_form(entity=None):
+        editing = entity is not None
         if request.method == "POST":
-            entity_id = request.form.get("entity_id", type=int)
             name = _normalize_optional_text(request.form.get("name"))
             address = _normalize_optional_text(request.form.get("address"))
             om_id = _normalize_optional_text(request.form.get("om_id"))
             tax_number = _normalize_legal_entity_tax_number(request.form.get("tax_number"))
-
+            errors = []
             if not name or not address or not tax_number:
-                flash("Name, address, and tax number are required.", "error")
-                return redirect(url_for("manage_legal_entities"))
-
-            om_error = _validate_om_id(om_id)
-            if om_error:
-                flash(om_error, "error")
-                return redirect(url_for("manage_legal_entities"))
-            tax_error = _validate_digit_field("Tax number", tax_number, 11)
-            if tax_error:
-                flash(tax_error, "error")
-                return redirect(url_for("manage_legal_entities"))
-
-            entity = db.session.get(LegalEntity, entity_id) if entity_id else LegalEntity()
-            if entity is None:
-                flash("Legal entity not found.", "error")
-                return redirect(url_for("manage_legal_entities"))
-
-            entity.name = name
-            entity.address = address
-            entity.om_id = om_id
-            entity.tax_number = tax_number
-            db.session.add(entity)
-            db.session.commit()
-            flash("Legal entity updated." if entity_id else "Legal entity saved.", "success")
-            return redirect(url_for("manage_legal_entities"))
-
-        entities = LegalEntity.query.order_by(LegalEntity.name.asc()).all()
-        editing_entity = None
-        if editing_entity_id:
-            editing_entity = db.session.get(LegalEntity, editing_entity_id)
-            if editing_entity is None:
-                flash("Legal entity not found.", "error")
+                errors.append(_("Name, address, and tax number are required."))
+            errors.extend([
+                _validate_om_id(om_id),
+                _validate_digit_field(_("Tax number"), tax_number, 11),
+            ])
+            errors = [error for error in errors if error]
+            if errors:
+                for error in errors:
+                    flash(error, "error")
+            else:
+                entity = entity or LegalEntity()
+                entity.name, entity.address = name, address
+                entity.om_id, entity.tax_number = om_id, tax_number
+                db.session.add(entity)
+                db.session.commit()
+                flash(_("Legal entity updated.") if editing else _("Legal entity saved."), "success")
                 return redirect(url_for("manage_legal_entities"))
         return render_template(
-            "manage_legal_entities.html",
-            entities=entities,
-            editing_entity=editing_entity,
+            "legal_entity_form.html", entity=entity,
             format_legal_entity_tax_number=_format_legal_entity_tax_number,
         )
 
-    @app.route("/places-of-work", methods=["GET", "POST"])
+    @app.route("/legal-entities/new", methods=["GET", "POST"])
+    @privilege_manager_required
+    def create_legal_entity():
+        return legal_entity_form()
+
+    @app.route("/legal-entities/<int:entity_id>/edit", methods=["GET", "POST"])
+    @privilege_manager_required
+    def edit_legal_entity(entity_id):
+        return legal_entity_form(db.get_or_404(LegalEntity, entity_id))
+
+    @app.route("/places-of-work")
     @privilege_manager_required
     def manage_places_of_work():
-        editing_place_id = request.args.get("edit", type=int)
+        editing_id = request.args.get("edit", type=int)
+        if editing_id:
+            return redirect(url_for("edit_place_of_work", place_id=editing_id))
+        places = PlaceOfWork.query.join(LegalEntity).order_by(LegalEntity.name.asc(), PlaceOfWork.address.asc()).all()
+        return render_template("manage_places_of_work.html", places=places)
+
+    def place_of_work_form(place=None):
+        editing = place is not None
         if request.method == "POST":
-            place_id = request.form.get("place_id", type=int)
             legal_entity_id = request.form.get("legal_entity_id", type=int)
             address = _normalize_optional_text(request.form.get("address"))
-
             if not legal_entity_id or not address:
-                flash("Employer and address are required.", "error")
+                flash(_("Employer and address are required."), "error")
+            elif db.session.get(LegalEntity, legal_entity_id) is None:
+                flash(_("Selected employer does not exist."), "error")
+            else:
+                place = place or PlaceOfWork()
+                place.legal_entity_id, place.address = legal_entity_id, address
+                db.session.add(place)
+                db.session.commit()
+                flash(_("Place of work updated.") if editing else _("Place of work saved."), "success")
                 return redirect(url_for("manage_places_of_work"))
-
-            if db.session.get(LegalEntity, legal_entity_id) is None:
-                flash("Selected employer does not exist.", "error")
-                return redirect(url_for("manage_places_of_work"))
-
-            place = db.session.get(PlaceOfWork, place_id) if place_id else PlaceOfWork()
-            if place is None:
-                flash("Place of work not found.", "error")
-                return redirect(url_for("manage_places_of_work"))
-
-            place.legal_entity_id = legal_entity_id
-            place.address = address
-            db.session.add(place)
-            db.session.commit()
-            flash("Place of work updated." if place_id else "Place of work saved.", "success")
-            return redirect(url_for("manage_places_of_work"))
-
         entities = LegalEntity.query.order_by(LegalEntity.name.asc()).all()
-        places = PlaceOfWork.query.join(LegalEntity).order_by(LegalEntity.name.asc(), PlaceOfWork.address.asc()).all()
-        editing_place = None
-        if editing_place_id:
-            editing_place = db.session.get(PlaceOfWork, editing_place_id)
-            if editing_place is None:
-                flash("Place of work not found.", "error")
-                return redirect(url_for("manage_places_of_work"))
-        return render_template(
-            "manage_places_of_work.html",
-            entities=entities,
-            places=places,
-            editing_place=editing_place,
-        )
+        return render_template("place_of_work_form.html", place=place, entities=entities)
+
+    @app.route("/places-of-work/new", methods=["GET", "POST"])
+    @privilege_manager_required
+    def create_place_of_work():
+        return place_of_work_form()
+
+    @app.route("/places-of-work/<int:place_id>/edit", methods=["GET", "POST"])
+    @privilege_manager_required
+    def edit_place_of_work(place_id):
+        return place_of_work_form(db.get_or_404(PlaceOfWork, place_id))
 
     @app.route("/contracts")
     @privilege_manager_required
     def manage_contracts():
-        users = User.query.order_by(User.username.asc()).all()
-        return render_template("manage_contracts.html", users=users)
+        today = date.today()
+        selected_status = request.args.get("status", "active")
+        if selected_status not in {"active", "upcoming", "ended", "all"}:
+            selected_status = "active"
+        search = request.args.get("q", "").strip()
+        selected_entity_id = request.args.get("legal_entity_id", type=int)
+        query = Contract.query.join(User).outerjoin(UserProfile).join(LegalEntity)
+        active = db.and_(Contract.start_date <= today, db.or_(Contract.end_date.is_(None), Contract.end_date >= today))
+        upcoming = Contract.start_date > today
+        ended = Contract.end_date < today
+        if search:
+            query = query.filter(db.or_(
+                User.username.icontains(search, autoescape=True),
+                UserProfile.full_name.icontains(search, autoescape=True),
+                Contract.job_title.icontains(search, autoescape=True),
+                LegalEntity.name.icontains(search, autoescape=True),
+                Contract.id == int(search) if search.isdecimal() and len(search) < 10 else db.false(),
+            ))
+        if selected_entity_id:
+            query = query.filter(Contract.legal_entity_id == selected_entity_id)
+        counts = {key: query.filter(condition).count() for key, condition in
+                  [("active", active), ("upcoming", upcoming), ("ended", ended)]}
+        counts["all"] = sum(counts.values())
+        if selected_status != "all":
+            query = query.filter({"active": active, "upcoming": upcoming, "ended": ended}[selected_status])
+        contracts = query.options(
+            joinedload(Contract.user).joinedload(User.profile),
+            joinedload(Contract.employer),
+            joinedload(Contract.place_of_work),
+        ).order_by(
+            db.case((active, 0), (upcoming, 1), else_=2),
+            Contract.start_date.desc(), Contract.id.desc(),
+        ).all()
+        return render_template(
+            "manage_contracts.html", contracts=contracts, counts=counts, today=today,
+            selected_status=selected_status, search=search, selected_entity_id=selected_entity_id,
+            legal_entities=LegalEntity.query.order_by(LegalEntity.name.asc()).all(),
+            user_display_name=_user_display_name,
+        )
+
+    @app.route("/contracts/new")
+    @privilege_manager_required
+    def select_contract_employee():
+        user_id = request.args.get("user_id", type=int)
+        if user_id:
+            if db.session.get(User, user_id) is None:
+                abort(404)
+            return redirect(url_for("create_contract", user_id=user_id))
+        return render_template("contract_employee.html", users=User.query.order_by(User.username.asc()).all(), user_display_name=_user_display_name)
 
     @app.route("/users/<int:user_id>/contracts/new", methods=["GET", "POST"])
     @privilege_manager_required
     def create_contract(user_id: int):
         target_user = db.session.get(User, user_id)
         if target_user is None:
-            flash("User not found.", "error")
+            flash(_("User not found."), "error")
             return redirect(url_for("manage_contracts"))
 
         contract = Contract(user_id=target_user.id)
@@ -1817,7 +1870,7 @@ def init_routes(app):
             else:
                 db.session.add(contract)
                 db.session.commit()
-                flash(f"Contract created for {target_user.username}.", "success")
+                flash(_("Contract created for %(username)s.", username=target_user.username), "success")
                 return redirect(url_for("manage_contracts"))
 
         entities = LegalEntity.query.order_by(LegalEntity.name.asc()).all()
@@ -1839,7 +1892,7 @@ def init_routes(app):
     def edit_contract(contract_id: int):
         contract = db.session.get(Contract, contract_id)
         if contract is None:
-            flash("Contract not found.", "error")
+            flash(_("Contract not found."), "error")
             return redirect(url_for("manage_contracts"))
 
         if request.method == "POST":
@@ -1850,7 +1903,7 @@ def init_routes(app):
             else:
                 db.session.add(contract)
                 db.session.commit()
-                flash(f"Contract updated for {contract.user.username}.", "success")
+                flash(_("Contract updated for %(username)s.", username=contract.user.username), "success")
                 return redirect(url_for("manage_contracts"))
 
         entities = LegalEntity.query.order_by(LegalEntity.name.asc()).all()
@@ -1941,38 +1994,38 @@ def init_routes(app):
                 .with_for_update().populate_existing().first()
             )
             if leave_request is None:
-                flash("Leave request not found or not available to you.", "error")
+                flash(_("Leave request not found or not available to you."), "error")
                 return redirect(url_for("dashboard" if return_to == "dashboard" else "manage_leaves"))
 
             if action == "approve":
                 approved_parts = _approve_leave_request(leave_request, current_user)
                 if not approved_parts:
-                    flash("You cannot add another approval to this leave request.", "error")
+                    flash(_("You cannot add another approval to this leave request."), "error")
                 elif leave_request.status == LeaveRequestStatus.approved:
-                    flash("Leave request fully approved.", "success")
+                    flash(_("Leave request fully approved."), "success")
                 else:
-                    flash(f"Recorded your {' and '.join(approved_parts)} approval; another approval is still required.", "success")
+                    flash(_("Recorded your %(reviewers)s approval; another approval is still required.", reviewers=_(" and ").join(_("CEO") if part == "CEO" else _("Principal / deputy principal") for part in approved_parts)), "success")
             elif action == "reject":
                 if leave_request.status == LeaveRequestStatus.pending_approval:
                     if not (_can_approve_ceo_part(current_user, leave_request) or _can_approve_leadership_part(current_user, leave_request)):
                         abort(403)
                     leave_request.status = LeaveRequestStatus.rejected
                     leave_request.decided_by_id = current_user.id
-                    flash("Leave request rejected.", "success")
+                    flash(_("Leave request rejected."), "success")
                 elif leave_request.status == LeaveRequestStatus.pending_cancellation:
                     leave_request.status = LeaveRequestStatus.approved
-                    flash("Leave cancellation rejected; request remains approved.", "success")
+                    flash(_("Leave cancellation rejected; request remains approved."), "success")
                 else:
-                    flash("Only pending approval or pending cancellation leave requests can be rejected.", "error")
+                    flash(_("Only pending approval or pending cancellation leave requests can be rejected."), "error")
             elif action == "cancel":
                 if leave_request.status in {LeaveRequestStatus.approved, LeaveRequestStatus.pending_cancellation}:
                     leave_request.status = LeaveRequestStatus.cancelled
                     leave_request.decided_by_id = current_user.id
-                    flash("Leave request cancelled.", "success")
+                    flash(_("Leave request cancelled."), "success")
                 else:
-                    flash("Only approved or pending cancellation leave requests can be cancelled.", "error")
+                    flash(_("Only approved or pending cancellation leave requests can be cancelled."), "error")
             else:
-                flash("Invalid leave action.", "error")
+                flash(_("Invalid leave action."), "error")
                 return redirect(url_for("dashboard" if return_to == "dashboard" else "manage_leaves"))
 
             db.session.commit()
@@ -2021,7 +2074,7 @@ def init_routes(app):
             try:
                 filtered_query = filtered_query.filter(LeaveRequest.status == LeaveRequestStatus(selected_status))
             except ValueError:
-                flash("Invalid status filter ignored.", "error")
+                flash(_("Invalid status filter ignored."), "error")
 
         leave_requests = (
             filtered_query
@@ -2068,11 +2121,11 @@ def init_routes(app):
             action = request.form.get("action")
             note = _normalize_optional_text(request.form.get("note"))
             if selected_day is None:
-                flash("Please select a valid day.", "error")
+                flash(_("Please select a valid day."), "error")
             elif action == "reset":
                 WorkingDayOverride.query.filter_by(day=selected_day).delete()
                 db.session.commit()
-                flash("The day now follows the Hungarian calendar default again.", "success")
+                flash(_("The day now follows the Hungarian calendar default again."), "success")
             elif action in {"working", "holiday"}:
                 override = WorkingDayOverride.query.filter_by(day=selected_day).first()
                 if override is None:
@@ -2081,9 +2134,9 @@ def init_routes(app):
                 override.is_working_day = action == "working"
                 override.note = note
                 db.session.commit()
-                flash("Working day calendar updated.", "success")
+                flash(_("Working day calendar updated."), "success")
             else:
-                flash("Invalid working day action.", "error")
+                flash(_("Invalid working day action."), "error")
             return redirect(url_for("manage_working_days", year=selected_year, month=selected_month))
 
         month_start = date(selected_year, selected_month, 1)
@@ -2137,9 +2190,9 @@ def init_routes(app):
         if selected_contract_id:
             selected_contract = next((contract for contract in all_contracts if contract.id == selected_contract_id), None)
             if selected_contract is None:
-                flash("Selected contract does not exist.", "error")
+                flash(_("Selected contract does not exist."), "error")
             elif selected_user and selected_contract.user_id != selected_user.id:
-                flash("Selected contract does not belong to the selected employee.", "error")
+                flash(_("Selected contract does not belong to the selected employee."), "error")
                 selected_contract = None
             elif selected_user is None:
                 selected_user = selected_contract.user
@@ -2148,37 +2201,37 @@ def init_routes(app):
         if request.method == "POST":
             action = request.form.get("action", "save")
             if selected_year < 1970 or selected_year > 2100:
-                flash("Please provide a valid calendar year.", "error")
+                flash(_("Please provide a valid calendar year."), "error")
                 return redirect(url_for("manage_leave_limits", calendar_year=selected_year))
             if action == "open_year":
                 _set_leave_year_open(selected_year, True, current_user)
                 db.session.commit()
-                flash(f"{selected_year} is now open for employee leave requests.", "success")
+                flash(_("%(year)s is now open for employee leave requests.", year=selected_year), "success")
                 return redirect(url_for("manage_leave_limits", calendar_year=selected_year))
             if action == "lock_year":
                 _set_leave_year_open(selected_year, False)
                 db.session.commit()
-                flash(f"{selected_year} is now locked for employee leave requests.", "success")
+                flash(_("%(year)s is now locked for employee leave requests.", year=selected_year), "success")
                 return redirect(url_for("manage_leave_limits", calendar_year=selected_year))
             if action == "load_year_defaults":
                 _import_default_leave_limits_for_year(selected_year)
                 _copy_range_limits_for_year(selected_year)
                 db.session.commit()
-                flash(f"Default leave limits were loaded for active contracts in {selected_year}.", "success")
+                flash(_("Default leave limits were loaded for active contracts in %(year)s.", year=selected_year), "success")
                 return redirect(url_for("manage_leave_limits", calendar_year=selected_year))
             if action == "undo_year_import":
                 _remove_imported_leave_limits_for_year(selected_year)
                 db.session.commit()
-                flash(f"Imported leave limits for {selected_year} were removed.", "success")
+                flash(_("Imported leave limits for %(year)s were removed.", year=selected_year), "success")
                 return redirect(url_for("manage_leave_limits", calendar_year=selected_year))
             if selected_user is None:
-                flash("Please select an employee first.", "error")
+                flash(_("Please select an employee first."), "error")
                 return redirect(url_for("manage_leave_limits"))
             if selected_contract is None:
-                flash("Please select a valid contract.", "error")
+                flash(_("Please select a valid contract."), "error")
                 return redirect(url_for("manage_leave_limits", user_id=selected_user_id, calendar_year=selected_year))
             if not _is_contract_active_in_year(selected_contract, selected_year):
-                flash("The selected contract is not active in the selected calendar year.", "error")
+                flash(_("The selected contract is not active in the selected calendar year."), "error")
                 return redirect(
                     url_for(
                         "manage_leave_limits",
@@ -2191,7 +2244,7 @@ def init_routes(app):
             if action == "load_contract_defaults":
                 _import_default_leave_limits_for_contract(selected_contract, selected_year)
                 db.session.commit()
-                flash("Default leave limits were loaded for the selected contract.", "success")
+                flash(_("Default leave limits were loaded for the selected contract."), "success")
                 return redirect(
                     url_for(
                         "manage_leave_limits",
@@ -2203,7 +2256,7 @@ def init_routes(app):
             if action == "undo_contract_import":
                 _remove_imported_leave_limits_for_contract(selected_contract, selected_year)
                 db.session.commit()
-                flash("Imported leave limits were removed for the selected contract.", "success")
+                flash(_("Imported leave limits were removed for the selected contract."), "success")
                 return redirect(
                     url_for(
                         "manage_leave_limits",
@@ -2227,7 +2280,7 @@ def init_routes(app):
                 if limit_days is None:
                     continue
                 if limit_days < 0:
-                    flash(f"{leave_type.value.title()} cannot be negative.", "error")
+                    flash(_("%(category)s cannot be negative.", category=enum_label(leave_type)), "error")
                     return redirect(
                         url_for(
                             "manage_leave_limits",
@@ -2273,7 +2326,7 @@ def init_routes(app):
                 try:
                     leave_type = LeaveType[leave_type_name]
                 except KeyError:
-                    flash("Invalid custom leave category submitted.", "error")
+                    flash(_("Invalid custom leave category submitted."), "error")
                     return redirect(
                         url_for(
                             "manage_leave_limits",
@@ -2297,7 +2350,7 @@ def init_routes(app):
                 if not limit_days_value and start_value is None and end_value is None:
                     continue
                 if not limit_days_value or start_value is None or end_value is None:
-                    flash(f"{leave_type.value.title()} must include limit, start date, and end date.", "error")
+                    flash(_("%(category)s must include limit, start date, and end date.", category=enum_label(leave_type)), "error")
                     return redirect(
                         url_for(
                             "manage_leave_limits",
@@ -2309,7 +2362,7 @@ def init_routes(app):
                 try:
                     limit_days = int(limit_days_value)
                 except ValueError:
-                    flash(f"{leave_type.value.title()} limit must be a whole number.", "error")
+                    flash(_("%(category)s limit must be a whole number.", category=enum_label(leave_type)), "error")
                     return redirect(
                         url_for(
                             "manage_leave_limits",
@@ -2319,7 +2372,7 @@ def init_routes(app):
                         )
                     )
                 if limit_days < 0:
-                    flash(f"{leave_type.value.title()} cannot be negative.", "error")
+                    flash(_("%(category)s cannot be negative.", category=enum_label(leave_type)), "error")
                     return redirect(
                         url_for(
                             "manage_leave_limits",
@@ -2329,7 +2382,7 @@ def init_routes(app):
                         )
                     )
                 if end_value < start_value:
-                    flash(f"{leave_type.value.title()} end date cannot be earlier than start date.", "error")
+                    flash(_("%(category)s end date cannot be earlier than start date.", category=enum_label(leave_type)), "error")
                     return redirect(
                         url_for(
                             "manage_leave_limits",
@@ -2360,7 +2413,7 @@ def init_routes(app):
                     db.session.add(record)
 
             db.session.commit()
-            flash("Leave limits saved for the selected contract and year.", "success")
+            flash(_("Leave limits saved for the selected contract and year."), "success")
             return redirect(
                 url_for(
                     "manage_leave_limits",
@@ -2427,7 +2480,7 @@ def init_routes(app):
             leadership_id = request.form.get("leadership_id", type=int)
             leadership = db.session.get(Leadership, leadership_id) if leadership_id else Leadership()
             if leadership is None:
-                flash("Leadership record not found.", "error")
+                flash(_("Leadership record not found."), "error")
                 return redirect(url_for("manage_leadership"))
 
             errors = _save_leadership_from_form(leadership)
@@ -2438,7 +2491,7 @@ def init_routes(app):
 
             db.session.add(leadership)
             db.session.commit()
-            flash("Leadership record updated." if leadership_id else "Leadership record saved.", "success")
+            flash(_("Leadership record updated.") if leadership_id else _("Leadership record saved."), "success")
             return redirect(url_for("manage_leadership"))
 
         legal_entities = LegalEntity.query.order_by(LegalEntity.name.asc()).all()
@@ -2458,7 +2511,7 @@ def init_routes(app):
         if editing_leadership_id:
             editing_leadership = db.session.get(Leadership, editing_leadership_id)
             if editing_leadership is None:
-                flash("Leadership record not found.", "error")
+                flash(_("Leadership record not found."), "error")
                 return redirect(url_for("manage_leadership"))
 
         return render_template(
@@ -2482,7 +2535,7 @@ def init_routes(app):
                 if exam.id:
                     db.session.delete(exam)
                     db.session.commit()
-                flash("Professional exam removed.", "success")
+                flash(_("Professional exam removed."), "success")
                 return redirect(url_for("dashboard"))
 
             try:
@@ -2490,7 +2543,7 @@ def init_routes(app):
                 if year_obtained < 1900 or year_obtained > datetime.now().year + 1:
                     raise ValueError
             except ValueError:
-                flash("Year obtained is invalid.", "error")
+                flash(_("Year obtained is invalid."), "error")
                 return render_template("professional_exam_form.html", exam=exam)
 
             exam.qualification_name = qualification_name
@@ -2498,7 +2551,7 @@ def init_routes(app):
             exam.year_obtained = year_obtained
             db.session.add(exam)
             db.session.commit()
-            flash("Professional exam saved.", "success")
+            flash(_("Professional exam saved."), "success")
             return redirect(url_for("dashboard"))
 
         return render_template("professional_exam_form.html", exam=exam)

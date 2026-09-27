@@ -47,8 +47,8 @@
         <time datetime="{{ day.isoformat() }}">{{ day.day }}</time>
         {% for leave_request in month_requests %}
           {% if leave_request.status.value not in ['cancelled', 'rejected'] and leave_request_overlaps_day(leave_request, day) %}
-          <span class="leave-chip status-{{ leave_request.status.value|replace(' ', '-') }}" title="{{ _(leave_request.category.value)|capitalize }} · {{ _(leave_request.status.value) }}">
-            {{ _(leave_request.category.value)|capitalize }}
+          <span class="leave-chip status-{{ leave_request.status.value|replace(' ', '-') }}" title="{{ enum_label(leave_request.category) }} · {{ enum_label(leave_request.status) }}">
+            {{ enum_label(leave_request.category) }}
           </span>
           {% endif %}
         {% endfor %}
@@ -65,11 +65,11 @@
       {% for leave_request in month_requests %}
       <article class="request-item">
         <div>
-          <strong>{{ _(leave_request.category.value)|capitalize }}</strong>
+          <strong>{{ enum_label(leave_request.category) }}</strong>
           <p>{{ leave_request.start_date }}{% if leave_request.end_date %} → {{ leave_request.end_date }}{% else %} · {{ _('Open-ended or single day') }}{% endif %}</p>
         </div>
         <div class="request-actions">
-          <span class="status-pill status-{{ leave_request.status.value|replace(' ', '-') }}">{{ _(leave_request.status.value)|capitalize }}</span>
+          <span class="status-pill status-{{ leave_request.status.value|replace(' ', '-') }}">{{ enum_label(leave_request.status) }}</span>
           {% if leave_request.status.value in ['approved', 'pending approval'] %}
           <form method="post" class="inline-form">
             <input type="hidden" name="action" value="cancel">
@@ -126,13 +126,13 @@
       <select id="category" name="category" required>
         {% for item in available_categories %}
         <option value="{{ item.category.value }}" data-end-required="{{ 'true' if item.end_required else 'false' }}">
-          {{ _(item.label) }}
+          {{ item.label }}
         </option>
         {% endfor %}
       </select>
       <div id="leave-type-help" class="leave-type-help">
         {% for item in available_categories %}
-        <p data-category-help="{{ item.category.value }}" {% if not loop.first %}hidden{% endif %}>{{ _(item.description) }}</p>
+        <p data-category-help="{{ item.category.value }}" {% if not loop.first %}hidden{% endif %}>{{ item.description }}</p>
         {% endfor %}
       </div>
 
@@ -174,7 +174,7 @@
         <tbody>
           {% for item in leave_usage_summary %}
           <tr>
-            <td>{{ _(item.label) }}</td>
+            <td>{{ item.label }}</td>
             <td>{{ item.used_days }}</td>
             <td>
               {% if item.available_days is not none %}

@@ -9,73 +9,73 @@
     </div>
   </div>
 
-  <form method="post" class="grid-form contract-fields">
-    <div>
+  <form method="post" class="form-grid contract-fields">
+    <div class="field">
       <label for="contract_type">{{ _('Contract type *') }}</label>
       <select id="contract_type" name="contract_type" required>
         <option value="">{{ _('Select contract type') }}</option>
         {% for ct in contract_types %}
-        <option value="{{ ct.value }}" {% if contract.contract_type == ct %}selected{% endif %}>{{ ct.value }}</option>
+        <option value="{{ ct.value }}" {% if request.form.get('contract_type', contract.contract_type.value if contract.contract_type else '') == ct.value %}selected{% endif %}>{{ enum_label(ct) }}</option>
         {% endfor %}
       </select>
     </div>
 
-    <div>
+    <div class="field">
       <label for="start_date">{{ _('Start of contract *') }}</label>
-      <input id="start_date" type="date" name="start_date" value="{{ contract.start_date or '' }}" required>
+      <input id="start_date" type="date" name="start_date" value="{{ request.form.get('start_date', contract.start_date or '') }}" required>
     </div>
 
-    <div>
+    <div class="field">
       <label for="end_date">{{ _('End of contract') }}</label>
-      <input id="end_date" type="date" name="end_date" value="{{ contract.end_date or '' }}">
+      <input id="end_date" type="date" name="end_date" value="{{ request.form.get('end_date', contract.end_date or '') }}">
     </div>
 
-    <div>
+    <div class="field">
       <label for="certificate_of_good_conduct_number">{{ _('Number of certificate of good conduct') }}</label>
-      <input id="certificate_of_good_conduct_number" name="certificate_of_good_conduct_number" value="{{ contract.certificate_of_good_conduct_number or '' }}">
+      <input id="certificate_of_good_conduct_number" maxlength="64" name="certificate_of_good_conduct_number" value="{{ request.form.get('certificate_of_good_conduct_number', contract.certificate_of_good_conduct_number or '') }}">
     </div>
 
-    <div>
+    <div class="field">
       <label for="certificate_of_good_conduct_date">{{ _('Date of certificate of good conduct') }}</label>
-      <input id="certificate_of_good_conduct_date" type="date" name="certificate_of_good_conduct_date" value="{{ contract.certificate_of_good_conduct_date or '' }}">
+      <input id="certificate_of_good_conduct_date" type="date" name="certificate_of_good_conduct_date" value="{{ request.form.get('certificate_of_good_conduct_date', contract.certificate_of_good_conduct_date or '') }}">
     </div>
 
-    <div>
+    <div class="field">
       <label for="job_title">{{ _('Job title *') }}</label>
-      <input id="job_title" name="job_title" value="{{ contract.job_title or '' }}" required>
+      <input id="job_title" maxlength="120" name="job_title" value="{{ request.form.get('job_title', contract.job_title or '') }}" required>
     </div>
 
-    <div>
+    <div class="field">
       <label for="working_hours_per_week">{{ _('Working hours per week *') }}</label>
-      <input id="working_hours_per_week" type="number" min="1" name="working_hours_per_week" value="{{ contract.working_hours_per_week or '' }}" required>
+      <input id="working_hours_per_week" type="number" min="1" name="working_hours_per_week" value="{{ request.form.get('working_hours_per_week', contract.working_hours_per_week or '') }}" required>
     </div>
 
-    <div>
+    <div class="field">
       <label for="teacher_classification">{{ _('Teacher classification') }}</label>
       <select id="teacher_classification" name="teacher_classification">
         <option value="">{{ _('No classification') }}</option>
         {% for tc in teacher_classifications %}
-        <option value="{{ tc.value }}" {% if contract.teacher_classification == tc %}selected{% endif %}>{{ tc.value }}</option>
+        <option value="{{ tc.value }}" {% if request.form.get('teacher_classification', contract.teacher_classification.value if contract.teacher_classification else '') == tc.value %}selected{% endif %}>{{ enum_label(tc) }}</option>
         {% endfor %}
       </select>
     </div>
 
-    <div>
+    <div class="field">
       <label for="classification_start_date">{{ _('Start of classification') }}</label>
-      <input id="classification_start_date" type="date" name="classification_start_date" value="{{ contract.classification_start_date or '' }}">
+      <input id="classification_start_date" type="date" name="classification_start_date" value="{{ request.form.get('classification_start_date', contract.classification_start_date or '') }}">
     </div>
 
-    <div>
+    <div class="field">
       <label for="legal_entity_id">{{ _('Employer *') }}</label>
       <select id="legal_entity_id" name="legal_entity_id" required>
         <option value="">{{ _('Select employer') }}</option>
         {% for entity in legal_entities %}
-        <option value="{{ entity.id }}" {% if contract.legal_entity_id == entity.id %}selected{% endif %}>{{ entity.name }}</option>
+        <option value="{{ entity.id }}" {% if request.form.get('legal_entity_id', contract.legal_entity_id)|int == entity.id %}selected{% endif %}>{{ entity.name }}</option>
         {% endfor %}
       </select>
     </div>
 
-    <div>
+    <div class="field">
       <label for="place_of_work_id">{{ _('Place of work *') }}</label>
       <select id="place_of_work_id" name="place_of_work_id" required>
         <option value="">{{ _('Select place of work') }}</option>
@@ -83,7 +83,7 @@
         <option
           value="{{ place.id }}"
           data-entity-id="{{ place.legal_entity_id }}"
-          {% if contract.place_of_work_id == place.id %}selected{% endif %}
+          {% if request.form.get('place_of_work_id', contract.place_of_work_id)|int == place.id %}selected{% endif %}
         >
           {{ place_label_fn(place) }}
         </option>
@@ -91,7 +91,7 @@
       </select>
     </div>
 
-    <div class="button-row">
+    <div class="button-row field-full">
       <button type="submit">{{ _('Create contract') if mode == 'create' else _('Save changes') }}</button>
       <a class="button button-secondary" href="{{ url_for('manage_contracts') }}">{{ _("Cancel") }}</a>
     </div>

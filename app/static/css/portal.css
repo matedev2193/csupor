@@ -250,3 +250,17 @@ td .button { white-space: nowrap; font-size: 11px; min-height: 34px; padding: 7p
 
 .management-hero { grid-template-columns: 1fr; }
 .management-hero .hero-copy h1 { font-size: clamp(1.7rem, 2.5vw, 2.2rem); }
+
+/* Compact profile addresses and contract-centred management. */
+.section-heading h1 { margin: 0; font-size: 1.4rem; letter-spacing: -.035em; line-height: 1.3; }
+textarea.address-field { min-height: 72px; height: 72px; }
+.nowrap { white-space: nowrap; }
+.contract-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+.contract-tab { display: inline-flex; align-items: center; gap: 9px; padding: 9px 13px; border: 1px solid var(--border); border-radius: 9px; font-size: 12px; }
+.contract-tab.active { color: var(--primary); border-color: var(--primary); background: var(--primary-tint); font-weight: 650; }
+.contract-tab span { border-radius: 5px; padding: 1px 6px; background: var(--surface-muted); color: var(--text-soft); }
+.contract-filters { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) auto; align-items: end; gap: 14px; }
+.contract-filters .button-row { margin: 0; }
+.contracts-table { min-width: 950px; }
+.contract-ended { background: var(--surface-muted); }
+@media (max-width: 850px) { .contract-filters { grid-template-columns: 1fr; } }

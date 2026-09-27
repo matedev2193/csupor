@@ -66,7 +66,7 @@
           <select id="gender" name="gender">
             <option value="">{{ _('Select gender') }}</option>
             {% for g in genders %}
-            <option value="{{ g.value }}" {% if profile.gender and profile.gender.value == g.value %}selected{% endif %}>{{ _(g.value)|capitalize }}</option>
+            <option value="{{ g.value }}" {% if profile.gender and profile.gender.value == g.value %}selected{% endif %}>{{ enum_label(g) }}</option>
             {% endfor %}
           </select>
         </div>
@@ -96,17 +96,17 @@
           <input id="education_number" name="education_number" value="{{ profile.education_number or '' }}">
         </div>
         <div class="field">
-          <label for="teacher_id_card_number">{{ _('Teacher ID card number') }}</label>
-          <input id="teacher_id_card_number" name="teacher_id_card_number" value="{{ profile.teacher_id_card_number or '' }}">
+          <label for="teacher_id_card_number">{{ _('Teacher ID card number (max. 64 characters)') }}</label>
+          <input id="teacher_id_card_number" name="teacher_id_card_number" maxlength="64" value="{{ profile.teacher_id_card_number or '' }}">
         </div>
         <h3 class="form-divider">{{ _('Address and other details') }}</h3>
         <div class="field field-full">
           <label for="permanent_residence">{{ _('Permanent residence') }}</label>
-          <textarea id="permanent_residence" name="permanent_residence">{{ profile.permanent_residence or '' }}</textarea>
+          <textarea class="address-field" rows="2" maxlength="255" id="permanent_residence" name="permanent_residence">{{ profile.permanent_residence or '' }}</textarea>
         </div>
         <div class="field field-full">
           <label for="temporary_address">{{ _('Temporary address') }}</label>
-          <textarea id="temporary_address" name="temporary_address">{{ profile.temporary_address or '' }}</textarea>
+          <textarea class="address-field" rows="2" maxlength="255" id="temporary_address" name="temporary_address">{{ profile.temporary_address or '' }}</textarea>
         </div>
         <div class="field">
           <label for="bank_account_number">{{ _('Bank account number') }}</label>
@@ -121,13 +121,13 @@
               value="{{ marital_status.value }}"
               {% if profile.marital_status and profile.marital_status.value == marital_status.value %}selected{% endif %}
             >
-              {{ _(marital_status.value)|capitalize }}
+              {{ enum_label(marital_status) }}
             </option>
             {% endfor %}
           </select>
         </div>
         <div class="field field-full">
-          <label for="disability">{{ _('Disability') }}</label>
+          <label for="disability">{{ _('Disability, long-term illness') }}</label>
           <input id="disability" name="disability" value="{{ profile.disability or '' }}">
         </div>
       </div>

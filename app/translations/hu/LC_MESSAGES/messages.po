@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  CSUPOR\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-06-17 19:41+0000\n"
+"POT-Creation-Date: 2026-09-27 05:37-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: hu\n"
@@ -14,105 +14,943 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: app/routes.py:101
-msgid "Complete"
-msgstr "Teljes"
+#: app/i18n.py:6
+msgid "Please log in to access this page."
+msgstr "Az oldal megnyitásához jelentkezz be."
 
-#: app/routes.py:102
+#: app/i18n.py:9 app/templates/contract_employee.html:6 app/templates/manage_contracts.html:18
+#: app/templates/manage_leave_limits.html:14 app/templates/manage_leaves.html:26
+#: app/templates/manage_leaves.html:76
+msgid "Employee"
+msgstr "Munkavállaló"
+
+#: app/i18n.py:10
+msgid "HR"
+msgstr "HR"
+
+#: app/i18n.py:11 app/routes.py:2007
+msgid "CEO"
+msgstr "Ügyvezető"
+
+#: app/i18n.py:12
+msgid "Developer"
+msgstr "Fejlesztő"
+
+#: app/i18n.py:13
+msgid "Male"
+msgstr "Férfi"
+
+#: app/i18n.py:14
+msgid "Female"
+msgstr "Nő"
+
+#: app/i18n.py:15
+msgid "Other"
+msgstr "Egyéb"
+
+#: app/i18n.py:16
+msgid "Teacher"
+msgstr "Pedagógus"
+
+#: app/i18n.py:17
+msgid "Teaching Assistant"
+msgstr "Pedagógiai asszisztens"
+
+#: app/i18n.py:18
+msgid "Nursery Assistant"
+msgstr "Dajka"
+
+#: app/i18n.py:19
+msgid "Secretary"
+msgstr "Titkár"
+
+#: app/i18n.py:20
+msgid "Employee under the Labour Code"
+msgstr "A munka törvénykönyve hatálya alá tartozó munkavállaló"
+
+#: app/i18n.py:21
+msgid "Basic leave"
+msgstr "Alapszabadság"
+
+#: app/i18n.py:22
+msgid "Supplementary leave based on age"
+msgstr "Életkor szerinti pótszabadság"
+
+#: app/i18n.py:23
+msgid "Supplementary leave for children"
+msgstr "Gyermekek után járó pótszabadság"
+
+#: app/i18n.py:24
+msgid "Supplementary leave for children with disability"
+msgstr "Fogyatékossággal élő gyermek után járó pótszabadság"
+
+#: app/i18n.py:25
+msgid "Supplementary leave for young employees"
+msgstr "Fiatal munkavállalók pótszabadsága"
+
+#: app/i18n.py:26
+msgid "Supplementary leave for employees with reduced working capacity / eligible for disability benefits"
+msgstr "Megváltozott munkaképesség vagy fogyatékossági ellátás alapján járó pótszabadság"
+
+#: app/i18n.py:27
+msgid "Sick leave"
+msgstr "Betegszabadság"
+
+#: app/i18n.py:28
+msgid "Leave carried over from previous year"
+msgstr "Előző évről áthozott szabadság"
+
+#: app/i18n.py:29
+msgid "Maternity leave"
+msgstr "Szülési szabadság"
+
+#: app/i18n.py:30
+msgid "Paternity leave"
+msgstr "Apasági szabadság"
+
+#: app/i18n.py:31
+msgid "Parental leave"
+msgstr "Szülői szabadság"
+
+#: app/i18n.py:32
+msgid "Childcare fee"
+msgstr "Gyermekgondozási díj"
+
+#: app/i18n.py:33
+msgid "Childcare allowance"
+msgstr "Gyermekgondozást segítő ellátás"
+
+#: app/i18n.py:34
+msgid "Supplementary leave for the birth of a grandchild"
+msgstr "Unoka születése után járó pótszabadság"
+
+#: app/i18n.py:35
+msgid "Supplementary leave for first marriage"
+msgstr "Első házasságkötés után járó pótszabadság"
+
+#: app/i18n.py:36 app/routes.py:894
+msgid "Exemption from obligation to work"
+msgstr "Munkavégzés alóli mentesítés"
+
+#: app/i18n.py:37 app/routes.py:857
+msgid "Paid leave"
+msgstr "Fizetett szabadság"
+
+#: app/i18n.py:38 app/routes.py:863
+msgid "Health leave"
+msgstr "Egészségügyi távollét"
+
+#: app/i18n.py:39 app/routes.py:872
+msgid "Childcare sickness benefit"
+msgstr "Gyermekápolási táppénz"
+
+#: app/i18n.py:40 app/routes.py:886
+msgid "Childbirth leave"
+msgstr "Szülési szabadság"
+
+#: app/i18n.py:41 app/routes.py:903
+msgid "Unpaid leave"
+msgstr "Fizetés nélküli szabadság"
+
+#: app/i18n.py:42 app/templates/leaves.html:14
+msgid "Pending approval"
+msgstr "Jóváhagyásra vár"
+
+#: app/i18n.py:43 app/templates/leaves.html:15
+msgid "Approved"
+msgstr "Jóváhagyva"
+
+#: app/i18n.py:44 app/templates/leaves.html:16
+msgid "Rejected"
+msgstr "Elutasítva"
+
+#: app/i18n.py:45 app/templates/leaves.html:17
+msgid "Pending cancellation"
+msgstr "Visszavonásra vár"
+
+#: app/i18n.py:46 app/templates/leaves.html:18
+msgid "Cancelled"
+msgstr "Visszavonva"
+
+#: app/i18n.py:47
+msgid "Single"
+msgstr "Nőtlen / hajadon"
+
+#: app/i18n.py:48
+msgid "Married"
+msgstr "Házas"
+
+#: app/i18n.py:49
+msgid "Divorced"
+msgstr "Elvált"
+
+#: app/i18n.py:50
+msgid "Widowed"
+msgstr "Özvegy"
+
+#: app/i18n.py:51
+msgid "Civil partnership"
+msgstr "Bejegyzett élettársi kapcsolat"
+
+#: app/i18n.py:52
+msgid "Child"
+msgstr "Gyermek"
+
+#: app/i18n.py:53
+msgid "Other dependent"
+msgstr "Egyéb eltartott"
+
+#: app/i18n.py:54
+msgid "Trainee"
+msgstr "Gyakornok"
+
+#: app/i18n.py:55
+msgid "Teacher I"
+msgstr "Pedagógus I."
+
+#: app/i18n.py:56
+msgid "Teacher II"
+msgstr "Pedagógus II."
+
+#: app/i18n.py:57
+msgid "Master Teacher"
+msgstr "Mesterpedagógus"
+
+#: app/i18n.py:58
+msgid "Research Teacher"
+msgstr "Kutatótanár"
+
+#: app/i18n.py:59 app/templates/manage_leadership.html:41
+msgid "Principal"
+msgstr "Igazgató"
+
+#: app/i18n.py:60 app/templates/manage_leadership.html:42
+msgid "Deputy principal"
+msgstr "Igazgatóhelyettes"
+
+#: app/i18n.py:61
+msgid "Sickness benefit"
+msgstr "Táppénz"
+
+#: app/leave_approval.py:12
+msgid "CEO only"
+msgstr "Csak az ügyvezető"
+
+#: app/leave_approval.py:13
+msgid "Principal/deputy only"
+msgstr "Csak az igazgató vagy helyettese"
+
+#: app/leave_approval.py:14
+msgid "Both"
+msgstr "Mindkettő"
+
+#: app/leave_approval.py:15
+msgid "Either"
+msgstr "Bármelyik"
+
+#: app/leave_approval.py:18
+msgid "A CEO approval is sufficient. Principal/deputy approval is not required."
+msgstr "Az ügyvezető jóváhagyása elegendő. Igazgatói vagy igazgatóhelyettesi jóváhagyás nem szükséges."
+
+#: app/leave_approval.py:19
+msgid "Approval from the relevant principal or deputy is sufficient. CEO approval is not required."
+msgstr "Az érintett igazgató vagy helyettese jóváhagyása elegendő. Ügyvezetői jóváhagyás nem szükséges."
+
+#: app/leave_approval.py:20
+msgid "Approval from both the CEO and the relevant principal/deputy is required."
+msgstr "Az ügyvezető és az érintett igazgató vagy helyettese jóváhagyása egyaránt szükséges."
+
+#: app/leave_approval.py:21
+msgid "One approval from either the CEO or the relevant principal/deputy is sufficient."
+msgstr "Az ügyvezető vagy az érintett igazgató, illetve helyettese egyetlen jóváhagyása elegendő."
+
+#: app/routes.py:116
+msgid "Complete"
+msgstr "Hiánytalan"
+
+#: app/routes.py:117
 #, python-format
 msgid "%(percent)s%% complete"
 msgstr "%(percent)s%% kész"
 
-#: app/routes.py:657
+#: app/routes.py:132
+#, python-format
+msgid "%(label)s must be exactly %(length)s digits."
+msgstr "%(label)s: pontosan %(length)s számjegyet adj meg."
+
+#: app/routes.py:157
+msgid "Social security number"
+msgstr "TAJ-szám"
+
+#: app/routes.py:158
+msgid "Personal tax identification number"
+msgstr "Adóazonosító jel"
+
+#: app/routes.py:159
+msgid "Education number"
+msgstr "Oktatási azonosító"
+
+#: app/routes.py:162
+#, python-format
+msgid "Teacher ID card number must be at most %(length)s characters."
+msgstr "A pedagógusigazolvány száma legfeljebb %(length)s karakter lehet."
+
+#: app/routes.py:205
+msgid "OM id must be exactly 6 digits."
+msgstr "Az OM-azonosítót pontosan 6 számjeggyel add meg."
+
+#: app/routes.py:219
+msgid "Contract type is required."
+msgstr "Válassz szerződéstípust."
+
+#: app/routes.py:224
+msgid "Invalid contract type selected."
+msgstr "Érvénytelen szerződéstípust választottál."
+
+#: app/routes.py:230
+msgid "Invalid teacher classification selected."
+msgstr "Érvénytelen besorolási fokozatot választottál."
+
+#: app/routes.py:236
+msgid "Enter valid dates in the contract form."
+msgstr "Érvényes dátumokat adj meg a szerződés űrlapján."
+
+#: app/routes.py:239 app/routes.py:296 app/routes.py:1393
+msgid "Start date is required."
+msgstr "Add meg a kezdő dátumot."
+
+#: app/routes.py:241 app/routes.py:298 app/routes.py:1411
+msgid "End date cannot be earlier than the start date."
+msgstr "A záró dátum nem lehet korábbi a kezdő dátumnál."
+
+#: app/routes.py:245
+msgid "Job title is required."
+msgstr "Add meg a munkakört."
+
+#: app/routes.py:247
+msgid "Job title must be at most 120 characters."
+msgstr "A munkakör megnevezése legfeljebb 120 karakter lehet."
+
+#: app/routes.py:250
+msgid "Certificate of good conduct number must be at most 64 characters."
+msgstr "Az erkölcsi bizonyítvány száma legfeljebb 64 karakter lehet."
+
+#: app/routes.py:253
+msgid "Working hours per week is required."
+msgstr "Add meg a heti munkaórák számát egész számként."
+
+#: app/routes.py:255
+msgid "Working hours per week must be greater than 0."
+msgstr "A heti munkaórák száma legyen nagyobb 0-nál."
+
+#: app/routes.py:260
+msgid "Employer is required."
+msgstr "Válassz munkáltatót."
+
+#: app/routes.py:262 app/routes.py:1782
+msgid "Selected employer does not exist."
+msgstr "A kiválasztott munkáltató nem létezik."
+
+#: app/routes.py:264
+msgid "Place of work is required."
+msgstr "Válassz munkahelyet."
+
+#: app/routes.py:268
+msgid "Selected place of work does not exist."
+msgstr "A kiválasztott munkahely nem létezik."
+
+#: app/routes.py:270
+msgid "Selected place of work does not belong to the selected employer."
+msgstr "A kiválasztott munkahely nem a megadott munkáltatóhoz tartozik."
+
+#: app/routes.py:290
+msgid "Legal entity is required."
+msgstr "Válassz jogi személyt."
+
+#: app/routes.py:292
+msgid "Contract is required."
+msgstr "Válassz szerződést."
+
+#: app/routes.py:294
+msgid "Leadership position is required."
+msgstr "Válassz vezetői pozíciót."
+
+#: app/routes.py:303 app/routes.py:2193
+msgid "Selected contract does not exist."
+msgstr "A kiválasztott szerződés nem létezik."
+
+#: app/routes.py:305
+msgid "Selected contract does not belong to the selected legal entity."
+msgstr "A kiválasztott szerződés nem a megadott jogi személyhez tartozik."
+
+#: app/routes.py:312 app/templates/leaves.html:106
+msgid "Ongoing"
+msgstr "Folyamatban"
+
+#: app/routes.py:858
+msgid "Basic leave, supplementary leaves, parental leave, paternity leave, and leave carry-over."
+msgstr "Alapszabadság, pótszabadságok, szülői és apasági szabadság, valamint áthozott szabadság."
+
+#: app/routes.py:864
+msgid "Sick leave and sickness benefit."
+msgstr "Betegszabadság és táppénz."
+
+#: app/routes.py:873
+msgid "Available when a child dependent is recorded on your profile."
+msgstr "Akkor érhető el, ha az eltartottak között gyermek is szerepel."
+
+#: app/routes.py:887
+msgid "Maternity leave, childcare fee, and childcare allowance."
+msgstr "Szülési szabadság, gyermekgondozási díj és gyermekgondozást segítő ellátás."
+
+#: app/routes.py:895
+msgid "Request time away under an exemption from work obligation."
+msgstr "Távollét igénylése munkavégzési kötelezettség alóli mentesítés alapján."
+
+#: app/routes.py:904
+msgid "Available once paid leave days are exhausted for the selected year."
+msgstr "A kiválasztott év fizetett szabadságának felhasználása után érhető el."
+
+#: app/routes.py:1212
 msgid "Language updated."
 msgstr "A nyelv frissítve."
 
-#: app/routes.py:659
+#: app/routes.py:1214
 msgid "Selected language is not supported."
 msgstr "A kiválasztott nyelv nem támogatott."
 
-#: app/templates/base.html:6
-msgid "CSUPOR User System"
-msgstr "CSUPOR Felhasználói Rendszer"
+#: app/routes.py:1236
+msgid "Email, username and password are required."
+msgstr "Add meg az e-mail-címedet, a felhasználónevedet és a jelszavadat."
 
-#: app/templates/base.html:748 app/templates/contract_form.html:2
+#: app/routes.py:1240
+msgid "Email or username already exists."
+msgstr "Ez az e-mail-cím vagy felhasználónév már foglalt."
+
+#: app/routes.py:1253
+msgid "Registration successful. Your privilege is set to employee until HR or the CEO updates it."
+msgstr "Sikeres regisztráció. Munkavállalói jogosultságot kaptál; ezt a HR vagy az ügyvezető módosíthatja."
+
+#: app/routes.py:1269
+msgid "Invalid credentials."
+msgstr "Hibás bejelentkezési adatok."
+
+#: app/routes.py:1273
+msgid "Logged in successfully."
+msgstr "Sikeresen bejelentkeztél."
+
+#: app/routes.py:1282
+msgid "Logged out."
+msgstr "Kijelentkeztél."
+
+#: app/routes.py:1334
+msgid "Please select one of your active contracts."
+msgstr "Válaszd ki az egyik aktív szerződésedet."
+
+#: app/routes.py:1350
+msgid "You need an active contract before applying for leave."
+msgstr "Szabadság igényléséhez aktív szerződésre van szükséged."
+
+#: app/routes.py:1361
+msgid "Leave request not found."
+msgstr "A szabadságigény nem található."
+
+#: app/routes.py:1367
+msgid "Pending leave request cancelled."
+msgstr "A függőben lévő szabadságigény visszavonva."
+
+#: app/routes.py:1371
+msgid "Leave cancellation requested."
+msgstr "A szabadság visszavonását kérted."
+
+#: app/routes.py:1373
+msgid "Only approved or pending approval leaves can be cancelled here."
+msgstr "Itt csak jóváhagyott vagy jóváhagyásra váró szabadságot vonhatsz vissza."
+
+#: app/routes.py:1377
+msgid "Leave cancellation request undone."
+msgstr "A visszavonási kérelmet visszaállítottad; a szabadság ismét jóváhagyott."
+
+#: app/routes.py:1379
+msgid "Only pending cancellation leaves can be undone."
+msgstr "Csak a visszavonásra váró szabadság visszavonási kérelmét állíthatod vissza."
+
+#: app/routes.py:1384 app/routes.py:2028
+msgid "Invalid leave action."
+msgstr "Érvénytelen szabadságkezelési művelet."
+
+#: app/routes.py:1401
+msgid "Please choose an available leave type."
+msgstr "Válassz az elérhető szabadságtípusok közül."
+
+#: app/routes.py:1406
+msgid "Paid leave requests require both start and end date."
+msgstr "Fizetett szabadsághoz kezdő és záró dátumot is adj meg."
+
+#: app/routes.py:1416
+msgid "The request start date must fall within the selected active contract."
+msgstr "Az igény kezdő dátumának a kiválasztott aktív szerződés időszakába kell esnie."
+
+#: app/routes.py:1421
+msgid "This calendar year is not open for leave requests yet. Please contact HR."
+msgstr "Erre az évre még nem igényelhetsz szabadságot. Keresd a HR-t."
+
+#: app/routes.py:1426
+msgid "The request end date must fall within the selected active contract."
+msgstr "Az igény záró dátumának a kiválasztott aktív szerződés időszakába kell esnie."
+
+#: app/routes.py:1440
+#, python-format
+msgid "This request overlaps with an existing %(status)s leave request (%(start)s → %(end)s)."
+msgstr "Az igény átfed egy meglévő szabadságigénnyel (%(start)s → %(end)s; állapot: %(status)s)."
+
+#: app/routes.py:1453
+#, python-format
+msgid ""
+"Paid leave request needs %(requested)s available days within the requested validity interval, but"
+" only %(remaining)s remain."
+msgstr ""
+"Az igényelt időszakban %(requested)s nap fizetett szabadságra lenne szükség, de csak "
+"%(remaining)s nap maradt."
+
+#: app/routes.py:1474
+msgid "Leave request submitted and automatically approved."
+msgstr "A szabadságigény beküldve és automatikusan jóváhagyva."
+
+#: app/routes.py:1476
+msgid "Leave request submitted and marked as pending approval."
+msgstr "A szabadságigény beküldve, jóváhagyásra vár."
+
+#: app/routes.py:1544 app/routes.py:1626 app/routes.py:1861
+msgid "User not found."
+msgstr "A felhasználó nem található."
+
+#: app/routes.py:1550
+msgid "Invalid privilege selected."
+msgstr "Érvénytelen jogosultságot választottál."
+
+#: app/routes.py:1554
+msgid "That privilege cannot be assigned here."
+msgstr "Ezt a jogosultságot itt nem adhatod meg."
+
+#: app/routes.py:1559
+#, python-format
+msgid "Updated %(username)s to %(privilege)s privilege."
+msgstr "%(username)s új jogosultsága: %(privilege)s."
+
+#: app/routes.py:1578
+msgid "Current password is incorrect."
+msgstr "A jelenlegi jelszó hibás."
+
+#: app/routes.py:1582
+msgid "New password is required."
+msgstr "Add meg az új jelszót."
+
+#: app/routes.py:1586
+msgid "New password and confirmation do not match."
+msgstr "Az új jelszó és a megerősítése nem egyezik."
+
+#: app/routes.py:1592
+msgid "Password updated successfully."
+msgstr "A jelszavad sikeresen módosult."
+
+#: app/routes.py:1610
+msgid "Profile updated."
+msgstr "A profil frissítve."
+
+#: app/routes.py:1639
+#, python-format
+msgid "Updated profile for %(username)s."
+msgstr "%(username)s profilja frissítve."
+
+#: app/routes.py:1652
+msgid "Dependent name is required."
+msgstr "Add meg az eltartott nevét."
+
+#: app/routes.py:1655
+msgid "Dependent type is required."
+msgstr "Válaszd ki az eltartott típusát."
+
+#: app/routes.py:1658
+msgid "Dependent social security number"
+msgstr "Az eltartott TAJ-száma"
+
+#: app/routes.py:1675
+msgid "Dependent added."
+msgstr "Az eltartott hozzáadva."
+
+#: app/routes.py:1687
+msgid "Year obtained must be a number."
+msgstr "A megszerzés évét számként add meg."
+
+#: app/routes.py:1705
+msgid "Educational qualification added."
+msgstr "A képesítés hozzáadva."
+
+#: app/routes.py:1733
+msgid "Name, address, and tax number are required."
+msgstr "Add meg a nevet, a címet és az adószámot."
+
+#: app/routes.py:1736 app/templates/manage_legal_entities.html:8
+msgid "Tax number"
+msgstr "Adószám"
+
+#: app/routes.py:1748
+msgid "Legal entity updated."
+msgstr "A jogi személy frissítve."
+
+#: app/routes.py:1748
+msgid "Legal entity saved."
+msgstr "A jogi személy mentve."
+
+#: app/routes.py:1780
+msgid "Employer and address are required."
+msgstr "Válassz munkáltatót, és add meg a címet."
+
+#: app/routes.py:1788
+msgid "Place of work updated."
+msgstr "A munkahely frissítve."
+
+#: app/routes.py:1788
+msgid "Place of work saved."
+msgstr "A munkahely mentve."
+
+#: app/routes.py:1873
+#, python-format
+msgid "Contract created for %(username)s."
+msgstr "%(username)s szerződése létrehozva."
+
+#: app/routes.py:1895
+msgid "Contract not found."
+msgstr "A szerződés nem található."
+
+#: app/routes.py:1906
+#, python-format
+msgid "Contract updated for %(username)s."
+msgstr "%(username)s szerződése frissítve."
+
+#: app/routes.py:1941
+msgid "The approval rule was changed by another CEO. Review the current setting and try again."
+msgstr ""
+"Egy másik ügyvezető módosította a jóváhagyási szabályt. Ellenőrizd az aktuális beállítást, és "
+"próbáld újra."
+
+#: app/routes.py:1945
+msgid "The approval rule is unchanged."
+msgstr "A jóváhagyási szabály nem változott."
+
+#: app/routes.py:1962
+#, python-format
+msgid "Approval rule saved. Pending requests approved using recorded approvals: %(count)s."
+msgstr ""
+"A jóváhagyási szabály mentve. A már rögzített jóváhagyások alapján jóváhagyott függő igények "
+"száma: %(count)s."
+
+#: app/routes.py:1997
+msgid "Leave request not found or not available to you."
+msgstr "A szabadságigény nem található, vagy nincs hozzáférésed."
+
+#: app/routes.py:2003
+msgid "You cannot add another approval to this leave request."
+msgstr "Ehhez a szabadságigényhez nem adhatsz újabb jóváhagyást."
+
+#: app/routes.py:2005
+msgid "Leave request fully approved."
+msgstr "A szabadságigény minden szükséges jóváhagyást megkapott."
+
+#: app/routes.py:2007
+#, python-format
+msgid "Recorded your %(reviewers)s approval; another approval is still required."
+msgstr "A jóváhagyásod rögzítve (%(reviewers)s); még egy jóváhagyás szükséges."
+
+#: app/routes.py:2007
+msgid " and "
+msgstr " és "
+
+#: app/routes.py:2007
+msgid "Principal / deputy principal"
+msgstr "Igazgató / igazgatóhelyettes"
+
+#: app/routes.py:2014
+msgid "Leave request rejected."
+msgstr "A szabadságigény elutasítva."
+
+#: app/routes.py:2017
+msgid "Leave cancellation rejected; request remains approved."
+msgstr "A visszavonási kérelem elutasítva; a szabadságigény jóváhagyott marad."
+
+#: app/routes.py:2019
+msgid "Only pending approval or pending cancellation leave requests can be rejected."
+msgstr "Csak jóváhagyásra vagy visszavonásra váró igényt utasíthatsz el."
+
+#: app/routes.py:2024
+msgid "Leave request cancelled."
+msgstr "A szabadságigény visszavonva."
+
+#: app/routes.py:2026
+msgid "Only approved or pending cancellation leave requests can be cancelled."
+msgstr "Csak jóváhagyott vagy visszavonásra váró szabadságigényt vonhatsz vissza."
+
+#: app/routes.py:2077
+msgid "Invalid status filter ignored."
+msgstr "Az érvénytelen állapotszűrőt nem alkalmaztuk."
+
+#: app/routes.py:2124
+msgid "Please select a valid day."
+msgstr "Válassz érvényes napot."
+
+#: app/routes.py:2128
+msgid "The day now follows the Hungarian calendar default again."
+msgstr "A nap ismét a magyar munkanaptár alapbeállítását követi."
+
+#: app/routes.py:2137
+msgid "Working day calendar updated."
+msgstr "A munkanaptár frissítve."
+
+#: app/routes.py:2139
+msgid "Invalid working day action."
+msgstr "Érvénytelen munkanaptár-művelet."
+
+#: app/routes.py:2195
+msgid "Selected contract does not belong to the selected employee."
+msgstr "A kiválasztott szerződés nem a megadott munkavállalóhoz tartozik."
+
+#: app/routes.py:2204
+msgid "Please provide a valid calendar year."
+msgstr "Adj meg érvényes naptári évet."
+
+#: app/routes.py:2209
+#, python-format
+msgid "%(year)s is now open for employee leave requests."
+msgstr "%(year)s megnyitva a munkavállalói szabadságigények előtt."
+
+#: app/routes.py:2214
+#, python-format
+msgid "%(year)s is now locked for employee leave requests."
+msgstr "%(year)s zárolva az új munkavállalói szabadságigények elől."
+
+#: app/routes.py:2220
+#, python-format
+msgid "Default leave limits were loaded for active contracts in %(year)s."
+msgstr "Az alapértelmezett szabadságkeretek betöltve %(year)s aktív szerződéseihez."
+
+#: app/routes.py:2225
+#, python-format
+msgid "Imported leave limits for %(year)s were removed."
+msgstr "%(year)s importált szabadságkeretei eltávolítva."
+
+#: app/routes.py:2228
+msgid "Please select an employee first."
+msgstr "Először válassz munkavállalót."
+
+#: app/routes.py:2231
+msgid "Please select a valid contract."
+msgstr "Válassz érvényes szerződést."
+
+#: app/routes.py:2234
+msgid "The selected contract is not active in the selected calendar year."
+msgstr "A kiválasztott szerződés nem aktív a megadott naptári évben."
+
+#: app/routes.py:2247
+msgid "Default leave limits were loaded for the selected contract."
+msgstr "Az alapértelmezett szabadságkeretek betöltve a kiválasztott szerződéshez."
+
+#: app/routes.py:2259
+msgid "Imported leave limits were removed for the selected contract."
+msgstr "A kiválasztott szerződés importált szabadságkeretei eltávolítva."
+
+#: app/routes.py:2283 app/routes.py:2375
+#, python-format
+msgid "%(category)s cannot be negative."
+msgstr "%(category)s: a keret nem lehet negatív."
+
+#: app/routes.py:2329
+msgid "Invalid custom leave category submitted."
+msgstr "Érvénytelen egyedi szabadságkategóriát adtál meg."
+
+#: app/routes.py:2353
+#, python-format
+msgid "%(category)s must include limit, start date, and end date."
+msgstr "%(category)s: add meg a keretet, a kezdő és a záró dátumot is."
+
+#: app/routes.py:2365
+#, python-format
+msgid "%(category)s limit must be a whole number."
+msgstr "%(category)s: a keretet egész számként add meg."
+
+#: app/routes.py:2385
+#, python-format
+msgid "%(category)s end date cannot be earlier than start date."
+msgstr "%(category)s: a záró dátum nem lehet korábbi a kezdő dátumnál."
+
+#: app/routes.py:2416
+msgid "Leave limits saved for the selected contract and year."
+msgstr "A kiválasztott szerződés és év szabadságkeretei mentve."
+
+#: app/routes.py:2483 app/routes.py:2514
+msgid "Leadership record not found."
+msgstr "A vezetői megbízás nem található."
+
+#: app/routes.py:2494
+msgid "Leadership record updated."
+msgstr "A vezetői megbízás frissítve."
+
+#: app/routes.py:2494
+msgid "Leadership record saved."
+msgstr "A vezetői megbízás mentve."
+
+#: app/routes.py:2538
+msgid "Professional exam removed."
+msgstr "A szakvizsga eltávolítva."
+
+#: app/routes.py:2546
+msgid "Year obtained is invalid."
+msgstr "A megszerzés éve érvénytelen."
+
+#: app/routes.py:2554
+msgid "Professional exam saved."
+msgstr "A szakvizsga mentve."
+
+#: app/templates/base.html:14 app/templates/base.html:25 app/templates/base.html:84
+#: app/templates/contract_employee.html:2 app/templates/contract_form.html:2
+#: app/templates/leave_approval_settings.html:2 app/templates/legal_entity_form.html:2
+#: app/templates/place_of_work_form.html:2
 msgid "CSUPOR Portal"
 msgstr "CSUPOR Portál"
 
-#: app/templates/base.html:749
-msgid "Modern employee records and profile management"
-msgstr "Modern munkavállalói nyilvántartás és profilkezelés"
+# Modern portal interface
+#: app/templates/base.html:21
+msgid "Skip to content"
+msgstr "Ugrás a tartalomra"
 
-#: app/templates/base.html:755
+#: app/templates/base.html:23 app/templates/base.html:31
+msgid "Main navigation"
+msgstr "Főmenü"
+
+#: app/templates/base.html:27 app/templates/base.html:86
+msgid "Employee portal"
+msgstr "Munkatársi portál"
+
+#: app/templates/base.html:29 app/templates/base.html:72
+msgid "Close menu"
+msgstr "Menü bezárása"
+
+#: app/templates/base.html:32 app/templates/base.html:80 app/templates/dashboard.html:6
+msgid "My workspace"
+msgstr "Saját felület"
+
+#: app/templates/base.html:33
 msgid "Dashboard"
 msgstr "Irányítópult"
 
-#: app/templates/base.html:756 app/templates/dashboard.html:61
+#: app/templates/base.html:34 app/templates/dashboard.html:77
 msgid "Leave calendar"
 msgstr "Szabadságnaptár"
 
-#: app/templates/base.html:757 app/templates/dashboard.html:117
-#: app/templates/manage_user_profiles.html:53
-msgid "Edit profile"
-msgstr "Profil szerkesztése"
+#: app/templates/base.html:35 app/templates/base.html:102 app/templates/profile.html:34
+msgid "My profile"
+msgstr "Saját profil"
 
-#: app/templates/base.html:758 app/templates/dashboard.html:13
-msgid "Change password"
-msgstr "Jelszó módosítása"
+#: app/templates/base.html:36
+msgid "My records"
+msgstr "Nyilvántartásaim"
 
-#: app/templates/base.html:764
+#: app/templates/base.html:37 app/templates/dashboard.html:31 app/templates/dashboard.html:91
+msgid "Dependents"
+msgstr "Eltartottak"
+
+#: app/templates/base.html:38 app/templates/dashboard.html:36 app/templates/dashboard.html:100
+msgid "Qualifications"
+msgstr "Képesítések"
+
+#: app/templates/base.html:39 app/templates/dashboard.html:109
+msgid "Professional exam"
+msgstr "Szakvizsga"
+
+#: app/templates/base.html:43 app/templates/dashboard.html:118
 msgid "Management"
 msgstr "Kezelés"
 
-#: app/templates/base.html:767
+#: app/templates/base.html:46 app/templates/dashboard.html:120
+#: app/templates/manage_user_profiles.html:7
 msgid "User profiles"
 msgstr "Felhasználói profilok"
 
-#: app/templates/base.html:768
-msgid "Privileges"
-msgstr "Jogosultságok"
-
-#: app/templates/base.html:769 app/templates/manage_contracts.html:7
-#: app/templates/manage_contracts.html:18
+#: app/templates/base.html:47 app/templates/dashboard.html:121 app/templates/manage_contracts.html:5
 msgid "Contracts"
 msgstr "Szerződések"
 
-#: app/templates/base.html:770
+#: app/templates/base.html:48 app/templates/dashboard.html:122
 msgid "Leave limits"
 msgstr "Szabadságkeretek"
 
-#: app/templates/base.html:771
+#: app/templates/base.html:49 app/templates/dashboard.html:125
+msgid "Working days"
+msgstr "Munkanapok"
+
+#: app/templates/base.html:51 app/templates/dashboard.html:123
 msgid "Leave approvals"
 msgstr "Szabadság-jóváhagyások"
 
-#: app/templates/base.html:772
+#: app/templates/base.html:52 app/templates/dashboard.html:124
+#: app/templates/leave_approval_settings.html:2 app/templates/leave_approval_settings.html:7
+#: app/templates/manage_leaves.html:12
+msgid "Approval settings"
+msgstr "Jóváhagyási beállítások"
+
+#: app/templates/base.html:54 app/templates/dashboard.html:126
 msgid "Leadership"
 msgstr "Vezetés"
 
-#: app/templates/base.html:773
+#: app/templates/base.html:55 app/templates/dashboard.html:127
+#: app/templates/manage_legal_entities.html:5
 msgid "Legal entities"
-msgstr "Jogi entitások"
+msgstr "Jogi személyek"
 
-#: app/templates/base.html:774
+#: app/templates/base.html:56 app/templates/dashboard.html:127
+#: app/templates/manage_places_of_work.html:5
 msgid "Workplaces"
 msgstr "Munkahelyek"
 
-#: app/templates/base.html:778
+#: app/templates/base.html:58 app/templates/dashboard.html:128
+msgid "Privileges"
+msgstr "Jogosultságok"
+
+#: app/templates/base.html:64
+msgid "Change password"
+msgstr "Jelszó módosítása"
+
+#: app/templates/base.html:65
 msgid "Logout"
 msgstr "Kijelentkezés"
 
-#: app/templates/base.html:780 app/templates/login.html:22
-#: app/templates/login.html:36
+#: app/templates/base.html:79
+msgid "Open menu"
+msgstr "Menü megnyitása"
+
+#: app/templates/base.html:93
+msgid "Language"
+msgstr "Nyelv"
+
+#: app/templates/base.html:99 app/templates/manage_privileges.html:48
+msgid "Save"
+msgstr "Mentés"
+
+#: app/templates/base.html:104 app/templates/login.html:32 app/templates/register.html:14
+msgid "Create an account"
+msgstr "Fiók létrehozása"
+
+#: app/templates/base.html:104 app/templates/login.html:30 app/templates/register.html:27
 msgid "Login"
 msgstr "Bejelentkezés"
 
-#: app/templates/base.html:781 app/templates/register.html:40
-msgid "Register"
-msgstr "Regisztráció"
+#: app/templates/base.html:115
+msgid "Dismiss message"
+msgstr "Üzenet bezárása"
 
-#: app/templates/base.html:785 app/templates/base.html:786
-msgid "Language"
-msgstr "Nyelv"
+#: app/templates/base.html:122 app/templates/login.html:7
+msgid "Your everyday workspace."
+msgstr "A mindennapokhoz, egy helyen."
 
 #: app/templates/change_password.html:2
 msgid "Change Password · CSUPOR Portal"
@@ -120,7 +958,7 @@ msgstr "Jelszó módosítása · CSUPOR Portál"
 
 #: app/templates/change_password.html:6
 msgid "Account security"
-msgstr "Fiók áttekintése"
+msgstr "Fiókbiztonság"
 
 #: app/templates/change_password.html:7
 msgid "Change your password."
@@ -128,19 +966,19 @@ msgstr "Jelszó módosítása"
 
 #: app/templates/change_password.html:8
 msgid "When you are logged in, you can update your account password at any time."
-msgstr "Bejelentkezés után bármikor frissítheti fiókja jelszavát."
+msgstr "Bejelentkezés után bármikor módosíthatod a fiókod jelszavát."
 
 #: app/templates/change_password.html:10
 msgid "Enter your current password to confirm your identity."
-msgstr "Adja meg jelenlegi jelszavát személyazonossága megerősítéséhez."
+msgstr "Azonosításként add meg a jelenlegi jelszavadat."
 
 #: app/templates/change_password.html:11
 msgid "Choose a new password and confirm it before saving."
-msgstr "Válasszon új jelszót, és mentés előtt erősítse meg."
+msgstr "Válassz új jelszót, és mentés előtt erősítsd meg."
 
 #: app/templates/change_password.html:12
 msgid "Use this page whenever you need to rotate credentials."
-msgstr "Használja ezt az oldalt, amikor módosítania kell hozzáférési adatait."
+msgstr "Ezen az oldalon bármikor módosíthatod a jelszavadat."
 
 #: app/templates/change_password.html:19
 msgid "Update password"
@@ -148,50 +986,75 @@ msgstr "Jelszó módosítása"
 
 #: app/templates/change_password.html:20
 msgid "Provide your current password and set a new one."
-msgstr "Adja meg jelenlegi jelszavát, és állítson be újat."
+msgstr "Add meg a jelenlegi jelszavadat, és állíts be újat."
 
 #: app/templates/change_password.html:27
 msgid "Current password"
-msgstr "Jelszó módosítása"
+msgstr "Jelenlegi jelszó"
 
 #: app/templates/change_password.html:31
 msgid "New password"
-msgstr "Jelszó módosítása"
+msgstr "Új jelszó"
 
 #: app/templates/change_password.html:35
 msgid "Confirm new password"
-msgstr "Jelszó módosítása"
+msgstr "Új jelszó megerősítése"
 
 #: app/templates/change_password.html:40
 msgid "Save password"
-msgstr "Jelszó módosítása"
+msgstr "Jelszó mentése"
 
-#: app/templates/change_password.html:41 app/templates/contract_form.html:96
-#: app/templates/dashboard.html:99 app/templates/leaves.html:139
-#: app/templates/manage_leaves.html:121 app/templates/manage_leaves.html:123
-#: app/templates/profile.html:133
+#: app/templates/change_password.html:41 app/templates/contract_employee.html:6
+#: app/templates/contract_form.html:96 app/templates/leaves.html:80
+#: app/templates/legal_entity_form.html:11 app/templates/manage_leaves.html:130
+#: app/templates/manage_leaves.html:132 app/templates/place_of_work_form.html:14
+#: app/templates/profile.html:136
 msgid "Cancel"
 msgstr "Mégse"
 
-#: app/templates/contract_form.html:2
+#: app/templates/contract_employee.html:2 app/templates/contract_employee.html:5
+#: app/templates/manage_contracts.html:5
+msgid "New contract"
+msgstr "Új szerződés"
+
+#: app/templates/contract_employee.html:5
+msgid "Choose the employee for the new contract, including employees without an existing contract."
+msgstr ""
+"Válaszd ki, kinek szeretnél új szerződést rögzíteni. Olyan munkavállalót is választhatsz, akinek "
+"még nincs szerződése."
+
+#: app/templates/contract_employee.html:6 app/templates/manage_leave_limits.html:16
+msgid "Select employee"
+msgstr "Válassz munkavállalót"
+
+#: app/templates/contract_employee.html:6
+msgid "Continue"
+msgstr "Tovább"
+
+#: app/templates/contract_employee.html:6
+msgid "No employees have been registered yet."
+msgstr "Még nincs regisztrált munkavállaló."
+
+#: app/templates/contract_form.html:2 app/templates/contract_form.html:7
+#: app/templates/contract_form.html:95
 msgid "Create contract"
 msgstr "Szerződés létrehozása"
 
-#: app/templates/contract_form.html:2
+#: app/templates/contract_form.html:2 app/templates/contract_form.html:7
 msgid "Edit contract"
 msgstr "Szerződés szerkesztése"
 
 #: app/templates/contract_form.html:8
 msgid "Fill in contract details. Fields marked with * are required."
-msgstr "Töltse ki a szerződés adatait. A *-gal jelölt mezők kitöltése kötelező."
+msgstr "Töltsd ki a szerződés adatait. A *-gal jelölt mezők kitöltése kötelező."
 
 #: app/templates/contract_form.html:14
 msgid "Contract type *"
-msgstr "Szerződések"
+msgstr "Szerződés típusa *"
 
 #: app/templates/contract_form.html:16
 msgid "Select contract type"
-msgstr "Válasszon szerződéstípust"
+msgstr "Válassz szerződéstípust"
 
 #: app/templates/contract_form.html:24
 msgid "Start of contract *"
@@ -199,7 +1062,7 @@ msgstr "Szerződés kezdete *"
 
 #: app/templates/contract_form.html:29
 msgid "End of contract"
-msgstr "Szerződések"
+msgstr "Szerződés vége"
 
 #: app/templates/contract_form.html:34
 msgid "Number of certificate of good conduct"
@@ -219,15 +1082,15 @@ msgstr "Heti munkaórák száma *"
 
 #: app/templates/contract_form.html:54
 msgid "Teacher classification"
-msgstr "Képesítés"
+msgstr "Besorolási fokozat"
 
 #: app/templates/contract_form.html:56
 msgid "No classification"
-msgstr "Képesítés"
+msgstr "Nincs besorolás"
 
 #: app/templates/contract_form.html:64
 msgid "Start of classification"
-msgstr "Képesítés"
+msgstr "Besorolás kezdete"
 
 #: app/templates/contract_form.html:69
 msgid "Employer *"
@@ -235,310 +1098,249 @@ msgstr "Munkáltató *"
 
 #: app/templates/contract_form.html:71
 msgid "Select employer"
-msgstr "Válasszon munkáltatót"
+msgstr "Válassz munkáltatót"
 
 #: app/templates/contract_form.html:79
 msgid "Place of work *"
-msgstr "Születési hely"
+msgstr "Munkavégzés helye *"
 
 #: app/templates/contract_form.html:81
 msgid "Select place of work"
-msgstr "Válasszon munkahelyet"
+msgstr "Válassz munkahelyet"
+
+#: app/templates/contract_form.html:95 app/templates/legal_entity_form.html:11
+#: app/templates/place_of_work_form.html:14
+msgid "Save changes"
+msgstr "Módosítások mentése"
 
 #: app/templates/dashboard.html:2
 msgid "Dashboard · CSUPOR Portal"
 msgstr "Irányítópult · CSUPOR Portál"
-
-#: app/templates/dashboard.html:6
-msgid "Unified employee workspace"
-msgstr "Egységes munkavállalói munkafelület"
 
 #: app/templates/dashboard.html:7
 #, python-format
 msgid "Welcome back, %(name)s."
 msgstr "Üdv újra, %(name)s."
 
-#: app/templates/dashboard.html:9
-msgid "Keep personal records, family data, educational milestones, and professional credentials organized in one elegant workspace designed for fast updates and clear visibility."
-msgstr "Tartsa rendezetten személyes adatait, családi adatait, tanulmányi mérföldköveit és szakmai képesítéseit egy elegáns munkafelületen, amely gyors frissítésekre és átláthatóságra készült."
+#: app/templates/dashboard.html:8
+msgid "Everything you need for your working day: your details, your records and your next time away."
+msgstr "A munkanapodhoz szükséges adatok, nyilvántartások és a következő szabadságod – egy helyen."
 
-#: app/templates/dashboard.html:12
-msgid "Update profile"
-msgstr "Profil frissítése"
-
-#: app/templates/dashboard.html:14 app/templates/dashboard.html:232
-msgid "Add qualification"
-msgstr "Képesítés hozzáadása"
-
-#: app/templates/dashboard.html:15 app/templates/dashboard.html:191
-#: app/templates/dependent_form.html:23
-msgid "Add dependent"
-msgstr "Eltartott hozzáadása"
-
-#: app/templates/dashboard.html:19
-msgid "Account snapshot"
-msgstr "Fiók áttekintése"
-
-#: app/templates/dashboard.html:22 app/templates/manage_privileges.html:34
-msgid "User ID"
-msgstr "Felhasználói azonosító"
-
-#: app/templates/dashboard.html:25
-msgid "Profile completion is centralized for easier annual HR updates."
-msgstr "A profil kitöltése központosított, így az éves HR-frissítések egyszerűbbek."
-
-#: app/templates/dashboard.html:26
-msgid "Dependents and qualifications are visible at a glance with cleaner summaries."
-msgstr "Az eltartottak és képesítések áttekinthetőbb összefoglalókban, egy pillantással láthatók."
-
-#: app/templates/dashboard.html:27
-msgid "Professional exam records can be updated anytime from a dedicated form."
-msgstr "A szakvizsga-adatok bármikor frissíthetők egy külön űrlapon."
-
-#: app/templates/dashboard.html:37 app/templates/manage_user_profiles.html:36
-msgid "Profile status"
-msgstr "Profil állapota"
-
-#: app/templates/dashboard.html:44 app/templates/dashboard.html:188
-msgid "Dependents"
-msgstr "Eltartottak"
-
-#: app/templates/dashboard.html:51 app/templates/dashboard.html:229
-msgid "Qualifications"
-msgstr "Képesítések"
-
-#: app/templates/dashboard.html:62
-msgid "Select an active contract, view your monthly leave calendar, and apply for leave in a polished self-service workflow."
-msgstr "Válasszon aktív szerződést, tekintse meg havi szabadságnaptárát, és igényeljen szabadságot egy kifinomult önkiszolgáló folyamatban."
-
-#: app/templates/dashboard.html:64
+#: app/templates/dashboard.html:10 app/templates/dashboard.html:77
 msgid "Open leave calendar"
 msgstr "Szabadságnaptár megnyitása"
 
-#: app/templates/dashboard.html:67
-msgid "Leave requests are approved by both a CEO user and an active principal or deputy principal for the contract's legal entity."
-msgstr "A szabadságigényeket a vezérigazgatói felhasználó és a szerződés jogi entitásához tartozó aktív igazgató vagy igazgatóhelyettes is jóváhagyja."
+#: app/templates/dashboard.html:11
+msgid "Update profile"
+msgstr "Profil frissítése"
 
-#: app/templates/dashboard.html:75
+#: app/templates/dashboard.html:18 app/templates/manage_privileges.html:26
+msgid "User ID"
+msgstr "Felhasználói azonosító"
+
+#: app/templates/dashboard.html:26 app/templates/dashboard.html:27
+#: app/templates/manage_user_profiles.html:28
+msgid "Profile status"
+msgstr "Profil állapota"
+
+#: app/templates/dashboard.html:31 app/templates/login.html:11 app/templates/register.html:11
+msgid "Personal records"
+msgstr "Személyes adatok"
+
+#: app/templates/dashboard.html:32 app/templates/dashboard.html:91 app/templates/dependent_form.html:23
+msgid "Add dependent"
+msgstr "Eltartott hozzáadása"
+
+#: app/templates/dashboard.html:36
+msgid "Professional records"
+msgstr "Szakmai adatok"
+
+#: app/templates/dashboard.html:37 app/templates/dashboard.html:100
+msgid "Add qualification"
+msgstr "Képesítés hozzáadása"
+
+#: app/templates/dashboard.html:43
 msgid "Pending leave approvals"
 msgstr "Függőben lévő szabadság-jóváhagyások"
 
-#: app/templates/dashboard.html:76
-msgid "Review requests that are waiting for your CEO or principal/deputy principal approval."
-msgstr "Tekintse át azokat az igényeket, amelyek az Ön vezérigazgatói vagy igazgatói/igazgatóhelyettesi jóváhagyására várnak."
+#: app/templates/dashboard.html:43 app/templates/leave_approval_settings.html:11
+#: app/templates/leaves.html:9 app/templates/manage_leaves.html:10
+msgid "Current approval rule"
+msgstr "Érvényes jóváhagyási szabály"
 
-#: app/templates/dashboard.html:78
+#: app/templates/dashboard.html:43 app/templates/leave_approval_settings.html:40
 msgid "Open leave manager"
 msgstr "Szabadságkezelő megnyitása"
 
-#: app/templates/dashboard.html:96 app/templates/manage_leaves.html:118
+#: app/templates/dashboard.html:51 app/templates/manage_leaves.html:127
 msgid "Approve"
 msgstr "Jóváhagyás"
 
-#: app/templates/dashboard.html:97 app/templates/dashboard.html:100
-#: app/templates/manage_leaves.html:119 app/templates/manage_leaves.html:124
+#: app/templates/dashboard.html:51 app/templates/dashboard.html:52 app/templates/manage_leaves.html:128
+#: app/templates/manage_leaves.html:133
 msgid "Reject"
 msgstr "Elutasítás"
 
-#: app/templates/dashboard.html:107
-msgid "No pending leave requests currently require your review."
-msgstr "Jelenleg nincs olyan függőben lévő szabadságigény, amely az Ön felülvizsgálatát igényelné."
+#: app/templates/dashboard.html:52
+msgid "Cancel leave"
+msgstr "Szabadság visszavonása"
 
-#: app/templates/dashboard.html:114
+#: app/templates/dashboard.html:57
+msgid "No pending leave requests currently require your review."
+msgstr "Jelenleg nincs döntésedre váró szabadságigény."
+
+#: app/templates/dashboard.html:63
 msgid "Profile overview"
 msgstr "Profiláttekintés"
 
-#: app/templates/dashboard.html:115
-msgid "Your essential employee details, highlighted in a clean summary layout."
-msgstr "Alapvető munkavállalói adatai letisztult összefoglaló elrendezésben kiemelve."
+#: app/templates/dashboard.html:63
+msgid "Your personal and contact details."
+msgstr "Személyes adataid és elérhetőségeid."
 
-#: app/templates/dashboard.html:123 app/templates/profile.html:48
+#: app/templates/dashboard.html:63 app/templates/manage_user_profiles.html:45
+msgid "Edit profile"
+msgstr "Profil szerkesztése"
+
+#: app/templates/dashboard.html:66 app/templates/profile.html:49
 msgid "Full name"
 msgstr "Teljes név"
 
-#: app/templates/dashboard.html:127 app/templates/profile.html:52
+#: app/templates/dashboard.html:67 app/templates/profile.html:53
 msgid "Name at birth"
 msgstr "Születési név"
 
-#: app/templates/dashboard.html:131 app/templates/dashboard.html:200
-#: app/templates/dependent_form.html:43 app/templates/profile.html:56
+#: app/templates/dashboard.html:68 app/templates/dashboard.html:93 app/templates/dependent_form.html:43
+#: app/templates/profile.html:57
 msgid "Date of birth"
 msgstr "Születési dátum"
 
-#: app/templates/dashboard.html:135 app/templates/profile.html:60
+#: app/templates/dashboard.html:69 app/templates/profile.html:61
 msgid "Place of birth"
 msgstr "Születési hely"
 
-#: app/templates/dashboard.html:139
+#: app/templates/dashboard.html:70
 msgid "Phone"
 msgstr "Telefon"
 
-#: app/templates/dashboard.html:143 app/templates/profile.html:113
+#: app/templates/dashboard.html:71 app/templates/profile.html:116
 msgid "Marital status"
 msgstr "Családi állapot"
 
-#: app/templates/dashboard.html:149
-msgid "Your profile has not been completed yet. Add your personal and contact information to make the portal more useful."
-msgstr "Profilja még nincs kitöltve. Adja meg személyes és kapcsolattartási adatait, hogy a portál hasznosabb legyen."
+#: app/templates/dashboard.html:73
+msgid ""
+"Your profile has not been completed yet. Add your personal and contact information to make the "
+"portal more useful."
+msgstr "A profilod még nincs kitöltve. Add meg a személyes adataidat és az elérhetőségeidet."
 
-#: app/templates/dashboard.html:157
-msgid "Professional exam"
-msgstr "Szakvizsga"
+#: app/templates/dashboard.html:77
+msgid "Your time away, at a glance."
+msgstr "Szabadságaid rövid áttekintése."
 
-#: app/templates/dashboard.html:158
+#: app/templates/dashboard.html:80 app/templates/leaves.html:161
+#, python-format
+msgid "Leave used in %(year)s"
+msgstr "Szabadságok %(year)s-ben"
+
+#: app/templates/dashboard.html:80 app/templates/leaves.html:30
+msgid "Employer not set"
+msgstr "Nincs megadva munkáltató"
+
+#: app/templates/dashboard.html:82 app/templates/leaves.html:169
+msgid "Leave type"
+msgstr "Távollét típusa"
+
+#: app/templates/dashboard.html:82 app/templates/leaves.html:170
+msgid "Used"
+msgstr "Felhasznált"
+
+#: app/templates/dashboard.html:82 app/templates/leaves.html:171
+msgid "Available"
+msgstr "Elérhető"
+
+#: app/templates/dashboard.html:85 app/templates/leaves.html:162
+msgid "Pending approval, approved, and pending cancellation requests are included."
+msgstr "A jóváhagyásra vagy visszavonásra váró és a jóváhagyott igényeket is tartalmazza."
+
+#: app/templates/dashboard.html:87 app/templates/leaves.html:202
+msgid "No active contract found"
+msgstr "Nincs aktív szerződés"
+
+#: app/templates/dashboard.html:87 app/templates/leaves.html:203
+msgid "You can apply for leave once HR records an active contract for your account."
+msgstr "Amint a HR rögzíti az aktív szerződésedet, itt igényelhetsz szabadságot."
+
+#: app/templates/dashboard.html:91
+msgid "Family details for your employee records."
+msgstr "Családi adatok a munkavállalói nyilvántartáshoz."
+
+#: app/templates/dashboard.html:93 app/templates/dependent_form.html:30
+#: app/templates/manage_legal_entities.html:8 app/templates/manage_user_profiles.html:26
+msgid "Name"
+msgstr "Név"
+
+#: app/templates/dashboard.html:93
+msgid "SSN"
+msgstr "TAJ-szám"
+
+#: app/templates/dashboard.html:93
+msgid "Dependency start"
+msgstr "Eltartás kezdete"
+
+#: app/templates/dashboard.html:93 app/templates/dependent_form.html:55 app/templates/profile.html:130
+msgid "Disability, long-term illness"
+msgstr "Fogyatékosság, tartós betegség"
+
+#: app/templates/dashboard.html:96
+msgid "No dependents have been added yet. Add one to keep benefit-related records complete."
+msgstr "Még nincs rögzített eltartottad. Add meg az eltartottjaidat a juttatások nyilvántartásához."
+
+#: app/templates/dashboard.html:100
+msgid "Your education and certificates."
+msgstr "Tanulmányaid és bizonyítványaid."
+
+#: app/templates/dashboard.html:103
+msgid "Highest"
+msgstr "Legmagasabb"
+
+#: app/templates/dashboard.html:103
+msgid "Degree #"
+msgstr "Oklevél #"
+
+#: app/templates/dashboard.html:105
+msgid ""
+"No educational qualifications are listed yet. Add your latest degree or certification to get "
+"started."
+msgstr "Még nincs rögzített képesítésed. Kezdd a legutóbbi végzettséged vagy bizonyítványod hozzáadásával."
+
+#: app/templates/dashboard.html:109
 msgid "Optional teaching certification or professional exam details."
 msgstr "Opcionális pedagógus-tanúsítvány vagy szakvizsga adatai."
 
-#: app/templates/dashboard.html:160
+#: app/templates/dashboard.html:109
 msgid "Manage exam"
 msgstr "Vizsga kezelése"
 
-#: app/templates/dashboard.html:166
+#: app/templates/dashboard.html:111
 msgid "Qualification"
 msgstr "Képesítés"
 
-#: app/templates/dashboard.html:170
-#: app/templates/professional_exam_form.html:32
+#: app/templates/dashboard.html:111 app/templates/professional_exam_form.html:32
 #: app/templates/qualification_form.html:44
 msgid "Year obtained"
 msgstr "Megszerzés éve"
 
-#: app/templates/dashboard.html:174
-#: app/templates/professional_exam_form.html:36
+#: app/templates/dashboard.html:111 app/templates/professional_exam_form.html:36
 #: app/templates/qualification_form.html:40
 msgid "Degree number"
 msgstr "Oklevél száma"
 
-#: app/templates/dashboard.html:180
+#: app/templates/dashboard.html:112
 msgid "No professional exam is recorded yet. Use the dedicated form to add it now or come back later."
-msgstr "Még nincs rögzített szakvizsga. Használja a külön űrlapot a hozzáadáshoz most, vagy térjen vissza később."
+msgstr "Még nincs rögzített szakvizsgád. Add meg az adatait a külön űrlapon, vagy térj vissza később."
 
-#: app/templates/dashboard.html:189
-msgid "Track household and dependent details in a more readable, responsive table."
-msgstr "Kövesse nyomon a háztartási és eltartotti adatokat egy olvashatóbb, reszponzív táblázatban."
-
-#: app/templates/dashboard.html:199 app/templates/dependent_form.html:30
-#: app/templates/manage_legal_entities.html:32
-#: app/templates/manage_user_profiles.html:34
-msgid "Name"
-msgstr "Név"
-
-#: app/templates/dashboard.html:201
-msgid "SSN"
-msgstr "TAJ-szám"
-
-#: app/templates/dashboard.html:202
-msgid "Dependency start"
-msgstr "Eltartás kezdete"
-
-#: app/templates/dashboard.html:203 app/templates/dependent_form.html:55
-#: app/templates/profile.html:127
-msgid "Disability"
-msgstr "Fogyatékosság"
-
-#: app/templates/dashboard.html:221
-msgid "No dependents have been added yet. Add one to keep benefit-related records complete."
-msgstr "Még nincs hozzáadott eltartott. Adjon hozzá egyet, hogy a juttatásokhoz kapcsolódó nyilvántartások teljesek legyenek."
-
-#: app/templates/dashboard.html:230
-msgid "Review academic achievements and highlight the highest completed credential."
-msgstr "Tekintse át tanulmányi eredményeit, és emelje ki a legmagasabb megszerzett végzettséget."
-
-#: app/templates/dashboard.html:245
-msgid "Highest"
-msgstr "Legmagasabb"
-
-#: app/templates/dashboard.html:250
-msgid "Degree #"
-msgstr "Oklevél #"
-
-#: app/templates/dashboard.html:258
-msgid "No educational qualifications are listed yet. Add your latest degree or certification to get started."
-msgstr "Még nincs felsorolt tanulmányi képesítés. Kezdésként adja hozzá legutóbbi diplomáját vagy tanúsítványát."
-
-#: app/templates/dashboard.html:267 app/templates/manage_user_profiles.html:26
-msgid "User profile administration"
-msgstr "Felhasználói profilok adminisztrációja"
-
-#: app/templates/dashboard.html:268
-msgid "HR and CEO users can select any employee account and edit that person's profile information."
-msgstr "A HR- és vezérigazgatói felhasználók bármely munkavállalói fiókot kiválaszthatnak, és szerkeszthetik az adott személy profiladatait."
-
-#: app/templates/dashboard.html:270
-msgid "Open profile manager"
-msgstr "Profilkezelő megnyitása"
-
-#: app/templates/dashboard.html:273
-msgid "Review registered users, choose a record, and update profile details without signing in as that employee."
-msgstr "Tekintse át a regisztrált felhasználókat, válasszon rekordot, és frissítse a profiladatokat anélkül, hogy az adott munkavállalóként jelentkezne be."
-
-#: app/templates/dashboard.html:283
-msgid "Contract management"
-msgstr "Szerződéskezelés"
-
-#: app/templates/dashboard.html:284
-msgid "Create and edit user contracts with teacher classification and workplace assignment."
-msgstr "Hozzon létre és szerkesszen felhasználói szerződéseket pedagógus-besorolással és munkahely-hozzárendeléssel."
-
-#: app/templates/dashboard.html:286
-msgid "Open contract manager"
-msgstr "Szerződéskezelő megnyitása"
-
-#: app/templates/dashboard.html:294
-msgid "Leadership management"
-msgstr "Vezetői megbízások kezelése"
-
-#: app/templates/dashboard.html:295
-msgid "HR and CEO users can create and update leadership assignments."
-msgstr "A HR- és vezérigazgatói felhasználók vezetői megbízásokat hozhatnak létre és frissíthetnek."
-
-#: app/templates/dashboard.html:297
-msgid "Open leadership manager"
-msgstr "Vezetői kezelő megnyitása"
-
-#: app/templates/dashboard.html:306
-msgid "Leave limit management"
-msgstr "Szabadságkeret-kezelés"
-
-#: app/templates/dashboard.html:307
-msgid "Assign calendar-year and range-based leave limits to active contracts."
-msgstr "Rendeljen naptári éves és időszak alapú szabadságkereteket az aktív szerződésekhez."
-
-#: app/templates/dashboard.html:309
-msgid "Open leave limit manager"
-msgstr "Szabadságkeret-kezelő megnyitása"
-
-#: app/templates/dashboard.html:317
-msgid "Legal entities and workplaces"
-msgstr "Jogi entitások és munkahelyek"
-
-#: app/templates/dashboard.html:318
-msgid "Maintain employers and places of work used in contracts."
-msgstr "Tartsa karban a szerződésekben használt munkáltatókat és munkahelyeket."
-
-#: app/templates/dashboard.html:321
-msgid "Manage legal entities"
-msgstr "Jogi entitások kezelése"
-
-#: app/templates/dashboard.html:322
-msgid "Manage workplaces"
-msgstr "Munkahelyek kezelése"
-
-#: app/templates/dashboard.html:332
-msgid "Privilege management"
-msgstr "Jogosultságkezelés"
-
-#: app/templates/dashboard.html:333
-msgid "HR, CEO, and developer users can update role assignments for newly registered accounts."
-msgstr "A HR-, vezérigazgatói és fejlesztői felhasználók frissíthetik az újonnan regisztrált fiókok szerepkör-hozzárendeléseit."
-
-#: app/templates/dashboard.html:335
-msgid "Open privilege manager"
-msgstr "Jogosultságkezelő megnyitása"
-
-#: app/templates/dashboard.html:338
-msgid "Access advanced user-role administration from the dedicated management page with the same visual system as the rest of the portal."
-msgstr "Érje el a fejlett felhasználói szerepkör-adminisztrációt a külön kezelőoldalról, a portál többi részével azonos vizuális rendszerben."
+#: app/templates/dashboard.html:118
+msgid "Quick access to your administrative tools."
+msgstr "Gyors elérés az adminisztrációs feladatokhoz."
 
 #: app/templates/dependent_form.html:2
 msgid "Add Dependent · CSUPOR Portal"
@@ -550,31 +1352,35 @@ msgstr "Családi nyilvántartás"
 
 #: app/templates/dependent_form.html:7
 msgid "Add a dependent record."
-msgstr "Eltartotti rekord hozzáadása."
+msgstr "Eltartott adatainak rögzítése"
+
+#: app/templates/dependent_form.html:9
+msgid "Add family details needed for benefits and leave entitlements."
+msgstr "Add meg a juttatásokhoz és szabadságjogosultságokhoz szükséges családi adatokat."
 
 #: app/templates/dependent_form.html:12
 msgid "Include all children here, including adult children."
-msgstr "Itt tüntesse fel az összes gyermeket, beleértve a nagykorú gyermekeket is."
+msgstr "Itt tüntesd fel az összes gyermekedet, a nagykorúakat is."
 
 #: app/templates/dependent_form.html:13
 msgid "Choose whether this dependent is a child or another dependent type."
-msgstr "Válassza ki, hogy az eltartott gyermek vagy más típusú eltartott."
+msgstr "Válaszd ki, hogy gyermekről vagy egyéb eltartottról van szó."
 
 #: app/templates/dependent_form.html:14
 msgid "Enter the social security number using exactly nine digits."
-msgstr "A társadalombiztosítási azonosítót pontosan kilenc számjeggyel adja meg."
+msgstr "A TAJ-számot pontosan kilenc számjeggyel add meg."
 
 #: app/templates/dependent_form.html:15
 msgid "Use the dependency start date that matches your official records."
-msgstr "Az eltartás hivatalos nyilvántartással egyező kezdő dátumát adja meg."
+msgstr "Az eltartás kezdetét a hivatalos nyilvántartás szerint add meg."
 
 #: app/templates/dependent_form.html:16
-msgid "Optional disability information can be added for context."
-msgstr "Opcionálisan fogyatékosságra vonatkozó információ is megadható."
+msgid "You can optionally add information about a disability or long-term illness."
+msgstr "Szükség esetén a fogyatékosságot vagy a tartós betegséget is megadhatod."
 
 #: app/templates/dependent_form.html:24
 msgid "Create a new dependent entry for your employee record."
-msgstr "Hozzon létre új eltartotti bejegyzést munkavállalói nyilvántartásához."
+msgstr "Rögzíts új eltartottat a munkavállalói adatlapodon."
 
 #: app/templates/dependent_form.html:31
 msgid "Dependent full name"
@@ -586,9 +1392,9 @@ msgstr "Eltartott típusa"
 
 #: app/templates/dependent_form.html:36
 msgid "Select dependent type"
-msgstr "Válasszon eltartotti típust"
+msgstr "Válaszd ki az eltartott típusát"
 
-#: app/templates/dependent_form.html:47 app/templates/profile.html:85
+#: app/templates/dependent_form.html:47 app/templates/profile.html:87
 msgid "Social security number (9 digits)"
 msgstr "TAJ-szám (9 számjegy)"
 
@@ -604,17 +1410,72 @@ msgstr "Opcionális megjegyzés"
 msgid "Save dependent"
 msgstr "Eltartott mentése"
 
-#: app/templates/dependent_form.html:61
-#: app/templates/professional_exam_form.html:42
+#: app/templates/dependent_form.html:61 app/templates/professional_exam_form.html:42
 #: app/templates/qualification_form.html:54
 msgid "Back to dashboard"
 msgstr "Vissza az irányítópultra"
+
+#: app/templates/leave_approval_settings.html:6 app/templates/manage_leaves.html:7
+msgid "Leave governance"
+msgstr "Szabadságkezelés"
+
+#: app/templates/leave_approval_settings.html:8
+msgid "Choose whose approval is needed for leave requests across all legal entities."
+msgstr "Válaszd ki, kinek a jóváhagyása szükséges a szabadságigényekhez az összes jogi személynél."
+
+#: app/templates/leave_approval_settings.html:13
+msgid "Only users with CEO privilege can change this setting."
+msgstr "Ezt a beállítást csak ügyvezetői jogosultsággal lehet módosítani."
+
+#: app/templates/leave_approval_settings.html:21
+msgid "Required approvals"
+msgstr "Szükséges jóváhagyások"
+
+#: app/templates/leave_approval_settings.html:32
+msgid "What happens when you save?"
+msgstr "Mi történik a mentéskor?"
+
+#: app/templates/leave_approval_settings.html:33
+msgid ""
+"The rule applies to new and pending requests. Pending requests are approved immediately if their "
+"recorded approvals satisfy the new rule. Completed decisions stay unchanged."
+msgstr ""
+"A szabály az új és a függőben lévő igényekre vonatkozik. A függőben lévő igények azonnal "
+"jóváhagyást kapnak, ha a már rögzített jóváhagyások megfelelnek az új szabálynak. A lezárt "
+"döntések változatlanok maradnak."
+
+#: app/templates/leave_approval_settings.html:34
+msgid ""
+"Principals and deputies can review requests only for their own legal entities. Deputies cannot "
+"approve their own requests. Existing automatic approvals for CEO and principal applicants follow "
+"the selected rule."
+msgstr ""
+"Az igazgatók és helyetteseik csak a saját jogi személyükhöz tartozó igényekről dönthetnek. A "
+"helyettesek nem hagyhatják jóvá a saját igényüket. Az ügyvezetők és igazgatók saját igényeinek "
+"automatikus jóváhagyása a kiválasztott szabályt követi."
+
+#: app/templates/leave_approval_settings.html:35
+msgid ""
+"Rejection by an eligible reviewer closes a pending request. Cancellation permissions stay "
+"unchanged."
+msgstr ""
+"Egy jogosult döntéshozó elutasítása lezárja a függőben lévő igényt. A visszavonási jogosultságok "
+"változatlanok maradnak."
+
+#: app/templates/leave_approval_settings.html:37
+#, python-format
+msgid "Last changed by %(name)s"
+msgstr "Utoljára módosította: %(name)s"
+
+#: app/templates/leave_approval_settings.html:39
+msgid "Save approval rule"
+msgstr "Jóváhagyási szabály mentése"
 
 #: app/templates/leaves.html:2
 msgid "Leave calendar · CSUPOR Portal"
 msgstr "Szabadságnaptár · CSUPOR Portál"
 
-#: app/templates/leaves.html:6
+#: app/templates/leaves.html:6 app/templates/login.html:11 app/templates/register.html:11
 msgid "Leave planning"
 msgstr "Szabadságtervezés"
 
@@ -623,212 +1484,299 @@ msgid "Plan time away with confidence."
 msgstr "Tervezd meg a szabadságodat."
 
 #: app/templates/leaves.html:8
-msgid "Select an active contract, review your leave calendar instantly, and submit a request that starts in pending approval."
-msgstr "Válassz dátumot a naptárban, töltsd ki az igénylést, majd küldd el jóváhagyásra."
+msgid "Select an active contract, review your leave calendar and submit a request."
+msgstr "Válassz egy aktív szerződést, tekintsd át a szabadságnaptárad, és küldd be az igényed."
 
-#: app/templates/leaves.html:11
+#: app/templates/leaves.html:12
 msgid "Request statuses"
 msgstr "Igénylési állapotok"
 
-#: app/templates/leaves.html:13
-msgid "Pending approval"
-msgstr "Jóváhagyásra vár"
-
-#: app/templates/leaves.html:14
-msgid "Approved"
-msgstr "Jóváhagyva"
-
-#: app/templates/leaves.html:15
-msgid "Rejected"
-msgstr "Elutasítva"
-
-#: app/templates/leaves.html:16
-msgid "Pending cancellation"
-msgstr "Lemondásra vár"
-
-#: app/templates/leaves.html:17
-msgid "Cancelled"
-msgstr "Lemondva"
-
-#: app/templates/leaves.html:26
-msgid "Assign leaves to contract"
-msgstr "Szabadságok hozzárendelése szerződéshez"
-
-#: app/templates/leaves.html:36
-msgid "Your current active contract is selected by default. The calendar refreshes immediately when you choose another active contract."
-msgstr "Alapértelmezés szerint az aktuális aktív szerződése van kiválasztva. A naptár azonnal frissül, amikor másik aktív szerződést választ."
-
-#: app/templates/leaves.html:45
-msgid "Apply for leave"
-msgstr "Szabadság igénylése"
-
-#: app/templates/leaves.html:46
-msgid "New submissions are saved as pending approval."
-msgstr "Az új beküldések jóváhagyásra váróként kerülnek mentésre."
-
-#: app/templates/leaves.html:50
-msgid "Leave type *"
-msgstr "Szabadság típusa *"
-
-#: app/templates/leaves.html:66 app/templates/manage_leadership.html:45
-msgid "Start date *"
-msgstr "Kezdő dátum *"
-
-#: app/templates/leaves.html:70 app/templates/manage_leadership.html:54
-#: app/templates/manage_leadership.html:87
-#: app/templates/manage_leave_limits.html:111
-msgid "End date"
-msgstr "Záró dátum"
-
-#: app/templates/leaves.html:72
-msgid "Required for paid leave. Optional for all other leave types."
-msgstr "Fizetett szabadság esetén kötelező. Minden más szabadságtípusnál opcionális."
-
-#: app/templates/leaves.html:75
-msgid "Tip: click a day in the calendar to choose the start date, then click another day to choose the end date."
-msgstr "Tipp: a kezdő- és zárónapot a naptárban is kiválaszthatod."
-
-#: app/templates/leaves.html:77
-msgid "Note"
-msgstr "Megjegyzés"
-
-#: app/templates/leaves.html:78
-msgid "Add context for HR, if needed."
-msgstr "Szükség esetén adjon meg kiegészítő információt a HR számára."
-
-#: app/templates/leaves.html:80
-msgid "Submit request"
-msgstr "Igénylés beküldése"
-
-#: app/templates/leaves.html:95
+#: app/templates/leaves.html:36 app/templates/manage_working_days.html:24
 msgid "Mon"
 msgstr "H"
 
-#: app/templates/leaves.html:95
+#: app/templates/leaves.html:36 app/templates/manage_working_days.html:24
 msgid "Tue"
 msgstr "K"
 
-#: app/templates/leaves.html:95
+#: app/templates/leaves.html:36 app/templates/manage_working_days.html:24
 msgid "Wed"
 msgstr "Sze"
 
-#: app/templates/leaves.html:95
+#: app/templates/leaves.html:36 app/templates/manage_working_days.html:24
 msgid "Thu"
 msgstr "Cs"
 
-#: app/templates/leaves.html:95
+#: app/templates/leaves.html:36 app/templates/manage_working_days.html:24
 msgid "Fri"
 msgstr "P"
 
-#: app/templates/leaves.html:95
+#: app/templates/leaves.html:36 app/templates/manage_working_days.html:24
 msgid "Sat"
 msgstr "Szo"
 
-#: app/templates/leaves.html:95
+#: app/templates/leaves.html:36 app/templates/manage_working_days.html:24
 msgid "Sun"
 msgstr "V"
 
-#: app/templates/leaves.html:104
+#: app/templates/leaves.html:45
+#, python-format
 msgid "Select %(month)s %(day)s, %(year)s as a leave date"
 msgstr "%(year)s. %(month)s %(day)s kiválasztása szabadságnapként"
 
-#: app/templates/leaves.html:122
+#: app/templates/leaves.html:63
 msgid "This month"
 msgstr "Ez a hónap"
 
-#: app/templates/leaves.html:148
-msgid "Undo"
-msgstr "Visszavonás"
+#: app/templates/leaves.html:69
+msgid "Open-ended or single day"
+msgstr "Nyitott végű vagy egynapos"
 
-#: app/templates/leaves.html:155
+#: app/templates/leaves.html:89
+msgid "Undo"
+msgstr "Visszaállítás"
+
+#: app/templates/leaves.html:96
 msgid "No leave requests are scheduled for this month yet."
 msgstr "Erre a hónapra még nincs ütemezett szabadságigény."
 
-#: app/templates/leaves.html:164
-msgid "No active contract found"
-msgstr "Nincs aktív szerződés"
+#: app/templates/leaves.html:102
+msgid "Assign leaves to contract"
+msgstr "Szabadságok hozzárendelése szerződéshez"
 
-#: app/templates/leaves.html:165
-msgid "You can apply for leave once HR records an active contract for your account."
-msgstr "Amint a HR rögzíti az aktív szerződésedet, itt igényelhetsz szabadságot."
+#: app/templates/leaves.html:112
+msgid ""
+"Your current active contract is selected by default. The calendar refreshes immediately when you "
+"choose another active contract."
+msgstr ""
+"Alapértelmezés szerint a jelenlegi aktív szerződésed van kiválasztva. Ha másik aktív szerződést "
+"választasz, a naptár azonnal frissül."
+
+#: app/templates/leaves.html:120
+msgid "Apply for leave"
+msgstr "Szabadság igénylése"
+
+#: app/templates/leaves.html:121
+msgid "Requests stay pending until the required approvals are recorded."
+msgstr "Az igények a szükséges jóváhagyások rögzítéséig függőben maradnak."
+
+#: app/templates/leaves.html:125
+msgid "Leave type *"
+msgstr "Szabadság típusa *"
+
+#: app/templates/leaves.html:141 app/templates/manage_leadership.html:45
+msgid "Start date *"
+msgstr "Kezdő dátum *"
+
+#: app/templates/leaves.html:145 app/templates/manage_leadership.html:54
+#: app/templates/manage_leadership.html:87 app/templates/manage_leave_limits.html:194
+msgid "End date"
+msgstr "Záró dátum"
+
+#: app/templates/leaves.html:147
+msgid "Required for paid leave. Optional for all other leave types."
+msgstr "Fizetett szabadság esetén kötelező. Minden más szabadságtípusnál opcionális."
+
+#: app/templates/leaves.html:150
+msgid ""
+"Tip: click a day in the calendar to choose the start date, then click another day to choose the "
+"end date."
+msgstr "Tipp: a kezdő- és zárónapot a naptárban is kiválaszthatod."
+
+#: app/templates/leaves.html:152
+msgid "Note"
+msgstr "Megjegyzés"
+
+#: app/templates/leaves.html:153
+msgid "Add context for HR, if needed."
+msgstr "Szükség esetén adj meg kiegészítő információt a HR számára."
+
+#: app/templates/leaves.html:155
+msgid "Submit request"
+msgstr "Igénylés beküldése"
+
+#: app/templates/legal_entity_form.html:2 app/templates/legal_entity_form.html:5
+msgid "Edit legal entity"
+msgstr "Jogi személy szerkesztése"
+
+#: app/templates/legal_entity_form.html:2 app/templates/legal_entity_form.html:5
+#: app/templates/manage_legal_entities.html:5 app/templates/place_of_work_form.html:16
+msgid "Add legal entity"
+msgstr "Jogi személy hozzáadása"
+
+#: app/templates/legal_entity_form.html:5 app/templates/place_of_work_form.html:5
+msgid "Fields marked with * are required."
+msgstr "A *-gal jelölt mezők kitöltése kötelező."
+
+#: app/templates/legal_entity_form.html:7
+msgid "Name *"
+msgstr "Név *"
+
+#: app/templates/legal_entity_form.html:8 app/templates/place_of_work_form.html:13
+msgid "Address *"
+msgstr "Cím *"
+
+#: app/templates/legal_entity_form.html:9
+msgid "OM id (6 digits) *"
+msgstr "OM-azonosító (6 számjegy) *"
+
+#: app/templates/legal_entity_form.html:10
+msgid "Tax number (format: 12345678-9-01) *"
+msgstr "Adószám (formátum: 12345678-9-01) *"
+
+#: app/templates/legal_entity_form.html:11
+msgid "Save legal entity"
+msgstr "Jogi személy mentése"
 
 #: app/templates/login.html:2
 msgid "Login · CSUPOR Portal"
 msgstr "Bejelentkezés · CSUPOR Portál"
 
-#: app/templates/login.html:7
-msgid "Secure access"
-msgstr "Biztonságos hozzáférés"
-
 #: app/templates/login.html:8
-msgid "Welcome back to CSUPOR."
-msgstr "Üdv újra a CSUPOR-ban."
+msgid "A little more clarity. Every day."
+msgstr "Átláthatóbb mindennapok."
 
-#: app/templates/login.html:10
-msgid "Sign in to manage employee records with a cleaner, more intuitive portal experience built for daily administrative work."
-msgstr "Jelentkezzen be a munkavállalói nyilvántartások kezeléséhez egy letisztultabb, intuitívabb, napi adminisztratív munkára tervezett portálélménnyel."
-
-#: app/templates/login.html:13
-msgid "Access your profile, dependents, and qualification records from one dashboard."
-msgstr "Profilját, eltartottait és képesítési adatait egy irányítópultról érheti el."
-
-#: app/templates/login.html:14
-msgid "Review important status information immediately after login."
-msgstr "Bejelentkezés után azonnal áttekintheti a fontos állapotinformációkat."
+#: app/templates/login.html:9
+msgid "Your profile, records and time away. Together in one place, with more room for what matters."
+msgstr ""
+"Személyes adatok, dokumentumok és szabadságok. Minden egy helyen, hogy több idő maradjon a fontos"
+" dolgokra."
 
 #: app/templates/login.html:15
-msgid "Keep HR workflows efficient with a calmer and more readable interface."
-msgstr "Tartsa hatékonyan a HR-folyamatokat egy nyugodtabb és olvashatóbb felülettel."
+msgid "Welcome back."
+msgstr "Örülünk, hogy itt vagy!"
 
-#: app/templates/login.html:23
+#: app/templates/login.html:16
 msgid "Use your e-mail address or username and your password to continue."
 msgstr "A belépéshez add meg az e-mail-címedet vagy felhasználónevedet és a jelszavadat."
 
-#: app/templates/login.html:28
+#: app/templates/login.html:20
 msgid "E-mail or username"
 msgstr "E-mail vagy felhasználónév"
 
-#: app/templates/login.html:29
+#: app/templates/login.html:21
 msgid "name@example.com or username"
 msgstr "nev@example.com vagy felhasználónév"
 
-#: app/templates/login.html:32 app/templates/register.html:36
+#: app/templates/login.html:24 app/templates/register.html:19
 msgid "Password"
 msgstr "Jelszó"
 
-#: app/templates/login.html:33
+#: app/templates/login.html:26
 msgid "Enter your password"
 msgstr "Add meg a jelszavad"
 
-#: app/templates/login.html:37
-msgid "Create an account"
-msgstr "Fiók létrehozása"
+#: app/templates/login.html:27 app/templates/register.html:22
+msgid "Show password"
+msgstr "Jelszó megjelenítése"
+
+#: app/templates/login.html:27 app/templates/register.html:22
+msgid "Hide password"
+msgstr "Jelszó elrejtése"
+
+#: app/templates/login.html:32
+msgid "New to CSUPOR?"
+msgstr "Még nincs fiókod?"
 
 #: app/templates/manage_contracts.html:2
 msgid "Contracts · CSUPOR Portal"
 msgstr "Szerződések · CSUPOR Portál"
 
-#: app/templates/manage_contracts.html:8
-msgid "HR and CEO users can create and edit employee contracts."
-msgstr "A HR- és vezérigazgatói felhasználók vezetői megbízásokat hozhatnak létre és frissíthetnek."
+#: app/templates/manage_contracts.html:5
+msgid "Each row is one contract. Active contracts are shown by default."
+msgstr "Minden sor egy szerződést mutat. Alapértelmezés szerint az aktív szerződések jelennek meg."
 
-#: app/templates/manage_contracts.html:16
-msgid "NAME"
-msgstr "Név"
+#: app/templates/manage_contracts.html:6
+msgid "Filter contracts by status"
+msgstr "Szerződések szűrése állapot szerint"
 
-#: app/templates/manage_contracts.html:17
-msgid "Email"
-msgstr "E-mail"
+#: app/templates/manage_contracts.html:7 app/templates/manage_contracts.html:28
+msgid "Active"
+msgstr "Aktív"
 
-#: app/templates/manage_contracts.html:19
-#: app/templates/manage_leave_limits.html:112
-#: app/templates/manage_leaves.html:79
+#: app/templates/manage_contracts.html:7 app/templates/manage_contracts.html:28
+msgid "Upcoming"
+msgstr "Később kezdődő"
+
+#: app/templates/manage_contracts.html:7 app/templates/manage_contracts.html:28
+msgid "Ended"
+msgstr "Lezárt"
+
+#: app/templates/manage_contracts.html:7 app/templates/manage_leaves.html:37
+msgid "All contracts"
+msgstr "Minden szerződés"
+
+#: app/templates/manage_contracts.html:13
+msgid "Search contracts"
+msgstr "Szerződések keresése"
+
+#: app/templates/manage_contracts.html:13
+msgid "Name, job title, employer or contract ID"
+msgstr "Név, munkakör, munkáltató vagy szerződésazonosító"
+
+#: app/templates/manage_contracts.html:14 app/templates/manage_leadership.html:83
+#: app/templates/manage_leaves.html:17 app/templates/manage_places_of_work.html:7
+msgid "Legal entity"
+msgstr "Jogi személy"
+
+#: app/templates/manage_contracts.html:14 app/templates/manage_leaves.html:19
+msgid "All legal entities"
+msgstr "Minden jogi személy"
+
+#: app/templates/manage_contracts.html:15 app/templates/manage_leaves.html:56
+msgid "Apply filters"
+msgstr "Szűrők alkalmazása"
+
+#: app/templates/manage_contracts.html:15 app/templates/manage_leaves.html:57
+#: app/templates/manage_working_days.html:44
+msgid "Reset"
+msgstr "Visszaállítás"
+
+#: app/templates/manage_contracts.html:18 app/templates/manage_leadership.html:84
+#: app/templates/manage_leave_limits.html:24 app/templates/manage_leaves.html:35
+msgid "Contract"
+msgstr "Szerződés"
+
+#: app/templates/manage_contracts.html:18
+msgid "Job title / contract type"
+msgstr "Munkakör / szerződéstípus"
+
+#: app/templates/manage_contracts.html:18
+msgid "Employer / workplace"
+msgstr "Munkáltató / munkahely"
+
+#: app/templates/manage_contracts.html:18
+msgid "Period"
+msgstr "Időszak"
+
+#: app/templates/manage_contracts.html:18
+msgid "Hours/week"
+msgstr "Óra/hét"
+
+#: app/templates/manage_contracts.html:18 app/templates/manage_leave_limits.html:81
+#: app/templates/manage_leaves.html:46 app/templates/manage_leaves.html:78
+msgid "Status"
+msgstr "Állapot"
+
+#: app/templates/manage_contracts.html:18 app/templates/manage_leave_limits.html:82
+#: app/templates/manage_leave_limits.html:195 app/templates/manage_leaves.html:81
+#: app/templates/manage_legal_entities.html:8 app/templates/manage_places_of_work.html:7
 msgid "Actions"
-msgstr "Képesítések"
+msgstr "Műveletek"
 
-#: app/templates/manage_contracts.html:29
-msgid "New contract"
-msgstr "Szerződések"
+#: app/templates/manage_contracts.html:26
+msgid "Open-ended"
+msgstr "Határozatlan"
+
+#: app/templates/manage_contracts.html:29 app/templates/manage_leadership.html:88
+#: app/templates/manage_leadership.html:100 app/templates/manage_legal_entities.html:9
+#: app/templates/manage_places_of_work.html:8 app/templates/profile.html:2
+msgid "Edit"
+msgstr "Szerkesztés"
+
+#: app/templates/manage_contracts.html:32
+msgid "No contracts match the selected filters."
+msgstr "Nincs a kiválasztott szűrőknek megfelelő szerződés."
 
 #: app/templates/manage_leadership.html:2
 msgid "Leadership · CSUPOR Portal"
@@ -842,25 +1790,21 @@ msgstr "Vezetői megbízás szerkesztése"
 msgid "Add leadership"
 msgstr "Vezetői megbízás hozzáadása"
 
-#: app/templates/manage_leadership.html:12
-#: app/templates/manage_places_of_work.html:11
+#: app/templates/manage_leadership.html:12 app/templates/place_of_work_form.html:8
 msgid "Legal entity *"
-msgstr "Jogi entitások"
+msgstr "Jogi személy *"
 
-#: app/templates/manage_leadership.html:14
-#: app/templates/manage_places_of_work.html:13
+#: app/templates/manage_leadership.html:14 app/templates/place_of_work_form.html:9
 msgid "Select legal entity"
-msgstr "Jogi entitások"
+msgstr "Válassz jogi személyt"
 
 #: app/templates/manage_leadership.html:25
-#: app/templates/manage_leave_limits.html:24
 msgid "Contract *"
-msgstr "Szerződések"
+msgstr "Szerződés *"
 
-#: app/templates/manage_leadership.html:27
-#: app/templates/manage_leave_limits.html:26
+#: app/templates/manage_leadership.html:27 app/templates/manage_leave_limits.html:26
 msgid "Select contract"
-msgstr "Szerződések"
+msgstr "Válassz szerződést"
 
 #: app/templates/manage_leadership.html:38
 msgid "Position *"
@@ -868,15 +1812,7 @@ msgstr "Pozíció *"
 
 #: app/templates/manage_leadership.html:40
 msgid "Select leadership position"
-msgstr "Válasszon vezetői pozíciót"
-
-#: app/templates/manage_leadership.html:41
-msgid "Principal"
-msgstr "Igazgató"
-
-#: app/templates/manage_leadership.html:42
-msgid "Deputy principal"
-msgstr "Igazgatóhelyettes"
+msgstr "Válassz vezetői pozíciót"
 
 #: app/templates/manage_leadership.html:63
 msgid "Update leadership"
@@ -887,8 +1823,6 @@ msgid "Save leadership"
 msgstr "Vezetői megbízás mentése"
 
 #: app/templates/manage_leadership.html:65
-#: app/templates/manage_legal_entities.html:22
-#: app/templates/manage_places_of_work.html:23
 msgid "Cancel edit"
 msgstr "Mégse"
 
@@ -898,38 +1832,19 @@ msgstr "Meglévő vezetői pozíciók"
 
 #: app/templates/manage_leadership.html:75
 msgid "Manage leadership assignments by legal entity and contract."
-msgstr "Vezetői megbízások kezelése jogi entitás és szerződés szerint."
-
-#: app/templates/manage_leadership.html:83 app/templates/manage_leaves.html:15
-#: app/templates/manage_places_of_work.html:33
-msgid "Legal entity"
-msgstr "Jogi entitások"
-
-#: app/templates/manage_leadership.html:84 app/templates/manage_leaves.html:33
-msgid "Contract"
-msgstr "Szerződések"
+msgstr "Vezetői megbízások kezelése jogi személy és szerződés szerint."
 
 #: app/templates/manage_leadership.html:85
 msgid "Position"
 msgstr "Pozíció"
 
-#: app/templates/manage_leadership.html:86
-#: app/templates/manage_leave_limits.html:110
+#: app/templates/manage_leadership.html:86 app/templates/manage_leave_limits.html:193
 msgid "Start date"
 msgstr "Kezdő dátum"
 
-#: app/templates/manage_leadership.html:88
-#: app/templates/manage_leadership.html:100
-#: app/templates/manage_legal_entities.html:32
-#: app/templates/manage_legal_entities.html:41
-#: app/templates/manage_places_of_work.html:33
-#: app/templates/manage_places_of_work.html:41 app/templates/profile.html:2
-msgid "Edit"
-msgstr "Szerkesztés"
-
 #: app/templates/manage_leadership.html:105
 msgid "No leadership records have been added yet."
-msgstr "Még nincs hozzáadott vezetői bejegyzés."
+msgstr "Még nincs rögzített vezetői megbízás."
 
 #: app/templates/manage_leave_limits.html:2
 msgid "Leave limits · CSUPOR Portal"
@@ -937,236 +1852,259 @@ msgstr "Szabadságkeretek · CSUPOR Portál"
 
 #: app/templates/manage_leave_limits.html:8
 msgid "Assign leave limits to active contracts"
-msgstr "Rendeljen naptári éves és időszak alapú szabadságkereteket az aktív szerződésekhez."
+msgstr "Szabadságkeretek hozzárendelése aktív szerződésekhez"
 
 #: app/templates/manage_leave_limits.html:9
-msgid "Select employee, contract, and calendar year before entering leave limits."
-msgstr "A szabadságkeretek megadása előtt válasszon munkavállalót, szerződést és naptári évet."
-
-#: app/templates/manage_leave_limits.html:14
-msgid "Employee *"
-msgstr "Munkavállaló *"
-
-#: app/templates/manage_leave_limits.html:16
-msgid "Select employee"
-msgstr "Válasszon munkavállalót"
+msgid ""
+"Select an employee and contract to edit one contract, or choose only a year to manage year "
+"availability and defaults."
+msgstr ""
+"Egy szerződés szerkesztéséhez válassz munkavállalót és szerződést. Az év megnyitásához és az "
+"alapértékek kezeléséhez csak az évet válaszd ki."
 
 #: app/templates/manage_leave_limits.html:38
 msgid "Select an employee first to load available contracts."
-msgstr "Az elérhető szerződések betöltéséhez először válasszon munkavállalót."
+msgstr "Az elérhető szerződések betöltéséhez először válassz munkavállalót."
 
-#: app/templates/manage_leave_limits.html:41
-msgid "Calendar year *"
-msgstr "Naptári év *"
+#: app/templates/manage_leave_limits.html:41 app/templates/manage_leave_limits.html:65
+#: app/templates/manage_leave_limits.html:80
+msgid "Calendar year"
+msgstr "Naptári év"
 
 #: app/templates/manage_leave_limits.html:45
-msgid "Load leave categories"
-msgstr "Szabadságnaptár megnyitása"
+msgid "Load"
+msgstr "Betöltés"
 
-#: app/templates/manage_leave_limits.html:58
+#: app/templates/manage_leave_limits.html:54
+msgid "Year availability"
+msgstr "Év megnyitása és zárolása"
+
+#: app/templates/manage_leave_limits.html:57
+#, python-format
+msgid "%(year)s is open for employee leave requests."
+msgstr "%(year)s meg van nyitva a munkavállalói szabadságigények előtt."
+
+#: app/templates/manage_leave_limits.html:59
+#, python-format
+msgid "%(year)s is closed. Employees cannot request leave in this year until HR opens it."
+msgstr "%(year)s zárolva van. Erre az évre addig nem igényelhető szabadság, amíg a HR meg nem nyitja."
+
+#: app/templates/manage_leave_limits.html:69
+msgid "Open year"
+msgstr "Év megnyitása"
+
+#: app/templates/manage_leave_limits.html:74
+msgid "Opened years"
+msgstr "Megnyitott évek"
+
+#: app/templates/manage_leave_limits.html:89
+msgid "Open"
+msgstr "Nyitott"
+
+#: app/templates/manage_leave_limits.html:89
+msgid "Locked"
+msgstr "Zárolt"
+
+#: app/templates/manage_leave_limits.html:95
+msgid "Lock year"
+msgstr "Év zárolása"
+
+#: app/templates/manage_leave_limits.html:99
+msgid "Reopen year"
+msgstr "Év újranyitása"
+
+#: app/templates/manage_leave_limits.html:103
+msgid "Load default values for all employees"
+msgstr "Alapértékek betöltése minden munkavállalóhoz"
+
+#: app/templates/manage_leave_limits.html:113
+msgid "No years have been opened yet."
+msgstr "Még nincs megnyitott év."
+
+#: app/templates/manage_leave_limits.html:122
+#, python-format
+msgid "Leave limits for %(year)s"
+msgstr "Szabadságkeretek – %(year)s"
+
+#: app/templates/manage_leave_limits.html:124
+#, python-format
+msgid "Contract: %(contract)s"
+msgstr "Szerződés: %(contract)s"
+
+#: app/templates/manage_leave_limits.html:126
 msgid "· Not active in selected year"
 msgstr "· Nem aktív a kiválasztott évben"
 
-#: app/templates/manage_leave_limits.html:70
+#: app/templates/manage_leave_limits.html:139
+msgid "Revert imported values for this contract"
+msgstr "A szerződés importált értékeinek visszavonása"
+
+#: app/templates/manage_leave_limits.html:143
+msgid "Load default values for this contract"
+msgstr "Alapértékek betöltése ehhez a szerződéshez"
+
+#: app/templates/manage_leave_limits.html:153
 msgid "Calendar year bounded categories"
 msgstr "Naptári évhez kötött kategóriák"
 
-#: app/templates/manage_leave_limits.html:75
-#: app/templates/manage_leave_limits.html:108
+#: app/templates/manage_leave_limits.html:158 app/templates/manage_leave_limits.html:191
 msgid "Leave category"
-msgstr "Szabadságnaptár"
+msgstr "Szabadságkategória"
 
-#: app/templates/manage_leave_limits.html:76
-#: app/templates/manage_leave_limits.html:109
+#: app/templates/manage_leave_limits.html:159 app/templates/manage_leave_limits.html:192
 msgid "Limit (days)"
 msgstr "Keret (nap)"
 
-#: app/templates/manage_leave_limits.html:77
+#: app/templates/manage_leave_limits.html:160
 msgid "Bounded period"
 msgstr "Kötött időszak"
 
-#: app/templates/manage_leave_limits.html:102
+#: app/templates/manage_leave_limits.html:185
 msgid "Categories with custom start/end date"
 msgstr "Egyedi kezdő/záró dátumú kategóriák"
 
-#: app/templates/manage_leave_limits.html:135
-#: app/templates/manage_leave_limits.html:286
-msgid "Remove"
-msgstr "Jóváhagyás"
+#: app/templates/manage_leave_limits.html:186
+#, python-format
+msgid ""
+"Use “Add another” when one employee has multiple eligible instances of the same category in "
+"%(year)s."
+msgstr ""
+"Ha egy munkavállaló %(year)s során ugyanabban a kategóriában többször is jogosult szabadságra, "
+"használd az „Új hozzáadása” gombot."
 
-#: app/templates/manage_leave_limits.html:159
+#: app/templates/manage_leave_limits.html:218 app/templates/manage_leave_limits.html:336
+msgid "Remove"
+msgstr "Eltávolítás"
+
+#: app/templates/manage_leave_limits.html:242
 msgid "Add another"
 msgstr "Új hozzáadása"
 
-#: app/templates/manage_leave_limits.html:168
+#: app/templates/manage_leave_limits.html:251
 msgid "Categories without assigned limit"
 msgstr "Hozzárendelt keret nélküli kategóriák"
 
-#: app/templates/manage_leave_limits.html:176
+#: app/templates/manage_leave_limits.html:259
 msgid "Save leave limits"
-msgstr "Szabadságkeretek"
+msgstr "Szabadságkeretek mentése"
+
+#: app/templates/manage_leave_limits.html:264
+#, python-format
+msgid ""
+"The selected contract is not active in %(year)s. Choose an active contract-year combination to "
+"assign limits."
+msgstr ""
+"A kiválasztott szerződés nem aktív ebben az évben: %(year)s. A keretek megadásához válassz olyan "
+"évet, amelyben a szerződés aktív."
 
 #: app/templates/manage_leaves.html:2
 msgid "Leave management · CSUPOR Portal"
 msgstr "Szabadságkezelés · CSUPOR Portál"
 
-#: app/templates/manage_leaves.html:7
-msgid "Leave governance"
-msgstr "Szabadságkezelési felügyelet"
-
 #: app/templates/manage_leaves.html:8
 msgid "Manage leave requests"
-msgstr "Jogi entitások kezelése"
+msgstr "Szabadságigények kezelése"
 
 #: app/templates/manage_leaves.html:9
-msgid "Filter by legal entity, employee, contract, and status, then approve, reject, or cancel requests directly."
-msgstr "Szűrjön jogi entitás, munkavállaló, szerződés és állapot szerint, majd közvetlenül hagyja jóvá, utasítsa el vagy mondja le az igényeket."
+msgid ""
+"Filter by legal entity, employee, contract, and status, then approve, reject, or cancel requests "
+"directly."
+msgstr ""
+"Szűrj jogi személy, munkavállaló, szerződés és állapot szerint, majd hagyd jóvá, utasítsd el vagy"
+" vond vissza az igényeket."
 
-#: app/templates/manage_leaves.html:17
-msgid "All legal entities"
-msgstr "Jogi entitások"
-
-#: app/templates/manage_leaves.html:24 app/templates/manage_leaves.html:74
-msgid "Employee"
-msgstr "Teljes"
-
-#: app/templates/manage_leaves.html:26
+#: app/templates/manage_leaves.html:28
 msgid "All employees"
 msgstr "Minden munkavállaló"
 
-#: app/templates/manage_leaves.html:35
-msgid "All contracts"
-msgstr "Szerződések"
-
-#: app/templates/manage_leaves.html:44 app/templates/manage_leaves.html:76
-msgid "Status"
-msgstr "Profil állapota"
-
-#: app/templates/manage_leaves.html:46
+#: app/templates/manage_leaves.html:48
 msgid "All statuses"
-msgstr "Családi állapot"
+msgstr "Minden állapot"
 
-#: app/templates/manage_leaves.html:54
-msgid "Apply filters"
-msgstr "Szűrők alkalmazása"
-
-#: app/templates/manage_leaves.html:55
-msgid "Reset"
-msgstr "Visszaállítás"
-
-#: app/templates/manage_leaves.html:64
+#: app/templates/manage_leaves.html:66
 msgid "Leave requests"
-msgstr "Szabadságkeretek"
+msgstr "Szabadságigények"
 
-#: app/templates/manage_leaves.html:65
-msgid "CEO and legal-entity principal approvals are tracked separately. A single approver with both roles can satisfy both requirements."
-msgstr "A vezérigazgatói és a jogi entitáshoz tartozó igazgatói jóváhagyás külön kerül nyomon követésre. Egy mindkét szereppel rendelkező jóváhagyó mindkét követelményt teljesítheti."
+#: app/templates/manage_leaves.html:67
+msgid ""
+"CEO and legal-entity principal approvals are tracked separately. A single approver with both "
+"roles can satisfy both requirements."
+msgstr ""
+"Az ügyvezető és a jogi személy igazgatójának jóváhagyását külön rögzítjük. Ha ugyanaz a személy "
+"mindkét szerepet betölti, mindkét jóváhagyást megadhatja."
 
-#: app/templates/manage_leaves.html:75
+#: app/templates/manage_leaves.html:77
 msgid "Leave"
 msgstr "Szabadság"
 
-#: app/templates/manage_leaves.html:77
+#: app/templates/manage_leaves.html:79
 msgid "Max workplace leaves"
-msgstr "Munkahelyek kezelése"
+msgstr "Legtöbb egyidejű távollét"
 
-#: app/templates/manage_leaves.html:78
+#: app/templates/manage_leaves.html:80
 msgid "Approvals"
 msgstr "Szabadság-jóváhagyások"
 
-#: app/templates/manage_leaves.html:100
+#: app/templates/manage_leaves.html:102
 msgid "same workplace"
-msgstr "Munkahelyek kezelése"
+msgstr "azonos munkahelyen"
 
-#: app/templates/manage_leaves.html:126
+#: app/templates/manage_leaves.html:110
+msgid "Not required"
+msgstr "Nem szükséges"
+
+#: app/templates/manage_leaves.html:111
+msgid "Either reviewer"
+msgstr "Bármelyik jóváhagyhatja"
+
+#: app/templates/manage_leaves.html:112
+msgid "Pending"
+msgstr "Függőben"
+
+#: app/templates/manage_leaves.html:135
 msgid "No actions available"
 msgstr "Nincs elérhető művelet"
 
-#: app/templates/manage_leaves.html:136
+#: app/templates/manage_leaves.html:145
 msgid "No leave requests match the selected filters."
 msgstr "Nincs a kiválasztott szűrőknek megfelelő szabadságigény."
 
 #: app/templates/manage_legal_entities.html:2
 msgid "Legal entities · CSUPOR Portal"
-msgstr "Jogi entitások · CSUPOR Portál"
+msgstr "Jogi személyek · CSUPOR Portál"
 
-#: app/templates/manage_legal_entities.html:6
-msgid "Edit legal entity"
-msgstr "Jogi entitás szerkesztése"
+#: app/templates/manage_legal_entities.html:5
+msgid "Manage the employers used in contracts."
+msgstr "A szerződésekben szereplő munkáltatók kezelése."
 
-#: app/templates/manage_legal_entities.html:6
-msgid "Add legal entity"
-msgstr "Jogi entitás hozzáadása"
-
-#: app/templates/manage_legal_entities.html:11
-msgid "Name *"
-msgstr "Név"
-
-#: app/templates/manage_legal_entities.html:13
-#: app/templates/manage_places_of_work.html:18
-msgid "Address *"
-msgstr "Cím *"
-
-#: app/templates/manage_legal_entities.html:15
-msgid "OM id (6 digits) *"
-msgstr "OM azonosító (6 számjegy) *"
-
-#: app/templates/manage_legal_entities.html:17
-msgid "Tax number (format: 12345678-9-01) *"
-msgstr "Adószám (formátum: 12345678-9-01) *"
-
-#: app/templates/manage_legal_entities.html:20
-msgid "Update legal entity"
-msgstr "Jogi entitás frissítése"
-
-#: app/templates/manage_legal_entities.html:20
-msgid "Save legal entity"
-msgstr "Jogi entitás mentése"
-
-#: app/templates/manage_legal_entities.html:29
-msgid "Existing legal entities"
-msgstr "Jogi entitások kezelése"
-
-#: app/templates/manage_legal_entities.html:32
-#: app/templates/manage_places_of_work.html:33
+#: app/templates/manage_legal_entities.html:8 app/templates/manage_places_of_work.html:7
 msgid "Address"
 msgstr "Cím"
 
-#: app/templates/manage_legal_entities.html:32
+#: app/templates/manage_legal_entities.html:8
 msgid "OM id"
-msgstr "OM azonosító"
+msgstr "OM-azonosító"
 
-#: app/templates/manage_legal_entities.html:32
-msgid "Tax number"
-msgstr "Oklevél száma"
+#: app/templates/manage_legal_entities.html:11
+msgid "No legal entities have been added yet."
+msgstr "Még nincs rögzített jogi személy."
 
 #: app/templates/manage_places_of_work.html:2
 msgid "Places of work · CSUPOR Portal"
 msgstr "Munkahelyek · CSUPOR Portál"
 
-#: app/templates/manage_places_of_work.html:6
-msgid "Edit place of work"
-msgstr "Munkahely szerkesztése"
+#: app/templates/manage_places_of_work.html:5
+msgid "Manage workplaces and their legal entities."
+msgstr "Munkahelyek és a hozzájuk tartozó jogi személyek kezelése."
 
-#: app/templates/manage_places_of_work.html:6
+#: app/templates/manage_places_of_work.html:5 app/templates/place_of_work_form.html:2
+#: app/templates/place_of_work_form.html:5
 msgid "Add place of work"
 msgstr "Munkahely hozzáadása"
 
-#: app/templates/manage_places_of_work.html:21
-msgid "Update place of work"
-msgstr "Munkahely frissítése"
-
-#: app/templates/manage_places_of_work.html:21
-msgid "Save place of work"
-msgstr "Munkahely mentése"
-
-#: app/templates/manage_places_of_work.html:30
-msgid "Existing places of work"
-msgstr "Meglévő munkahelyek"
-
-#: app/templates/manage_places_of_work.html:33
-msgid "Display format"
-msgstr "Megjelenítési formátum"
+#: app/templates/manage_places_of_work.html:9
+msgid "No workplaces have been added yet."
+msgstr "Még nincs rögzített munkahely."
 
 #: app/templates/manage_privileges.html:2
 msgid "Manage Privileges · CSUPOR Portal"
@@ -1174,78 +2112,36 @@ msgstr "Jogosultságok kezelése · CSUPOR Portál"
 
 #: app/templates/manage_privileges.html:6
 msgid "Administrative controls"
-msgstr "Adminisztratív vezérlők"
+msgstr "Adminisztráció"
 
 #: app/templates/manage_privileges.html:7
-msgid "Manage user privileges with confidence."
-msgstr "Kezelje magabiztosan a felhasználói jogosultságokat."
+msgid "Privilege management"
+msgstr "Jogosultságkezelés"
 
-#: app/templates/manage_privileges.html:13
-msgid "Access rules"
-msgstr "Hozzáférési szabályok"
+#: app/templates/manage_privileges.html:9 app/templates/manage_privileges.html:19
+msgid "Choose the access each team member needs for their work."
+msgstr "Állítsd be a munkatársak feladataihoz szükséges hozzáféréseket."
 
-#: app/templates/manage_privileges.html:15
-msgid "Users with the"
-msgstr "Az"
-
-#: app/templates/manage_privileges.html:15
-#: app/templates/manage_user_profiles.html:15
-msgid "hr"
-msgstr "hr"
-
-#: app/templates/manage_privileges.html:15
-#: app/templates/manage_user_profiles.html:15
-msgid "ceo"
-msgstr "vezérigazgató"
-
-#: app/templates/manage_privileges.html:15
-msgid "or"
-msgstr "vagy"
-
-#: app/templates/manage_privileges.html:15
-msgid "developer"
-msgstr "fejlesztő"
-
-#: app/templates/manage_privileges.html:15
-msgid "privilege can access this page."
-msgstr "jogosultsággal rendelkező felhasználók érhetik el ezt az oldalt."
-
-#: app/templates/manage_privileges.html:16
-msgid "Changes take effect as soon as the new privilege is saved."
-msgstr "A módosítások az új jogosultság mentése után azonnal életbe lépnek."
-
-#: app/templates/manage_privileges.html:17
-msgid "Use this page after registration to elevate or revise user access."
-msgstr "Regisztráció után ezen az oldalon emelheti vagy módosíthatja a felhasználói hozzáférést."
-
-#: app/templates/manage_privileges.html:26
+#: app/templates/manage_privileges.html:18
 msgid "User privilege management"
 msgstr "Jogosultságkezelés"
 
-#: app/templates/manage_privileges.html:27
-msgid "Assign employee, HR, CEO, or developer access from a modernized table layout."
-msgstr "Munkavállalói, HR-, vezérigazgatói vagy fejlesztői hozzáférést rendelhet hozzá modernizált táblázatos elrendezésben."
-
-#: app/templates/manage_privileges.html:35 app/templates/register.html:32
+#: app/templates/manage_privileges.html:27 app/templates/register.html:17
 msgid "Username"
 msgstr "Felhasználónév"
 
-#: app/templates/manage_privileges.html:36
-#: app/templates/manage_user_profiles.html:35 app/templates/register.html:28
+#: app/templates/manage_privileges.html:28 app/templates/manage_user_profiles.html:27
+#: app/templates/register.html:16
 msgid "E-mail"
 msgstr "E-mail"
 
-#: app/templates/manage_privileges.html:37
+#: app/templates/manage_privileges.html:29
 msgid "Current privilege"
-msgstr "Jogosultságok"
+msgstr "Jelenlegi jogosultság"
 
-#: app/templates/manage_privileges.html:38
+#: app/templates/manage_privileges.html:30
 msgid "Assign privilege"
-msgstr "Jogosultságok"
-
-#: app/templates/manage_privileges.html:56
-msgid "Save"
-msgstr "Mentés"
+msgstr "Új jogosultság"
 
 #: app/templates/manage_user_profiles.html:2
 msgid "Manage User Profiles · CSUPOR Portal"
@@ -1255,49 +2151,97 @@ msgstr "Felhasználói profilok kezelése · CSUPOR Portál"
 msgid "Restricted profile access"
 msgstr "Korlátozott profil-hozzáférés"
 
-#: app/templates/manage_user_profiles.html:7
-msgid "Edit employee profiles for selected users."
-msgstr "Szerkessze a kiválasztott felhasználók munkavállalói profiljait."
+#: app/templates/manage_user_profiles.html:9
+msgid "Find an employee and open their profile to update personal details."
+msgstr "Válassz ki egy munkatársat, majd nyisd meg az adatlapját a személyes adatok frissítéséhez."
 
-#: app/templates/manage_user_profiles.html:13
-msgid "Who can use this?"
-msgstr "Ki használhatja ezt?"
+#: app/templates/manage_user_profiles.html:18
+msgid "User profile administration"
+msgstr "Felhasználói profilok adminisztrációja"
 
-#: app/templates/manage_user_profiles.html:15
-msgid "Only"
-msgstr "Csak a"
-
-#: app/templates/manage_user_profiles.html:15
-msgid "and"
-msgstr "és"
-
-#: app/templates/manage_user_profiles.html:15
-msgid "accounts can reach this page."
-msgstr "fiókok érhetik el ezt az oldalt."
-
-#: app/templates/manage_user_profiles.html:16
-msgid "Select any registered user to open the full employee profile editor."
-msgstr "Válasszon bármely regisztrált felhasználót a teljes munkavállalói profilszerkesztő megnyitásához."
-
-#: app/templates/manage_user_profiles.html:17
-msgid "Use this workflow when profile corrections need administrative review."
-msgstr "Használja ezt a folyamatot, ha a profiljavítások adminisztratív felülvizsgálatot igényelnek."
-
-#: app/templates/manage_user_profiles.html:27
+#: app/templates/manage_user_profiles.html:19
 msgid "Choose a user below to edit that employee's profile details."
-msgstr "Válasszon alább egy felhasználót az adott munkavállaló profiladatainak szerkesztéséhez."
+msgstr "Válassz egy felhasználót a profiladatai szerkesztéséhez."
 
-#: app/templates/manage_user_profiles.html:37
+#: app/templates/manage_user_profiles.html:29
 msgid "Action"
 msgstr "Művelet"
 
-#: app/templates/manage_user_profiles.html:47
+#: app/templates/manage_user_profiles.html:39
 msgid "Profile started"
 msgstr "Adatok rögzítve"
 
-#: app/templates/manage_user_profiles.html:49
+#: app/templates/manage_user_profiles.html:41
 msgid "Needs details"
 msgstr "Adatok szükségesek"
+
+#: app/templates/manage_working_days.html:2
+msgid "Working day calendar · CSUPOR Portal"
+msgstr "Munkanaptár · CSUPOR Portál"
+
+#: app/templates/manage_working_days.html:7
+msgid "HR calendar"
+msgstr "HR-naptár"
+
+#: app/templates/manage_working_days.html:8
+msgid "Manage working days and holidays"
+msgstr "Munkanapok és szabadnapok kezelése"
+
+#: app/templates/manage_working_days.html:9
+msgid ""
+"Defaults come from the Hungarian work calendar. Override specific dates when Saturdays become "
+"working days or ordinary weekdays become holidays."
+msgstr ""
+"Az alapértékek a magyar munkanaptárból származnak. Módosítsd az érintett napokat, ha egy szombat "
+"munkanap, vagy egy hétköznap szabadnap lesz."
+
+#: app/templates/manage_working_days.html:18
+msgid "Hungary default calendar with HR overrides"
+msgstr "Magyar munkanaptár a HR módosításaival"
+
+#: app/templates/manage_working_days.html:33 app/templates/manage_working_days.html:59
+msgid "Working day"
+msgstr "Munkanap"
+
+#: app/templates/manage_working_days.html:33 app/templates/manage_working_days.html:60
+msgid "Holiday"
+msgstr "Szabadnap"
+
+#: app/templates/manage_working_days.html:36
+msgid "Default: working day"
+msgstr "Alapérték: munkanap"
+
+#: app/templates/manage_working_days.html:36
+msgid "Default: holiday"
+msgstr "Alapérték: szabadnap"
+
+#: app/templates/manage_working_days.html:36 app/templates/manage_working_days.html:61
+msgid "HR override"
+msgstr "HR-módosítás"
+
+#: app/templates/manage_working_days.html:46
+msgid "Set holiday"
+msgstr "Legyen szabadnap"
+
+#: app/templates/manage_working_days.html:48
+msgid "Set working"
+msgstr "Legyen munkanap"
+
+#: app/templates/manage_working_days.html:58
+msgid "Working day calendar legend"
+msgstr "A munkanaptár jelmagyarázata"
+
+#: app/templates/place_of_work_form.html:2 app/templates/place_of_work_form.html:5
+msgid "Edit place of work"
+msgstr "Munkahely szerkesztése"
+
+#: app/templates/place_of_work_form.html:14
+msgid "Save place of work"
+msgstr "Munkahely mentése"
+
+#: app/templates/place_of_work_form.html:16
+msgid "Add a legal entity before creating a workplace."
+msgstr "Munkahely felvétele előtt adj hozzá egy jogi személyt."
 
 #: app/templates/professional_exam_form.html:2
 msgid "Professional Exam · CSUPOR Portal"
@@ -1305,39 +2249,43 @@ msgstr "Szakvizsga · CSUPOR Portál"
 
 #: app/templates/professional_exam_form.html:6
 msgid "Certification record"
-msgstr "Tanúsítvány-nyilvántartás"
+msgstr "Szakvizsga adatai"
 
 #: app/templates/professional_exam_form.html:7
 msgid "Manage your professional exam details."
-msgstr "Opcionális pedagógus-tanúsítvány vagy szakvizsga adatai."
+msgstr "Szakvizsgaadatok kezelése"
+
+#: app/templates/professional_exam_form.html:9
+msgid "Keep your professional exam details together with your qualifications."
+msgstr "Rögzítsd a szakvizsgád adatait a végzettségeid mellett."
 
 #: app/templates/professional_exam_form.html:12
 msgid "Leave all fields empty and submit to remove the current record."
-msgstr "Az aktuális rekord eltávolításához hagyjon minden mezőt üresen, majd küldje be az űrlapot."
+msgstr "Az aktuális bejegyzés törléséhez hagyj minden mezőt üresen, majd küldd be az űrlapot."
 
 #: app/templates/professional_exam_form.html:13
 msgid "Use a valid year that reflects the official exam completion date."
-msgstr "Olyan érvényes évet adjon meg, amely megfelel a hivatalos vizsgateljesítési dátumnak."
+msgstr "A szakvizsga hivatalos megszerzésének évét add meg."
 
 #: app/templates/professional_exam_form.html:14
 msgid "Keep the degree number aligned with your documentation."
-msgstr "Az oklevél számát a dokumentációval egyezően adja meg."
+msgstr "Az oklevél számát a dokumentumon szereplő formában add meg."
 
 #: app/templates/professional_exam_form.html:21
 msgid "Teacher professional exam"
-msgstr "Szakvizsga"
+msgstr "Pedagógus-szakvizsga"
 
 #: app/templates/professional_exam_form.html:22
 msgid "Update your certification details or clear the record by submitting blank values."
-msgstr "Frissítse tanúsítványadatait, vagy üres értékek beküldésével törölje a rekordot."
+msgstr "Frissítsd a szakvizsgád adatait, vagy üres űrlap beküldésével töröld a bejegyzést."
 
 #: app/templates/professional_exam_form.html:28
 msgid "Name of qualification"
-msgstr "Képesítés hozzáadása"
+msgstr "Képesítés megnevezése"
 
 #: app/templates/professional_exam_form.html:41
 msgid "Save professional exam"
-msgstr "Szakvizsga"
+msgstr "Szakvizsga mentése"
 
 #: app/templates/profile.html:2
 msgid "Profile"
@@ -1351,85 +2299,118 @@ msgstr "Profil · CSUPOR Portál"
 msgid "Administrative profile editor"
 msgstr "Adminisztratív profilszerkesztő"
 
+#: app/templates/profile.html:8 app/templates/profile.html:34
+#, python-format
+msgid "Employee record: %(name)s"
+msgstr "Munkatársi adatlap: %(name)s"
+
+#: app/templates/profile.html:10
+msgid "Review and update the selected employee’s personal details."
+msgstr "Ellenőrizd és frissítsd a kiválasztott munkatárs személyes adatait."
+
 #: app/templates/profile.html:13
 msgid "Confirm official identifiers before saving administrative edits."
-msgstr "Az adminisztratív módosítások mentése előtt ellenőrizze a hivatalos azonosítókat."
+msgstr "Mentés előtt ellenőrizd a hivatalos azonosítókat."
 
 #: app/templates/profile.html:14
 msgid "Use this view to correct missing or outdated employee information."
-msgstr "Ebben a nézetben javíthatja a hiányzó vagy elavult munkavállalói adatokat."
+msgstr "Ebben a nézetben pótolhatod a hiányzó és javíthatod az elavult munkavállalói adatokat."
 
 #: app/templates/profile.html:15
 msgid "Return to the user list to choose another profile after saving."
-msgstr "Mentés után térjen vissza a felhasználói listához egy másik profil kiválasztásához."
+msgstr "Mentés után térj vissza a felhasználói listához egy másik profil kiválasztásához."
 
 #: app/templates/profile.html:18
 msgid "Employee profile"
-msgstr "Profil frissítése"
+msgstr "Munkavállalói profil"
 
 #: app/templates/profile.html:19
 msgid "Build a complete employee record."
-msgstr "Hozzon létre teljes munkavállalói nyilvántartást."
+msgstr "Töltsd ki a munkavállalói adatlapodat."
+
+#: app/templates/profile.html:21 app/templates/profile.html:39
+msgid "Keep your personal details and contact information up to date."
+msgstr "Tartsd naprakészen a személyes adataidat és elérhetőségeidet."
 
 #: app/templates/profile.html:24
 msgid "Use the official number fields exactly as issued."
-msgstr "A hivatalos számmezőket pontosan a kiadásuk szerint adja meg."
+msgstr "A hivatalos azonosítókat az okmányokon szereplő formában add meg."
 
 #: app/templates/profile.html:25
 msgid "Add both permanent and temporary addresses where applicable."
-msgstr "Adja meg az állandó és ideiglenes címeket is, ahol releváns."
+msgstr "Add meg az állandó és – ha van – az ideiglenes lakcímedet is."
 
 #: app/templates/profile.html:26
 msgid "Save regularly to keep HR information current."
-msgstr "Mentsen rendszeresen, hogy a HR-adatok naprakészek maradjanak."
+msgstr "Ments rendszeresen, hogy a HR-adatok naprakészek maradjanak."
 
-#: app/templates/profile.html:64
+#: app/templates/profile.html:37
+msgid "Account"
+msgstr "Fiók"
+
+#: app/templates/profile.html:47
+msgid "Personal details"
+msgstr "Személyes adatok"
+
+#: app/templates/profile.html:65
 msgid "Gender"
 msgstr "Nem"
 
-#: app/templates/profile.html:66
+#: app/templates/profile.html:67
 msgid "Select gender"
-msgstr "Válasszon nemet"
+msgstr "Válaszd ki a nemet"
 
-#: app/templates/profile.html:73
+#: app/templates/profile.html:74
 msgid "Mother's maiden name"
 msgstr "Anyja leánykori neve"
 
-#: app/templates/profile.html:77
+#: app/templates/profile.html:78
 msgid "Citizenship(s)"
 msgstr "Állampolgárság(ok)"
 
-#: app/templates/profile.html:81
+#: app/templates/profile.html:82
 msgid "Phone number"
-msgstr "Oklevél száma"
+msgstr "Telefonszám"
 
-#: app/templates/profile.html:89
+#: app/templates/profile.html:85
+msgid "Official identifiers"
+msgstr "Hivatalos azonosítók"
+
+#: app/templates/profile.html:91
 msgid "Tax number (10 digits)"
 msgstr "Adóazonosító jel (10 számjegy)"
 
-#: app/templates/profile.html:93
+#: app/templates/profile.html:95
 msgid "Education number (11 digits)"
 msgstr "Oktatási azonosító (11 számjegy)"
 
-#: app/templates/profile.html:97
-msgid "Teacher ID card number"
-msgstr "Pedagógus igazolvány száma"
+#: app/templates/profile.html:99
+msgid "Teacher ID card number (max. 64 characters)"
+msgstr "Pedagógusigazolvány száma (legfeljebb 64 karakter)"
 
-#: app/templates/profile.html:101
+#: app/templates/profile.html:102
+msgid "Address and other details"
+msgstr "Lakcím és további adatok"
+
+#: app/templates/profile.html:104
 msgid "Permanent residence"
 msgstr "Állandó lakcím"
 
-#: app/templates/profile.html:105
+#: app/templates/profile.html:108
 msgid "Temporary address"
-msgstr "Ideiglenes cím"
+msgstr "Ideiglenes lakcím"
 
-#: app/templates/profile.html:109
+#: app/templates/profile.html:112
 msgid "Bank account number"
 msgstr "Bankszámlaszám"
 
-#: app/templates/profile.html:115
+#: app/templates/profile.html:118
 msgid "Select marital status"
-msgstr "Családi állapot"
+msgstr "Válaszd ki a családi állapotot"
+
+#: app/templates/profile.html:135
+msgid "Save profile"
+msgstr "Profil mentése"
 
 #: app/templates/qualification_form.html:2
 msgid "Add Qualification · CSUPOR Portal"
@@ -1437,23 +2418,27 @@ msgstr "Képesítés hozzáadása · CSUPOR Portál"
 
 #: app/templates/qualification_form.html:6
 msgid "Academic history"
-msgstr "Tanulmányi előzmények"
+msgstr "Tanulmányok"
 
 #: app/templates/qualification_form.html:7
 msgid "Record an educational qualification."
-msgstr "Rögzítsen egy tanulmányi képesítést."
+msgstr "Rögzíts egy képesítést."
+
+#: app/templates/qualification_form.html:9
+msgid "Add the details shown on your diploma or certificate."
+msgstr "Add meg az okleveleden vagy bizonyítványodon szereplő adatokat."
 
 #: app/templates/qualification_form.html:12
 msgid "Use the exact degree or certificate number from the issuing institution."
-msgstr "A kiállító intézmény által megadott pontos oklevél- vagy tanúsítványszámot használja."
+msgstr "Az oklevél vagy bizonyítvány számát a kiállító intézmény által megadott formában rögzítsd."
 
 #: app/templates/qualification_form.html:13
 msgid "Mark only one qualification as the highest to keep records consistent."
-msgstr "A nyilvántartás következetessége érdekében csak egy képesítést jelöljön legmagasabbként."
+msgstr "Csak egy képesítést jelölj meg legmagasabb végzettségként."
 
 #: app/templates/qualification_form.html:14
 msgid "Enter the year obtained as a numeric year."
-msgstr "A megszerzés évét számként adja meg."
+msgstr "A megszerzés évét számként add meg."
 
 #: app/templates/qualification_form.html:21
 msgid "Add educational qualification"
@@ -1461,7 +2446,7 @@ msgstr "Képesítés hozzáadása"
 
 #: app/templates/qualification_form.html:22
 msgid "Save a new qualification and optionally flag it as your highest achievement."
-msgstr "Mentse az új képesítést, és opcionálisan jelölje meg legmagasabb végzettségként."
+msgstr "Mentsd az új képesítést, és szükség esetén jelöld meg legmagasabb végzettségként."
 
 #: app/templates/qualification_form.html:28
 msgid "Level or type"
@@ -1496,383 +2481,35 @@ msgid "Get started"
 msgstr "Kezdés"
 
 #: app/templates/register.html:8
-msgid "Create your portal account."
-msgstr "Hozza létre portálfiókját."
-
-#: app/templates/register.html:10
-msgid "New users join with the default"
-msgstr "Az új felhasználók alapértelmezett"
-
-#: app/templates/register.html:10
-msgid "employee"
-msgstr "munkavállaló"
-
-#: app/templates/register.html:10
-msgid "privilege. HR or the CEO can later update access based on organizational needs."
-msgstr "jogosultsággal csatlakoznak. A HR vagy a vezérigazgató később a szervezeti igények alapján módosíthatja a hozzáférést."
-
-#: app/templates/register.html:13
-msgid "Start with a secure account and complete your profile afterward."
-msgstr "Kezdje egy biztonságos fiókkal, majd töltse ki profilját."
-
-#: app/templates/register.html:14
-msgid "Keep qualifications, dependents, and certification history organized."
-msgstr "Tartsa rendezetten képesítéseit, eltartottait és tanúsítványtörténetét."
-
-#: app/templates/register.html:15
-msgid "Enjoy a more modern and approachable onboarding flow."
-msgstr "Élvezze a modernebb és barátságosabb belépési folyamatot."
-
-#: app/templates/register.html:22
-msgid "Registration"
-msgstr "Regisztráció"
-
-#: app/templates/register.html:23
-msgid "Set up your account credentials to access the employee portal."
-msgstr "Állítsa be fiókadatait a munkavállalói portál eléréséhez."
-
-#: app/templates/register.html:29
-msgid "name@example.com"
-msgstr "nev@example.com"
-
-#: app/templates/register.html:33
-msgid "Choose a username"
-msgstr "Válasszon felhasználónevet"
-
-#: app/templates/register.html:37
-msgid "Create a strong password"
-msgstr "Hozzon létre erős jelszót"
-
-#: app/templates/register.html:41
-msgid "Back to login"
-msgstr "Vissza a bejelentkezéshez"
-
-# Modern portal interface
-msgid "Skip to content"
-msgstr "Ugrás a tartalomra"
-
-msgid "Main navigation"
-msgstr "Főmenü"
-
-msgid "Employee portal"
-msgstr "Munkatársi portál"
-
-msgid "Close menu"
-msgstr "Menü bezárása"
-
-msgid "Open menu"
-msgstr "Menü megnyitása"
-
-msgid "My workspace"
-msgstr "Saját felület"
-
-msgid "My profile"
-msgstr "Saját profil"
-
-msgid "My records"
-msgstr "Nyilvántartásaim"
-
-msgid "Dismiss message"
-msgstr "Üzenet bezárása"
-
-msgid "Your everyday workspace."
-msgstr "A mindennapokhoz, egy helyen."
-
-msgid "A little more clarity. Every day."
-msgstr "Átláthatóbb mindennapok."
-
-msgid "Your profile, records and time away. Together in one place, with more room for what matters."
-msgstr "Személyes adatok, dokumentumok és szabadságok. Minden egy helyen, hogy több idő maradjon a fontos dolgokra."
-
-msgid "Personal records"
-msgstr "Személyes adatok"
-
-msgid "Professional records"
-msgstr "Szakmai adatok"
-
-msgid "Welcome back."
-msgstr "Örülünk, hogy itt vagy!"
-
-msgid "Show password"
-msgstr "Jelszó megjelenítése"
-
-msgid "Hide password"
-msgstr "Jelszó elrejtése"
-
-msgid "New to CSUPOR?"
-msgstr "Még nincs fiókod?"
-
 msgid "Your place in the team."
 msgstr "A csapat tagja vagy."
 
+#: app/templates/register.html:9
 msgid "Create your account, then add your personal details. HR will set up the access you need."
-msgstr "Hozd létre a fiókodat, majd töltsd ki a személyes adataidat. A szükséges hozzáféréseket a HR állítja be."
+msgstr ""
+"Hozd létre a fiókodat, majd töltsd ki a személyes adataidat. A szükséges hozzáféréseket a HR "
+"állítja be."
 
+#: app/templates/register.html:14
+msgid "Set up your account credentials to access the employee portal."
+msgstr "Add meg a fiókod adatait a munkavállalói portál eléréséhez."
+
+#: app/templates/register.html:16
+msgid "name@example.com"
+msgstr "nev@example.com"
+
+#: app/templates/register.html:17
+msgid "Choose a username"
+msgstr "Válassz felhasználónevet"
+
+#: app/templates/register.html:21
+msgid "Create a strong password"
+msgstr "Hozz létre erős jelszót"
+
+#: app/templates/register.html:25
+msgid "Register"
+msgstr "Regisztráció"
+
+#: app/templates/register.html:27
 msgid "Already have an account?"
 msgstr "Már van fiókod?"
-
-msgid "Everything you need for your working day: your details, your records and your next time away."
-msgstr "A munkanapodhoz szükséges adatok, nyilvántartások és a következő szabadságod – egy helyen."
-
-msgid "Your personal and contact details."
-msgstr "Személyes adataid és elérhetőségeid."
-
-msgid "Your time away, at a glance."
-msgstr "Szabadságaid rövid áttekintése."
-
-msgid "Family details for your employee records."
-msgstr "Családi adatok a munkavállalói nyilvántartáshoz."
-
-msgid "Your education and certificates."
-msgstr "Tanulmányaid és bizonyítványaid."
-
-msgid "Quick access to your administrative tools."
-msgstr "Gyors elérés az adminisztrációs feladatokhoz."
-
-#, python-format
-msgid "Employee record: %(name)s"
-msgstr "Munkatársi adatlap: %(name)s"
-
-msgid "Review and update the selected employee’s personal details."
-msgstr "Ellenőrizd és frissítsd a kiválasztott munkatárs személyes adatait."
-
-msgid "Keep your personal details and contact information up to date."
-msgstr "Tartsd naprakészen a személyes adataidat és elérhetőségeidet."
-
-msgid "Account"
-msgstr "Fiók"
-
-msgid "Save profile"
-msgstr "Profil mentése"
-
-msgid "Add family details needed for benefits and leave entitlements."
-msgstr "Add meg a juttatásokhoz és szabadságjogosultságokhoz szükséges családi adatokat."
-
-msgid "Add the details shown on your diploma or certificate."
-msgstr "Add meg az okleveleden vagy bizonyítványodon szereplő adatokat."
-
-msgid "Keep your professional exam details together with your qualifications."
-msgstr "Rögzítsd a szakvizsgád adatait a végzettségeid mellett."
-
-msgid "Find an employee and open their profile to update personal details."
-msgstr "Válassz ki egy munkatársat, majd nyisd meg az adatlapját a személyes adatok frissítéséhez."
-
-msgid "Choose the access each team member needs for their work."
-msgstr "Állítsd be a munkatársak feladataihoz szükséges hozzáféréseket."
-
-msgid "Open-ended or single day"
-msgstr "Nyitott végű vagy egynapos"
-
-msgid "Personal details"
-msgstr "Személyes adatok"
-
-msgid "Official identifiers"
-msgstr "Hivatalos azonosítók"
-
-msgid "Address and other details"
-msgstr "Lakcím és további adatok"
-
-msgid "Save changes"
-msgstr "Módosítások mentése"
-
-msgid "male"
-msgstr "férfi"
-
-msgid "female"
-msgstr "nő"
-
-msgid "other"
-msgstr "egyéb"
-
-msgid "single"
-msgstr "egyedülálló"
-
-msgid "married"
-msgstr "házas"
-
-msgid "divorced"
-msgstr "elvált"
-
-msgid "widowed"
-msgstr "özvegy"
-
-msgid "civil partnership"
-msgstr "bejegyzett élettársi kapcsolat"
-
-msgid "paid leave"
-msgstr "fizetett szabadság"
-
-msgid "health leave"
-msgstr "egészségügyi távollét"
-
-msgid "childcare sickness benefit"
-msgstr "gyermekápolási táppénz"
-
-msgid "childbirth leave"
-msgstr "szülési szabadság"
-
-msgid "exemption from obligation to work"
-msgstr "munkavégzési kötelezettség alóli mentesítés"
-
-msgid "unpaid leave"
-msgstr "fizetés nélküli szabadság"
-
-msgid "pending approval"
-msgstr "jóváhagyásra vár"
-
-msgid "approved"
-msgstr "jóváhagyva"
-
-msgid "rejected"
-msgstr "elutasítva"
-
-msgid "pending cancellation"
-msgstr "visszavonásra vár"
-
-msgid "cancelled"
-msgstr "visszavonva"
-
-#, python-format
-msgid "Leave used in %(year)s"
-msgstr "Szabadságok %(year)s-ben"
-
-msgid "Leave type"
-msgstr "Távollét típusa"
-
-msgid "Used"
-msgstr "Felhasznált"
-
-msgid "Available"
-msgstr "Elérhető"
-
-msgid "Paid leave"
-msgstr "Fizetett szabadság"
-
-msgid "Health leave"
-msgstr "Egészségügyi távollét"
-
-msgid "Childcare sickness benefit"
-msgstr "Gyermekápolási táppénz"
-
-msgid "Childbirth leave"
-msgstr "Szülési szabadság"
-
-msgid "Exemption from obligation to work"
-msgstr "Munkavégzés alóli mentesítés"
-
-msgid "Unpaid leave"
-msgstr "Fizetés nélküli szabadság"
-
-msgid "Pending approval, approved, and pending cancellation requests are included."
-msgstr "A jóváhagyásra vagy visszavonásra váró és a jóváhagyott igényeket is tartalmazza."
-
-msgid "Basic leave, supplementary leaves, parental leave, paternity leave, and leave carry-over."
-msgstr "Alapszabadság, pótszabadságok, szülői és apasági szabadság, valamint áthozott szabadság."
-
-msgid "Sick leave and sickness benefit."
-msgstr "Betegszabadság és táppénz."
-
-msgid "Available when a child dependent is recorded on your profile."
-msgstr "Akkor érhető el, ha az eltartottak között gyermek is szerepel."
-
-msgid "Maternity leave, childcare fee, and childcare allowance."
-msgstr "Szülési szabadság, gyermekgondozási díj és gyermekgondozást segítő ellátás."
-
-msgid "Request time away under an exemption from work obligation."
-msgstr "Távollét igénylése munkavégzési kötelezettség alóli mentesítés alapján."
-
-msgid "Available once paid leave days are exhausted for the selected year."
-msgstr "A kiválasztott év fizetett szabadságának felhasználása után érhető el."
-
-msgid "Ongoing"
-msgstr "Folyamatban"
-
-msgid "Working days"
-msgstr "Munkanapok"
-
-msgid "CEO only"
-msgstr "Csak az ügyvezető"
-
-msgid "Principal/deputy only"
-msgstr "Csak az igazgató vagy helyettese"
-
-msgid "Both"
-msgstr "Mindkettő"
-
-msgid "Either"
-msgstr "Bármelyik"
-
-msgid "A CEO approval is sufficient. Principal/deputy approval is not required."
-msgstr "Az ügyvezető jóváhagyása elegendő. Igazgatói vagy igazgatóhelyettesi jóváhagyás nem szükséges."
-
-msgid "Approval from the relevant principal or deputy is sufficient. CEO approval is not required."
-msgstr "Az érintett igazgató vagy helyettese jóváhagyása elegendő. Ügyvezetői jóváhagyás nem szükséges."
-
-msgid "Approval from both the CEO and the relevant principal/deputy is required."
-msgstr "Az ügyvezető és az érintett igazgató vagy helyettese jóváhagyása egyaránt szükséges."
-
-msgid "One approval from either the CEO or the relevant principal/deputy is sufficient."
-msgstr "Az ügyvezető vagy az érintett igazgató, illetve helyettese egyetlen jóváhagyása elegendő."
-
-msgid "Approval settings"
-msgstr "Jóváhagyási beállítások"
-
-msgid "Choose whose approval is needed for leave requests across all legal entities."
-msgstr "Válaszd ki, kinek a jóváhagyása szükséges a szabadságigényekhez az összes jogi személynél."
-
-msgid "Current approval rule"
-msgstr "Érvényes jóváhagyási szabály"
-
-msgid "Only users with CEO privilege can change this setting."
-msgstr "Ezt a beállítást csak ügyvezetői jogosultsággal lehet módosítani."
-
-msgid "Required approvals"
-msgstr "Szükséges jóváhagyások"
-
-msgid "What happens when you save?"
-msgstr "Mi történik a mentéskor?"
-
-msgid "The rule applies to new and pending requests. Pending requests are approved immediately if their recorded approvals satisfy the new rule. Completed decisions stay unchanged."
-msgstr "A szabály az új és a függőben lévő igényekre vonatkozik. A függőben lévő igények azonnal jóváhagyást kapnak, ha a már rögzített jóváhagyások megfelelnek az új szabálynak. A lezárt döntések változatlanok maradnak."
-
-msgid "Principals and deputies can review requests only for their own legal entities. Deputies cannot approve their own requests. Existing automatic approvals for CEO and principal applicants follow the selected rule."
-msgstr "Az igazgatók és helyetteseik csak a saját jogi személyükhöz tartozó igényekről dönthetnek. A helyettesek nem hagyhatják jóvá a saját igényüket. Az ügyvezetők és igazgatók saját igényeinek automatikus jóváhagyása a kiválasztott szabályt követi."
-
-msgid "Rejection by an eligible reviewer closes a pending request. Cancellation permissions stay unchanged."
-msgstr "Egy jogosult döntéshozó elutasítása lezárja a függőben lévő igényt. A visszavonási jogosultságok változatlanok maradnak."
-
-msgid "Last changed by %(name)s"
-msgstr "Utoljára módosította: %(name)s"
-
-msgid "Save approval rule"
-msgstr "Jóváhagyási szabály mentése"
-
-msgid "The approval rule was changed by another CEO. Review the current setting and try again."
-msgstr "Egy másik ügyvezető módosította a jóváhagyási szabályt. Ellenőrizd az aktuális beállítást, és próbáld újra."
-
-msgid "The approval rule is unchanged."
-msgstr "A jóváhagyási szabály nem változott."
-
-msgid "Approval rule saved. Pending requests approved using recorded approvals: %(count)s."
-msgstr "A jóváhagyási szabály mentve. A már rögzített jóváhagyások alapján jóváhagyott függő igények száma: %(count)s."
-
-msgid "Select an active contract, review your leave calendar and submit a request."
-msgstr "Válassz egy aktív szerződést, tekintsd át a szabadságnaptárad, és küldd be az igényed."
-
-msgid "Requests stay pending until the required approvals are recorded."
-msgstr "Az igények a szükséges jóváhagyások rögzítéséig függőben maradnak."
-
-msgid "CEO"
-msgstr "Ügyvezető"
-
-msgid "Principal/deputy"
-msgstr "Igazgató vagy helyettese"
-
-msgid "Not required"
-msgstr "Nem szükséges"
-
-msgid "Either reviewer"
-msgstr "Bármelyik jóváhagyhatja"
-
-msgid "Pending"
-msgstr "Függőben"

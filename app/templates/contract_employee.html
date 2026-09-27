@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('New contract') }} · {{ _('CSUPOR Portal') }}{% endblock %}
+{% block content %}
+<section class="form-shell">
+  <div class="section-heading"><div><h1>{{ _('New contract') }}</h1><p>{{ _('Choose the employee for the new contract, including employees without an existing contract.') }}</p></div></div>
+  {% if users %}<form method="get"><div class="field"><label for="user_id">{{ _('Employee') }}</label><select id="user_id" name="user_id" required><option value="">{{ _('Select employee') }}</option>{% for user in users %}<option value="{{ user.id }}">{{ user_display_name(user) }} · {{ user.email }}</option>{% endfor %}</select></div><div class="button-row"><button type="submit">{{ _('Continue') }}</button><a class="button button-secondary" href="{{ url_for('manage_contracts') }}">{{ _('Cancel') }}</a></div></form>{% else %}<div class="empty-state">{{ _('No employees have been registered yet.') }}</div>{% endif %}
+</section>
+{% endblock %}
