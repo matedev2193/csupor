@@ -137,32 +137,4 @@
   {% endif %}
 </section>
 
-<style>
-  .approval-stack,
-  .action-stack {
-    display: grid;
-    gap: 8px;
-  }
-
-  .action-stack button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  .status-pill {
-    display: inline-flex;
-    align-items: center;
-    border-radius: 999px;
-    padding: 7px 10px;
-    font-size: 0.78rem;
-    font-weight: 800;
-  }
-
-  .status-pending-approval { color: #92400e; background: #fef3c7; }
-  .status-approved { color: #166534; background: #dcfce7; }
-  .status-rejected { color: #991b1b; background: #fee2e2; }
-  .status-pending-cancellation { color: #6d28d9; background: #ede9fe; }
-  .status-cancelled { color: #475569; background: #e2e8f0; }
-</style>
 {% endblock %}

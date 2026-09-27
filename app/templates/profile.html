@@ -5,9 +5,9 @@
   <aside class="form-sidebar">
     {% if manager_mode %}
     <span class="eyebrow">{{ _('Administrative profile editor') }}</span>
-    <h2>Update {{ target_user.username }}'s employee record.</h2>
+    <h2>{{ _('Employee record: %(name)s', name=target_user.username) }}</h2>
     <p>
-      Review and revise the selected employee's core profile details. Changes are saved directly to that user's record.
+      {{ _('Review and update the selected employee’s personal details.') }}
     </p>
     <ul>
       <li>{{ _('Confirm official identifiers before saving administrative edits.') }}</li>
@@ -18,7 +18,7 @@
     <span class="eyebrow">{{ _('Employee profile') }}</span>
     <h2>{{ _('Build a complete employee record.') }}</h2>
     <p>
-      Maintain personal, residency, and identification details in a single polished form designed to be easier to scan and update.
+      {{ _('Keep your personal details and contact information up to date.') }}
     </p>
     <ul>
       <li>{{ _('Use the official number fields exactly as issued.') }}</li>
@@ -31,12 +31,12 @@
   <section class="form-shell">
     <div class="section-heading">
       <div>
-        <h2>{% if manager_mode %}Editing {{ target_user.username }}{% else %}User profile{% endif %}</h2>
+        <h2>{% if manager_mode %}{{ _('Employee record: %(name)s', name=target_user.username) }}{% else %}{{ _('My profile') }}{% endif %}</h2>
         <p>
           {% if manager_mode %}
-          Make updates for <strong>{{ target_user.email }}</strong> using the same employee profile form.
+          {{ _('Account') }}: <strong>{{ target_user.email }}</strong>
           {% else %}
-          Complete or revise the fields below to keep your employee information accurate.
+          {{ _('Keep your personal details and contact information up to date.') }}
           {% endif %}
         </p>
       </div>
@@ -44,6 +44,7 @@
 
     <form method="post">
       <div class="form-grid">
+        <h3 class="form-divider">{{ _('Personal details') }}</h3>
         <div class="field">
           <label for="full_name">{{ _('Full name') }}</label>
           <input id="full_name" name="full_name" value="{{ profile.full_name or '' }}">
@@ -65,7 +66,7 @@
           <select id="gender" name="gender">
             <option value="">{{ _('Select gender') }}</option>
             {% for g in genders %}
-            <option value="{{ g.value }}" {% if profile.gender and profile.gender.value == g.value %}selected{% endif %}>{{ g.value }}</option>
+            <option value="{{ g.value }}" {% if profile.gender and profile.gender.value == g.value %}selected{% endif %}>{{ _(g.value)|capitalize }}</option>
             {% endfor %}
           </select>
         </div>
@@ -79,8 +80,9 @@
         </div>
         <div class="field">
           <label for="phone_number">{{ _('Phone number') }}</label>
-          <input id="phone_number" name="phone_number" value="{{ profile.phone_number or '' }}">
+          <input id="phone_number" type="tel" autocomplete="tel" name="phone_number" value="{{ profile.phone_number or '' }}">
         </div>
+        <h3 class="form-divider">{{ _('Official identifiers') }}</h3>
         <div class="field">
           <label for="social_security_number">{{ _("Social security number (9 digits)") }}</label>
           <input id="social_security_number" name="social_security_number" value="{{ profile.social_security_number or '' }}">
@@ -97,6 +99,7 @@
           <label for="teacher_id_card_number">{{ _('Teacher ID card number') }}</label>
           <input id="teacher_id_card_number" name="teacher_id_card_number" value="{{ profile.teacher_id_card_number or '' }}">
         </div>
+        <h3 class="form-divider">{{ _('Address and other details') }}</h3>
         <div class="field field-full">
           <label for="permanent_residence">{{ _('Permanent residence') }}</label>
           <textarea id="permanent_residence" name="permanent_residence">{{ profile.permanent_residence or '' }}</textarea>
@@ -118,7 +121,7 @@
               value="{{ marital_status.value }}"
               {% if profile.marital_status and profile.marital_status.value == marital_status.value %}selected{% endif %}
             >
-              {{ marital_status.value }}
+              {{ _(marital_status.value)|capitalize }}
             </option>
             {% endfor %}
           </select>
@@ -129,7 +132,7 @@
         </div>
       </div>
       <div class="button-row">
-        <button type="submit">{% if manager_mode %}Save user profile{% else %}Save profile{% endif %}</button>
+        <button type="submit">{{ _('Save profile') }}</button>
         <a class="button button-secondary" href="{{ url_for('manage_user_profiles') if manager_mode else url_for('dashboard') }}">{{ _("Cancel") }}</a>
       </div>
     </form>

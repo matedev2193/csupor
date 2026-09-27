@@ -21,7 +21,95 @@
 
 {% if active_contracts %}
 <section class="leave-workspace dashboard-grid">
+  <section class="leave-calendar-card span-7">
+    <div class="calendar-toolbar">
+      <a class="button button-secondary" href="{{ url_for('leaves', contract_id=selected_contract.id, year=previous_month.year, month=previous_month.month) }}">← {{ previous_month|dateformat('MMM') }}</a>
+      <div>
+        <h2>{{ calendar_days|select|first|dateformat('y. MMMM' if current_locale == 'hu' else 'MMMM y') }}</h2>
+        <p>{{ selected_contract.job_title }} · {{ selected_contract.employer.name if selected_contract.employer else _('Employer not set') }}</p>
+      </div>
+      <a class="button button-secondary" href="{{ url_for('leaves', contract_id=selected_contract.id, year=next_month.year, month=next_month.month) }}">{{ next_month|dateformat('MMM') }} →</a>
+    </div>
+
+    <div class="calendar-grid weekday-grid">
+      <div>{{ _('Mon') }}</div><div>{{ _('Tue') }}</div><div>{{ _('Wed') }}</div><div>{{ _('Thu') }}</div><div>{{ _('Fri') }}</div><div>{{ _('Sat') }}</div><div>{{ _('Sun') }}</div>
+    </div>
+    <div class="calendar-grid day-grid">
+      {% for day in calendar_days %}
+      {% if day %}
+      <button
+        type="button"
+        class="calendar-day calendar-day-button"
+        data-calendar-date="{{ day.isoformat() }}"
+        aria-label="{{ _("Select %(month)s %(day)s, %(year)s as a leave date", month=day|dateformat('MMMM'), day=day.day, year=day.year) }}"
+      >
+        <time datetime="{{ day.isoformat() }}">{{ day.day }}</time>
+        {% for leave_request in month_requests %}
+          {% if leave_request.status.value not in ['cancelled', 'rejected'] and leave_request_overlaps_day(leave_request, day) %}
+          <span class="leave-chip status-{{ leave_request.status.value|replace(' ', '-') }}" title="{{ _(leave_request.category.value)|capitalize }} · {{ _(leave_request.status.value) }}">
+            {{ _(leave_request.category.value)|capitalize }}
+          </span>
+          {% endif %}
+        {% endfor %}
+      </button>
+      {% else %}
+      <div class="calendar-day empty-day" aria-hidden="true"></div>
+      {% endif %}
+      {% endfor %}
+    </div>
+
+    <div class="request-list">
+      <h3>{{ _("This month") }}</h3>
+      {% if month_requests %}
+      {% for leave_request in month_requests %}
+      <article class="request-item">
+        <div>
+          <strong>{{ _(leave_request.category.value)|capitalize }}</strong>
+          <p>{{ leave_request.start_date }}{% if leave_request.end_date %} → {{ leave_request.end_date }}{% else %} · {{ _('Open-ended or single day') }}{% endif %}</p>
+        </div>
+        <div class="request-actions">
+          <span class="status-pill status-{{ leave_request.status.value|replace(' ', '-') }}">{{ _(leave_request.status.value)|capitalize }}</span>
+          {% if leave_request.status.value in ['approved', 'pending approval'] %}
+          <form method="post" class="inline-form">
+            <input type="hidden" name="action" value="cancel">
+            <input type="hidden" name="leave_request_id" value="{{ leave_request.id }}">
+            <input type="hidden" name="contract_id" value="{{ selected_contract.id }}">
+            <input type="hidden" name="year" value="{{ selected_year }}">
+            <input type="hidden" name="month" value="{{ selected_month }}">
+            <button type="submit" class="button-secondary">{{ _("Cancel") }}</button>
+          </form>
+          {% elif leave_request.status.value == 'pending cancellation' %}
+          <form method="post" class="inline-form">
+            <input type="hidden" name="action" value="undo_cancel">
+            <input type="hidden" name="leave_request_id" value="{{ leave_request.id }}">
+            <input type="hidden" name="contract_id" value="{{ selected_contract.id }}">
+            <input type="hidden" name="year" value="{{ selected_year }}">
+            <input type="hidden" name="month" value="{{ selected_month }}">
+            <button type="submit" class="button-secondary">{{ _("Undo") }}</button>
+          </form>
+          {% endif %}
+        </div>
+      </article>
+      {% endfor %}
+      {% else %}
+      <div class="empty-state">{{ _("No leave requests are scheduled for this month yet.") }}</div>
+      {% endif %}
+    </div>
+  </section>
   <aside class="leave-sidebar span-5">
+    <form id="contract-picker" method="get" class="leave-card contract-picker-card">
+      <label for="contract_id">{{ _("Assign leaves to contract") }}</label>
+      <select id="contract_id" name="contract_id" onchange="this.form.submit()">
+        {% for contract in active_contracts %}
+        <option value="{{ contract.id }}" {% if selected_contract and selected_contract.id == contract.id %}selected{% endif %}>
+          {{ contract.job_title }} · {{ contract.start_date }} → {{ contract.end_date or _('Ongoing') }}
+        </option>
+        {% endfor %}
+      </select>
+      <input type="hidden" name="year" value="{{ selected_year }}">
+      <input type="hidden" name="month" value="{{ selected_month }}">
+      <small class="help-text">{{ _("Your current active contract is selected by default. The calendar refreshes immediately when you choose another active contract.") }}</small>
+    </form>
     <form method="post" class="leave-card leave-request-form">
       <input type="hidden" name="contract_id" value="{{ selected_contract.id }}">
       <input type="hidden" name="year" value="{{ selected_year }}">
@@ -37,13 +125,13 @@
       <select id="category" name="category" required>
         {% for item in available_categories %}
         <option value="{{ item.category.value }}" data-end-required="{{ 'true' if item.end_required else 'false' }}">
-          {{ item.label }}
+          {{ _(item.label) }}
         </option>
         {% endfor %}
       </select>
       <div id="leave-type-help" class="leave-type-help">
         {% for item in available_categories %}
-        <p data-category-help="{{ item.category.value }}" {% if not loop.first %}hidden{% endif %}>{{ item.description }}</p>
+        <p data-category-help="{{ item.category.value }}" {% if not loop.first %}hidden{% endif %}>{{ _(item.description) }}</p>
         {% endfor %}
       </div>
 
@@ -73,6 +161,7 @@
           <p>{{ _("Pending approval, approved, and pending cancellation requests are included.") }}</p>
         </div>
       </div>
+      <div class="table-wrap">
       <table class="leave-usage-table">
         <thead>
           <tr>
@@ -97,98 +186,13 @@
           {% endfor %}
         </tbody>
       </table>
+      </div>
     </section>
-    <form id="contract-picker" method="get" class="leave-card contract-picker-card">
-      <label for="contract_id">{{ _("Assign leaves to contract") }}</label>
-      <select id="contract_id" name="contract_id" onchange="this.form.submit()">
-        {% for contract in active_contracts %}
-        <option value="{{ contract.id }}" {% if selected_contract and selected_contract.id == contract.id %}selected{% endif %}>
-          {{ contract.job_title }} · {{ contract.start_date }} → {{ contract.end_date or 'ongoing' }}
-        </option>
-        {% endfor %}
-      </select>
-      <input type="hidden" name="year" value="{{ selected_year }}">
-      <input type="hidden" name="month" value="{{ selected_month }}">
-      <small class="help-text">{{ _("Your current active contract is selected by default. The calendar refreshes immediately when you choose another active contract.") }}</small>
-    </form>
+
 
   </aside>
 
-  <section class="leave-calendar-card span-7">
-    <div class="calendar-toolbar">
-      <a class="button button-secondary" href="{{ url_for('leaves', contract_id=selected_contract.id, year=previous_month.year, month=previous_month.month) }}">← {{ previous_month.strftime('%b') }}</a>
-      <div>
-        <h2>{{ month_label }}</h2>
-        <p>{{ selected_contract.job_title }} · {{ selected_contract.employer.name if selected_contract.employer else 'Employer not set' }}</p>
-      </div>
-      <a class="button button-secondary" href="{{ url_for('leaves', contract_id=selected_contract.id, year=next_month.year, month=next_month.month) }}">{{ next_month.strftime('%b') }} →</a>
-    </div>
 
-    <div class="calendar-grid weekday-grid">
-      <div>{{ _('Mon') }}</div><div>{{ _('Tue') }}</div><div>{{ _('Wed') }}</div><div>{{ _('Thu') }}</div><div>{{ _('Fri') }}</div><div>{{ _('Sat') }}</div><div>{{ _('Sun') }}</div>
-    </div>
-    <div class="calendar-grid day-grid">
-      {% for day in calendar_days %}
-      {% if day %}
-      <button
-        type="button"
-        class="calendar-day calendar-day-button"
-        data-calendar-date="{{ day.isoformat() }}"
-        aria-label="{{ _("Select %(month)s %(day)s, %(year)s as a leave date", month=day.strftime('%B'), day=day.day, year=day.year) }}"
-      >
-        <time datetime="{{ day.isoformat() }}">{{ day.day }}</time>
-        {% for leave_request in month_requests %}
-          {% if leave_request.status.value not in ['cancelled', 'rejected'] and leave_request_overlaps_day(leave_request, day) %}
-          <span class="leave-chip status-{{ leave_request.status.value|replace(' ', '-') }}" title="{{ leave_request.category.value|capitalize }} · {{ leave_request.status.value }}">
-            {{ leave_request.category.value|capitalize }}
-          </span>
-          {% endif %}
-        {% endfor %}
-      </button>
-      {% else %}
-      <div class="calendar-day empty-day" aria-hidden="true"></div>
-      {% endif %}
-      {% endfor %}
-    </div>
-
-    <div class="request-list">
-      <h3>{{ _("This month") }}</h3>
-      {% if month_requests %}
-      {% for leave_request in month_requests %}
-      <article class="request-item">
-        <div>
-          <strong>{{ leave_request.category.value|capitalize }}</strong>
-          <p>{{ leave_request.start_date }}{% if leave_request.end_date %} → {{ leave_request.end_date }}{% else %} · open-ended / single day{% endif %}</p>
-        </div>
-        <div class="request-actions">
-          <span class="status-pill status-{{ leave_request.status.value|replace(' ', '-') }}">{{ leave_request.status.value|capitalize }}</span>
-          {% if leave_request.status.value in ['approved', 'pending approval'] %}
-          <form method="post" class="inline-form">
-            <input type="hidden" name="action" value="cancel">
-            <input type="hidden" name="leave_request_id" value="{{ leave_request.id }}">
-            <input type="hidden" name="contract_id" value="{{ selected_contract.id }}">
-            <input type="hidden" name="year" value="{{ selected_year }}">
-            <input type="hidden" name="month" value="{{ selected_month }}">
-            <button type="submit" class="button-secondary">{{ _("Cancel") }}</button>
-          </form>
-          {% elif leave_request.status.value == 'pending cancellation' %}
-          <form method="post" class="inline-form">
-            <input type="hidden" name="action" value="undo_cancel">
-            <input type="hidden" name="leave_request_id" value="{{ leave_request.id }}">
-            <input type="hidden" name="contract_id" value="{{ selected_contract.id }}">
-            <input type="hidden" name="year" value="{{ selected_year }}">
-            <input type="hidden" name="month" value="{{ selected_month }}">
-            <button type="submit" class="button-secondary">{{ _("Undo") }}</button>
-          </form>
-          {% endif %}
-        </div>
-      </article>
-      {% endfor %}
-      {% else %}
-      <div class="empty-state">{{ _("No leave requests are scheduled for this month yet.") }}</div>
-      {% endif %}
-    </div>
-  </section>
 </section>
 {% else %}
 <section class="form-shell">
@@ -201,282 +205,6 @@
 </section>
 {% endif %}
 
-<style>
-  .leave-hero,
-  .leave-workspace {
-    display: grid;
-    gap: 22px;
-  }
-
-  .leave-hero {
-    grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
-    margin-bottom: 22px;
-    padding: 30px;
-    border-radius: var(--radius-lg);
-    color: var(--text-on-dark);
-    background:
-      radial-gradient(circle at 18% 18%, rgba(251, 146, 60, 0.42), transparent 32%),
-      linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(124, 45, 18, 0.9));
-    box-shadow: var(--shadow);
-  }
-
-  .leave-hero h1 {
-    margin: 12px 0;
-    font-size: clamp(2rem, 4vw, 3.15rem);
-    line-height: 1.05;
-  }
-
-  .leave-hero p,
-  .leave-status-panel {
-    color: rgba(255, 247, 237, 0.82);
-  }
-
-  .leave-status-panel,
-  .leave-card,
-  .leave-calendar-card {
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background: rgba(255, 255, 255, 0.95);
-    box-shadow: var(--shadow);
-  }
-
-  .leave-status-panel {
-    padding: 20px;
-    align-self: stretch;
-    color: var(--text);
-  }
-
-  .status-cloud {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 14px;
-  }
-
-  .leave-workspace {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: 22px;
-    align-items: start;
-  }
-
-  .leave-sidebar,
-  .leave-calendar-card {
-    min-width: 0;
-  }
-
-  .leave-sidebar,
-  .leave-request-form {
-    display: grid;
-    gap: 16px;
-  }
-
-  .leave-card,
-  .leave-calendar-card {
-    padding: 22px;
-  }
-
-  .leave-calendar-card {
-    width: 100%;
-    max-width: 780px;
-    justify-self: start;
-  }
-
-  .contract-picker-card {
-    display: grid;
-    gap: 10px;
-  }
-
-
-  .date-pair {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-
-  .leave-type-help p {
-    margin: 0;
-    padding: 12px 14px;
-    border-radius: 14px;
-    color: var(--primary-strong);
-    background: rgba(234, 88, 12, 0.1);
-  }
-
-  .calendar-toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 18px;
-    text-align: center;
-  }
-
-  .calendar-toolbar h2,
-  .calendar-toolbar p {
-    margin: 0;
-  }
-
-  .calendar-toolbar p {
-    color: var(--text-soft);
-  }
-
-  .calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-  }
-
-  .weekday-grid {
-    gap: 6px;
-    margin-bottom: 6px;
-    color: var(--text-soft);
-    font-weight: 800;
-    text-align: center;
-  }
-
-  .day-grid {
-    gap: 6px;
-  }
-
-  .calendar-day {
-    min-height: 74px;
-    padding: 7px;
-    border: 1px solid rgba(226, 232, 240, 0.9);
-    border-radius: 14px;
-    background: linear-gradient(180deg, #ffffff, #fff7ed);
-    overflow: hidden;
-  }
-
-  .calendar-day-button {
-    width: 100%;
-    color: inherit;
-    font: inherit;
-    text-align: left;
-    cursor: pointer;
-    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
-  }
-
-  .calendar-day-button:hover,
-  .calendar-day-button:focus-visible {
-    border-color: rgba(234, 88, 12, 0.62);
-    box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.12);
-    outline: none;
-    transform: translateY(-1px);
-  }
-
-  .calendar-day.is-range-start,
-  .calendar-day.is-range-end {
-    border-color: rgba(234, 88, 12, 0.9);
-    background: linear-gradient(180deg, #fed7aa, #ffedd5);
-  }
-
-  .calendar-day.is-in-range {
-    border-color: rgba(251, 146, 60, 0.72);
-    background: linear-gradient(180deg, #fff7ed, #ffedd5);
-  }
-
-  .calendar-day time {
-    display: inline-grid;
-    width: 26px;
-    height: 26px;
-    place-items: center;
-    border-radius: 9px;
-    font-weight: 800;
-    color: var(--primary-strong);
-    background: rgba(234, 88, 12, 0.12);
-  }
-
-  .empty-day {
-    background: rgba(255, 255, 255, 0.42);
-  }
-
-  .leave-chip,
-  .status-pill {
-    display: inline-flex;
-    align-items: center;
-    border-radius: 999px;
-    font-size: 0.78rem;
-    font-weight: 800;
-  }
-
-  .leave-chip {
-    width: 100%;
-    margin-top: 5px;
-    padding: 5px 7px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .status-pill {
-    padding: 7px 10px;
-  }
-
-  .status-pending-approval { color: #92400e; background: #fef3c7; }
-  .status-approved { color: #166534; background: #dcfce7; }
-  .status-rejected { color: #991b1b; background: #fee2e2; }
-  .status-pending-cancellation { color: #6d28d9; background: #ede9fe; }
-  .status-cancelled { color: #475569; background: #e2e8f0; }
-
-  .request-list {
-    display: grid;
-    gap: 12px;
-    margin-top: 22px;
-  }
-
-  .request-item {
-    display: flex;
-    justify-content: space-between;
-    gap: 14px;
-    align-items: center;
-    padding: 14px 16px;
-    border: 1px solid rgba(226, 232, 240, 0.9);
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.74);
-  }
-
-  .request-item p {
-    margin: 4px 0 0;
-    color: var(--text-soft);
-  }
-
-  .request-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-  }
-
-  @media (max-width: 960px) {
-    .leave-hero,
-    .leave-workspace,
-    .date-pair {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  @media (max-width: 720px) {
-    .calendar-toolbar,
-    .request-item {
-      align-items: stretch;
-      flex-direction: column;
-    }
-
-    .calendar-grid {
-      gap: 6px;
-    }
-
-    .calendar-day {
-      min-height: 62px;
-      padding: 6px;
-      border-radius: 12px;
-    }
-
-    .leave-chip {
-      font-size: 0.68rem;
-      padding: 6px 7px;
-    }
-  }
-</style>
 
 <script>
   const categorySelect = document.getElementById("category");

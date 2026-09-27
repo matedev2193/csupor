@@ -1,22 +1,14 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Manage User Profiles · CSUPOR Portal') }}{% endblock %}
 {% block content %}
-<section class="hero">
+<section class="hero management-hero">
   <div class="hero-copy">
     <span class="eyebrow">{{ _('Restricted profile access') }}</span>
-    <h1>{{ _('Edit employee profiles for selected users.') }}</h1>
+    <h1>{{ _('User profiles') }}</h1>
     <p>
-      HR and CEO users can open a selected employee record, review profile details, and save updates from one dedicated interface.
+      {{ _('Find an employee and open their profile to update personal details.') }}
     </p>
   </div>
-  <aside class="hero-panel">
-    <span class="badge">{{ _('Who can use this?') }}</span>
-    <ul>
-      <li>{{ _('Only') }} <strong>{{ _('hr') }}</strong> {{ _('and') }} <strong>{{ _('ceo') }}</strong> {{ _('accounts can reach this page.') }}</li>
-      <li>{{ _('Select any registered user to open the full employee profile editor.') }}</li>
-      <li>{{ _('Use this workflow when profile corrections need administrative review.') }}</li>
-    </ul>
-  </aside>
 </section>
 
 <section class="layout-stack">
