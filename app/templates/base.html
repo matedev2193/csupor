@@ -12,7 +12,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="theme-color" content="#faf9f6">
     <title>{% block title %}{{ _('CSUPOR Portal') }}{% endblock %}</title>
-    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="icon" type="image/png" sizes="96x96" href="{{ url_for('static', filename='images/csupor-favicon.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/portal.css') }}">
     <script>document.documentElement.classList.add('js');</script>
     <script defer src="{{ url_for('static', filename='js/portal.js') }}"></script>
@@ -23,8 +23,8 @@
     <aside class="sidebar" id="main-navigation" aria-label="{{ _('Main navigation') }}">
       <div class="sidebar-brand-row">
         <a class="brand" href="{{ url_for('dashboard') }}" aria-label="{{ _('CSUPOR Portal') }}">
-          <span class="brand-mark">{{ icon('cup') }}</span>
-          <span class="brand-copy"><strong>csupor<span>.</span></strong><small>{{ _('Employee portal') }}</small></span>
+          <img class="brand-logo" src="{{ url_for('static', filename='images/csupor-logo.webp') }}" alt="CSUPOR" width="125" height="128">
+          <span class="brand-copy"><small>{{ _('Employee portal') }}</small></span>
         </a>
         <button type="button" class="icon-button sidebar-close" data-menu-close aria-label="{{ _('Close menu') }}">{{ icon('close') }}</button>
       </div>
@@ -82,8 +82,8 @@
         </div>
         {% else %}
         <a class="brand" href="{{ url_for('login') }}" aria-label="{{ _('CSUPOR Portal') }}">
-          <span class="brand-mark">{{ icon('cup') }}</span>
-          <span class="brand-copy"><strong>csupor<span>.</span></strong><small>{{ _('Employee portal') }}</small></span>
+          <img class="brand-logo" src="{{ url_for('static', filename='images/csupor-logo.webp') }}" alt="CSUPOR" width="125" height="128">
+          <span class="brand-copy"><small>{{ _('Employee portal') }}</small></span>
         </a>
         {% endif %}
         <div class="topbar-actions">
@@ -119,7 +119,7 @@
           {% endif %}
         {% endwith %}
         {% block content %}{% endblock %}
-        <footer class="page-footer"><span>csupor.</span> {{ _('Your everyday workspace.') }}</footer>
+        <footer class="page-footer"><span>CSUPOR</span> {{ _('Your everyday workspace.') }}</footer>
       </main>
     </div>
   </body>

@@ -6,7 +6,7 @@ The dashboard presents real profile completion and record counts, followed by pe
 
 ## Preview
 
-These screenshots use fictional records in a disposable local SQLite database, with the Hungarian interface selected.
+These original interface-refresh screenshots use fictional records in a disposable local SQLite database, with the Hungarian interface selected. The branding has since been updated to the supplied [CSUPOR pot-and-calendar logo](logo.md).
 
 ### Dashboard
 
@@ -24,7 +24,7 @@ These screenshots use fictional records in a disposable local SQLite database, w
 
 - `app/static/css/portal.css` contains the shared design system and responsive rules, replacing embedded template styles.
 - `app/static/js/portal.js` enhances the mobile menu, password visibility and dismissible messages. The menu supports Escape, focus containment and focus restoration; it remains visible in normal document flow when JavaScript is unavailable.
-- The icon and authentication illustration templates use local SVG/CSS. No new application dependencies, external fonts, CDN requests or build steps are needed.
+- Interface icons use local SVG; the authentication illustration and branding use the supplied logo as a local transparent WebP. No new application dependencies, external fonts, CDN requests or build steps are needed.
 - Form actions and field names retain the existing server contract. The dashboard route supplies the existing profile-completion calculation as a numeric value for its progress indicator.
 - Hungarian translations, including the compiled catalogue, accompany the interface. Month labels use the selected locale.
 
