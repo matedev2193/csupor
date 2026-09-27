@@ -263,6 +263,17 @@ class Contract(db.Model):
     leave_requests = db.relationship("LeaveRequest", back_populates="contract", cascade="all, delete-orphan")
 
 
+class LeaveYear(db.Model):
+    __tablename__ = "leave_years"
+
+    year = db.Column(db.Integer, primary_key=True)
+    is_open = db.Column(db.Boolean, nullable=False, default=False)
+    imported_by_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    imported_at = db.Column(db.DateTime, nullable=True)
+
+    imported_by = db.relationship("User")
+
+
 class ContractLeaveLimit(db.Model):
     __tablename__ = "contract_leave_limits"
     id = db.Column(db.Integer, primary_key=True)
@@ -272,6 +283,11 @@ class ContractLeaveLimit(db.Model):
     limit_days = db.Column(db.Integer, nullable=False)
     period_start = db.Column(db.Date, nullable=True)
     period_end = db.Column(db.Date, nullable=True)
+    imported = db.Column(db.Boolean, nullable=False, default=False)
+    previous_limit_days = db.Column(db.Integer, nullable=True)
+    previous_period_start = db.Column(db.Date, nullable=True)
+    previous_period_end = db.Column(db.Date, nullable=True)
+    previous_imported = db.Column(db.Boolean, nullable=True)
 
     contract = db.relationship("Contract", back_populates="leave_limits")
 

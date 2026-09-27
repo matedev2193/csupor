@@ -61,6 +61,10 @@ mysql -u root -p < sql/schema.sql
 
 Tables are created automatically on startup.
 
+## Manual portal testing
+
+For an end-to-end, role-based checklist covering every portal screen and workflow, see [the manual portal test guide](PORTAL_TESTING.md).
+
 
 ## Troubleshooting
 
