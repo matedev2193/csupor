@@ -96,7 +96,7 @@
           <input id="education_number" name="education_number" value="{{ profile.education_number or '' }}">
         </div>
         <div class="field">
-          <label for="teacher_id_card_number">{{ _('Teacher ID card number (max. 64 characters)') }}</label>
+          <label for="teacher_id_card_number">{{ _('Teacher ID card number') }}</label>
           <input id="teacher_id_card_number" name="teacher_id_card_number" maxlength="64" value="{{ profile.teacher_id_card_number or '' }}">
         </div>
         <h3 class="form-divider">{{ _('Address and other details') }}</h3>
@@ -128,7 +128,8 @@
         </div>
         <div class="field field-full">
           <label for="disability">{{ _('Disability, long-term illness') }}</label>
-          <input id="disability" name="disability" value="{{ profile.disability or '' }}">
+          <input id="disability" name="disability" aria-describedby="disability-help" value="{{ profile.disability or '' }}">
+          <small class="help-text" id="disability-help">{{ _("If none, leave this blank.") }}</small>
         </div>
       </div>
       <div class="button-row">

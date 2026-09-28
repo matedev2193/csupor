@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Dependents') }} · {{ _('CSUPOR Portal') }}{% endblock %}
+{% block content %}
+<section class="table-card">
+  <div class="section-heading"><div><h1>{{ _('Dependents') }}</h1><p>{{ _('Review and update your recorded dependents.') }}</p></div><a class="button button-primary" href="{{ url_for('add_dependent') }}">{{ icon('plus') }} {{ _('Add dependent') }}</a></div>
+  {% if dependents %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>{{ _('Name') }}</th><th>{{ _('Dependent type') }}</th><th>{{ _('Date of birth') }}</th><th>{{ _('SSN') }}</th><th>{{ _('Dependency start') }}</th><th>{{ _('Disability, long-term illness') }}</th><th>{{ _('Actions') }}</th></tr></thead>
+    <tbody>{% for dependent in dependents %}<tr>
+      <td><strong>{{ dependent.name }}</strong></td><td>{{ enum_label(dependent.dependent_type) }}</td><td>{{ dependent.date_of_birth }}</td><td>{{ dependent.social_security_number }}</td><td>{{ dependent.dependency_start }}</td><td>{{ dependent.disability or '—' }}</td>
+      <td><a class="button button-secondary" href="{{ url_for('edit_dependent', dependent_id=dependent.id) }}">{{ _('Edit') }}</a></td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="empty-state">{{ _('No dependents have been added yet. Add one to keep benefit-related records complete.') }}</div>{% endif %}
+</section>
+{% endblock %}

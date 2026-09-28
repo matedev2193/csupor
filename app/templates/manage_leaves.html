@@ -64,7 +64,7 @@
   <div class="section-heading">
     <div>
       <h2>{{ _('Leave requests') }}</h2>
-      <p>{{ _('CEO and legal-entity principal approvals are tracked separately. A single approver with both roles can satisfy both requirements.') }}</p>
+      <p>{{ _('Director and legal-entity nursery head approvals are tracked separately. A single approver with both roles can satisfy both requirements.') }}</p>
     </div>
   </div>
 
@@ -103,8 +103,8 @@
           </td>
           <td>
             <div class="approval-stack">
-              {% for label, approver, excluded_policy in [('CEO', leave_request.ceo_approver, 'leadership_only'), ('Principal/deputy', leave_request.leadership_approver, 'ceo_only')] %}
-              <span class="badge">{{ _(label) }}:
+              {% for label, approver, excluded_policy in [(_('Director'), leave_request.ceo_approver, 'leadership_only'), (_('Nursery head / deputy nursery head'), leave_request.leadership_approver, 'ceo_only')] %}
+              <span class="badge">{{ label }}:
                 {% if approver %}{{ user_display_name(approver) }}
                 {% elif leave_request.status.value != 'pending approval' %}—
                 {% elif leave_approval_policy.value == excluded_policy %}{{ _('Not required') }}

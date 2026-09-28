@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_leave_basis.html" import basis_cell %}
 {% block title %}{{ _('Leave limits · CSUPOR Portal') }}{% endblock %}
 {% block content %}
 <section class="dashboard-grid">
@@ -150,6 +151,7 @@
       <input type="hidden" name="contract_id" value="{{ selected_contract.id }}">
       <input type="hidden" name="calendar_year" value="{{ selected_year }}">
 
+      <p class="help-text">{{ _('Legal references checked on 28 September 2026. The statutory entitlement and the recorded allowance are shown separately.') }}</p>
       <h3>{{ _('Calendar year bounded categories') }}</h3>
       <div class="table-wrap">
         <table class="leave-limits-table leave-limits-table-calendar">
@@ -158,6 +160,7 @@
               <th class="leave-category-column">{{ _('Leave category') }}</th>
               <th>{{ _('Limit (days)') }}</th>
               <th>{{ _('Bounded period') }}</th>
+              <th>{{ _('Legal basis and entitlement') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -174,7 +177,8 @@
                     value="{{ existing.limit_days if existing else '' }}"
                   >
                 </td>
-                <td>{{ selected_year }}-01-01 → {{ selected_year }}-12-31</td>
+                <td>{{ existing.period_start if existing and existing.period_start else selected_year|string ~ '-01-01' }} → {{ existing.period_end if existing and existing.period_end else selected_year|string ~ '-12-31' }}</td>
+                {{ basis_cell(leave_bases[leave_type], existing) }}
               </tr>
               {% endif %}
             {% endfor %}
@@ -192,6 +196,7 @@
               <th>{{ _('Limit (days)') }}</th>
               <th>{{ _('Start date') }}</th>
               <th>{{ _("End date") }}</th>
+              <th>{{ _('Legal basis and entitlement') }}</th>
               <th>{{ _('Actions') }}</th>
             </tr>
           </thead>
@@ -214,6 +219,7 @@
                   <td>
                     <input type="date" name="range_period_end" value="{{ existing.period_end if existing.period_end else '' }}">
                   </td>
+                  {{ basis_cell(leave_bases[leave_type], existing) }}
                   <td>
                     <button type="button" class="button-secondary remove-range-row">{{ _('Remove') }}</button>
                   </td>
@@ -233,6 +239,7 @@
                   <td>
                     <input type="date" name="range_period_end" value="">
                   </td>
+                  {{ basis_cell(leave_bases[leave_type]) }}
                   <td>
                     <button
                       type="button"
@@ -322,27 +329,18 @@
       return;
     }
 
-    const createRangeRow = (leaveTypeName, leaveTypeLabel) => {
-      const row = document.createElement("tr");
-      row.dataset.rangeRow = leaveTypeName;
-      row.innerHTML = `
-        <td class="leave-category-column">
-          ${leaveTypeLabel}
-          <input type="hidden" name="range_leave_type" value="${leaveTypeName}">
-        </td>
-        <td><input type="number" min="0" name="range_limit_days" value=""></td>
-        <td><input type="date" name="range_period_start" value=""></td>
-        <td><input type="date" name="range_period_end" value=""></td>
-        <td><button type="button" class="button-secondary remove-range-row">{{ _('Remove') }}</button></td>
-      `;
-      return row;
-    };
-
     rangeTableBody.addEventListener("click", (event) => {
       const addButton = event.target.closest(".add-range-row");
       if (addButton) {
-        const newRow = createRangeRow(addButton.dataset.leaveTypeName, addButton.dataset.leaveTypeLabel);
-        addButton.closest("tr").before(newRow);
+        const template = addButton.closest("tr");
+        const newRow = template.cloneNode(true);
+        newRow.querySelectorAll("input:not([type=hidden])").forEach(input => { input.value = ""; });
+        const removeButton = document.createElement("button");
+        removeButton.type = "button";
+        removeButton.className = "button-secondary remove-range-row";
+        removeButton.textContent = {{ _('Remove')|tojson }};
+        newRow.querySelector(".add-range-row").replaceWith(removeButton);
+        template.before(newRow);
         return;
       }
 

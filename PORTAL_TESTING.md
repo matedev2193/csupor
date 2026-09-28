@@ -2,6 +2,8 @@
 
 This checklist covers every user-facing portal feature. Run it against a disposable database: several steps create and update personnel records, change passwords, and alter leave balances.
 
+Current display names are **Director / Igazgató** for CEO, **Nursery head / Óvodavezető** for principal, and **Deputy nursery head / Óvodavezető-helyettes** for deputy principal. The technical role values and sample account names below are unchanged. See [people and leave context](docs/design/people-context.md) for the dependent editor, birthday reminders and named approval checks.
+
 ## 1. Prepare the test environment
 
 1. Follow the setup steps in `README.md`, start the application with `python run.py`, and open the URL printed by Flask (normally `http://127.0.0.1:5000`).

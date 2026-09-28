@@ -24,7 +24,7 @@
       <div class="sidebar-brand-row">
         <a class="brand" href="{{ url_for('dashboard') }}" aria-label="{{ _('CSUPOR Portal') }}">
           <img class="brand-logo" src="{{ url_for('static', filename='images/csupor-logo.webp') }}" alt="CSUPOR" width="125" height="128">
-          <span class="brand-copy"><small>{{ _('Employee portal') }}</small></span>
+          <span class="brand-copy"><small>{{ _('Childcare Staff Unified Presence & Out-of-office Registry') }}</small></span>
         </a>
         <button type="button" class="icon-button sidebar-close" data-menu-close aria-label="{{ _('Close menu') }}">{{ icon('close') }}</button>
       </div>
@@ -34,7 +34,7 @@
         {{ nav_item('leaves', _('Leave calendar'), 'calendar') }}
         {{ nav_item('edit_profile', _('My profile'), 'user') }}
         <p class="nav-label">{{ _('My records') }}</p>
-        {{ nav_item('add_dependent', _('Dependents'), 'users') }}
+        {{ nav_item('manage_dependents', _('Dependents'), 'users', ['add_dependent', 'edit_dependent']) }}
         {{ nav_item('add_qualification', _('Qualifications'), 'graduate') }}
         {{ nav_item('professional_exam', _('Professional exam'), 'award') }}
         {% if current_user.privilege.value in ['hr', 'ceo', 'developer'] or can_manage_leaves_global %}
@@ -83,7 +83,7 @@
         {% else %}
         <a class="brand" href="{{ url_for('login') }}" aria-label="{{ _('CSUPOR Portal') }}">
           <img class="brand-logo" src="{{ url_for('static', filename='images/csupor-logo.webp') }}" alt="CSUPOR" width="125" height="128">
-          <span class="brand-copy"><small>{{ _('Employee portal') }}</small></span>
+          <span class="brand-copy"><small>{{ _('Childcare Staff Unified Presence & Out-of-office Registry') }}</small></span>
         </a>
         {% endif %}
         <div class="topbar-actions">

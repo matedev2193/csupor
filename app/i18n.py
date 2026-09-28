@@ -8,7 +8,7 @@ LOGIN_MESSAGE = lazy_gettext("Please log in to access this page.")
 ENUM_LABELS = {
     'employee': lazy_gettext('Employee'),
     'hr': lazy_gettext('HR'),
-    'ceo': lazy_gettext('CEO'),
+    'ceo': lazy_gettext('Director'),
     'developer': lazy_gettext('Developer'),
     'male': lazy_gettext('Male'),
     'female': lazy_gettext('Female'),
@@ -56,8 +56,8 @@ ENUM_LABELS = {
     'Teacher II': lazy_gettext('Teacher II'),
     'Master Teacher': lazy_gettext('Master Teacher'),
     'Research Teacher': lazy_gettext('Research Teacher'),
-    'principal': lazy_gettext('Principal'),
-    'deputy principal': lazy_gettext('Deputy principal'),
+    'principal': lazy_gettext('Nursery head'),
+    'deputy principal': lazy_gettext('Deputy nursery head'),
     'sickness benefit': lazy_gettext('Sickness benefit'),
 }
 

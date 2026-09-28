@@ -38,8 +38,8 @@
       <label for="position">{{ _('Position *') }}</label>
       <select id="position" name="position" required>
         <option value="">{{ _('Select leadership position') }}</option>
-        <option value="principal" {% if editing_leadership and editing_leadership.position.value == "principal" %}selected{% endif %}>{{ _('Principal') }}</option>
-        <option value="deputy principal" {% if editing_leadership and editing_leadership.position.value == "deputy principal" %}selected{% endif %}>{{ _('Deputy principal') }}</option>
+        <option value="principal" {% if editing_leadership and editing_leadership.position.value == "principal" %}selected{% endif %}>{{ _('Nursery head') }}</option>
+        <option value="deputy principal" {% if editing_leadership and editing_leadership.position.value == "deputy principal" %}selected{% endif %}>{{ _('Deputy nursery head') }}</option>
       </select>
 
       <label for="start_date">{{ _("Start date *") }}</label>

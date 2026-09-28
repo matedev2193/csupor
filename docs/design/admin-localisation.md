@@ -4,7 +4,7 @@ The Hungarian interface now uses informal second-person wording consistently. La
 
 ## Behaviour
 
-- `/profile` has compact, two-line address fields and the requested **Fogyatékosság, tartós betegség** / **Disability, long-term illness** label. **Pedagógusigazolvány** is written as one word. Its label shows the existing model's maximum of 64 characters in both languages, with matching input and server validation. This describes the field capacity, not a newly assumed official document-number format.
+- `/profile` has compact, two-line address fields and the requested **Fogyatékosság, tartós betegség** / **Disability, long-term illness** label. **Pedagógusigazolvány** is written as one word. The original change showed the model's 64-character capacity in the label; [the subsequent update](people-context.md) removes that count while retaining input and server validation.
 - `/legal-entities` and `/places-of-work` are list pages. Their add buttons open `/new`, and each row links to `/<id>/edit`. Existing `?edit=<id>` links redirect to the corresponding editor. Workplaces no longer show a display-format column.
 - `/contracts` lists one row per contract and initially shows contracts active today, including either date boundary. Tabs expose upcoming, ended and all contracts, with counts calculated after search/employer filtering. In the all-contracts view, active contracts come first and ended contracts last.
 - Search covers the employee's name/username, job title, employer and numeric contract ID. A separate employer filter is available. New contracts start with an employee chooser that includes employees without a contract.

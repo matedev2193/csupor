@@ -12,6 +12,9 @@ from . import SUPPORTED_LOCALES, db, get_locale
 
 from .working_calendar import HungaryCalendar
 from .i18n import enum_label
+from .people import birthday_context, local_today
+from .approval_display import approval_description
+from .leave_basis import leave_basis, age_supplement_days, eligible_children
 from .leave_approval import (
     POLICY_DESCRIPTIONS,
     POLICY_LABELS,
@@ -592,21 +595,7 @@ def _age_on_year_end(birth_date: date | None, year: int) -> int | None:
 
 
 def _age_supplement_days(age: int | None) -> int:
-    if age is None or age <= 25:
-        return 0
-    thresholds = [
-        (45, 10),
-        (43, 9),
-        (41, 8),
-        (39, 7),
-        (37, 6),
-        (35, 5),
-        (33, 4),
-        (31, 3),
-        (28, 2),
-        (25, 1),
-    ]
-    return next(days for threshold, days in thresholds if age > threshold)
+    return age_supplement_days(age)
 
 
 def _round_half_up(numerator: int, denominator: int) -> int:
@@ -661,13 +650,7 @@ def _calculated_calendar_leave_limits(contract: Contract, year: int) -> dict[Lea
     profile = user.profile
     age = _age_on_year_end(profile.date_of_birth if profile else None, year)
     status_law = contract.contract_type != ContractType.employee_under_the_labour_code
-    children = [
-        dependent
-        for dependent in user.dependents
-        if dependent.dependent_type == DependentType.child
-        and _age_on_year_end(dependent.date_of_birth, year) is not None
-        and _age_on_year_end(dependent.date_of_birth, year) <= 16
-    ]
+    children = eligible_children(user, year)
     children_count = len(children)
     paid_full_year_limits = {
         LeaveType.basic_leave: 35 if status_law else 20,
@@ -678,7 +661,7 @@ def _calculated_calendar_leave_limits(contract: Contract, year: int) -> dict[Lea
         LeaveType.supplementary_leave_for_children_with_disability: (
             sum(1 for child in children if child.disability) * 2
         ),
-        LeaveType.supplementary_leave_for_young_employees: 5 if age is not None and age <= 18 else 0,
+        LeaveType.supplementary_leave_for_young_employees: 5 if not status_law and age is not None and 0 <= age <= 18 else 0,
         LeaveType.supplementary_leave_for_reduced_working_capacity: 5 if profile and profile.disability else 0,
     }
     limits = _distribute_prorated_paid_leave_days(paid_full_year_limits, contract, year)
@@ -1250,7 +1233,7 @@ def init_routes(app):
             db.session.commit()
 
             login_user(user)
-            flash(_("Registration successful. Your privilege is set to employee until HR or the CEO updates it."), "success")
+            flash(_('Registration successful. Your privilege is set to employee until HR or the Director updates it.'), "success")
             return redirect(url_for("edit_profile"))
 
         return render_template("register.html")
@@ -1315,6 +1298,7 @@ def init_routes(app):
             dashboard_leave_contract=current_contract,
             dashboard_leave_usage_summary=dashboard_leave_usage_summary,
             dashboard_leave_usage_year=today.year,
+            **birthday_context(current_user),
         )
 
     @app.route("/leaves", methods=["GET", "POST"])
@@ -1518,6 +1502,7 @@ def init_routes(app):
             )
         return render_template(
             "leaves.html",
+            named_approval_description=approval_description(selected_contract, current_user, current_leave_approval_policy()),
             active_contracts=active_contracts,
             selected_contract=selected_contract,
             available_categories=available_categories,
@@ -1641,41 +1626,70 @@ def init_routes(app):
 
         return _render_profile_editor(profile, target_user, manager_mode=True)
 
+    @app.route("/dependents")
+    @login_required
+    def manage_dependents():
+        dependents = Dependent.query.filter_by(user_id=current_user.id).order_by(Dependent.name, Dependent.id).all()
+        return render_template("dependents.html", dependents=dependents)
+
+    def dependent_editor(dependent=None):
+        session.setdefault("dependent_csrf_token", token_urlsafe(32))
+        if request.method == "POST":
+            if not compare_digest(session["dependent_csrf_token"].encode(), request.form.get("csrf_token", "").encode()):
+                abort(400)
+            values = {field: _normalize_optional_text(request.form.get(field))
+                      for field in ("name", "social_security_number", "disability")}
+            errors = []
+            if not values["name"]:
+                errors.append(_("Dependent name is required."))
+            elif len(values["name"]) > 120:
+                errors.append(_("Dependent name must be at most 120 characters."))
+            try:
+                values["dependent_type"] = DependentType(request.form.get("dependent_type", ""))
+            except ValueError:
+                errors.append(_("Dependent type is required."))
+            ssn = values["social_security_number"]
+            if not ssn or len(ssn) != 9 or not ssn.isascii() or not ssn.isdigit():
+                errors.append(_("Enter the dependent's social security number using exactly nine digits."))
+            for field in ("date_of_birth", "dependency_start"):
+                try:
+                    values[field] = parse_iso_date(request.form.get(field))
+                except ValueError:
+                    values[field] = None
+            if not values["date_of_birth"] or not values["dependency_start"]:
+                errors.append(_("Enter a valid date of birth and dependency start date."))
+            else:
+                if values["date_of_birth"] > local_today():
+                    errors.append(_("The date of birth cannot be in the future."))
+                if values["dependency_start"] < values["date_of_birth"]:
+                    errors.append(_("Dependency cannot start before the dependent's birth."))
+            if values["disability"] and len(values["disability"]) > 255:
+                errors.append(_("The disability or illness note must be at most 255 characters."))
+            if errors:
+                for error in errors:
+                    flash(error, "error")
+            else:
+                editing = dependent is not None
+                dependent = dependent or Dependent(user_id=current_user.id)
+                for field, value in values.items():
+                    setattr(dependent, field, value)
+                db.session.add(dependent)
+                db.session.commit()
+                flash(_("Dependent updated.") if editing else _("Dependent added."), "success")
+                return redirect(url_for("manage_dependents"))
+        return render_template("dependent_form.html", dependent=dependent, dependent_types=DependentType,
+                               csrf_token=session["dependent_csrf_token"])
+
     @app.route("/dependents/add", methods=["GET", "POST"])
     @login_required
     def add_dependent():
-        if request.method == "POST":
-            name = request.form.get("name", "").strip()
-            dependent_type_raw = request.form.get("dependent_type", "").strip()
-            social_security_number = request.form.get("social_security_number", "").strip()
-            if not name:
-                flash(_("Dependent name is required."), "error")
-                return render_template("dependent_form.html", dependent_types=DependentType)
-            if dependent_type_raw not in {item.value for item in DependentType}:
-                flash(_("Dependent type is required."), "error")
-                return render_template("dependent_form.html", dependent_types=DependentType)
-            validation_error = _validate_digit_field(
-                _("Dependent social security number"), social_security_number, 9
-            )
-            if validation_error:
-                flash(validation_error, "error")
-                return render_template("dependent_form.html", dependent_types=DependentType)
+        return dependent_editor()
 
-            dependent = Dependent(
-                user_id=current_user.id,
-                name=name,
-                dependent_type=DependentType(dependent_type_raw),
-                date_of_birth=parse_iso_date(request.form.get("date_of_birth")),
-                social_security_number=social_security_number,
-                dependency_start=parse_iso_date(request.form.get("dependency_start")),
-                disability=request.form.get("disability"),
-            )
-            db.session.add(dependent)
-            db.session.commit()
-            flash(_("Dependent added."), "success")
-            return redirect(url_for("dashboard"))
-
-        return render_template("dependent_form.html", dependent_types=DependentType)
+    @app.route("/dependents/<int:dependent_id>/edit", methods=["GET", "POST"])
+    @login_required
+    def edit_dependent(dependent_id):
+        dependent = Dependent.query.filter_by(id=dependent_id, user_id=current_user.id).first_or_404()
+        return dependent_editor(dependent)
 
     @app.route("/qualifications/add", methods=["GET", "POST"])
     @login_required
@@ -1938,7 +1952,7 @@ def init_routes(app):
             settings = get_leave_approval_settings(for_update=True)
             if request.form.get("previous_policy") != settings.policy.value:
                 db.session.rollback()
-                flash(_("The approval rule was changed by another CEO. Review the current setting and try again."), "error")
+                flash(_('The approval rule was changed by another Director. Review the current setting and try again.'), "error")
                 return redirect(url_for("leave_approval_settings"))
             if policy == settings.policy:
                 db.session.rollback()
@@ -2004,7 +2018,7 @@ def init_routes(app):
                 elif leave_request.status == LeaveRequestStatus.approved:
                     flash(_("Leave request fully approved."), "success")
                 else:
-                    flash(_("Recorded your %(reviewers)s approval; another approval is still required.", reviewers=_(" and ").join(_("CEO") if part == "CEO" else _("Principal / deputy principal") for part in approved_parts)), "success")
+                    flash(_("Recorded your %(reviewers)s approval; another approval is still required.", reviewers=_(" and ").join(_('Director') if part == "CEO" else _('Nursery head / deputy nursery head') for part in approved_parts)), "success")
             elif action == "reject":
                 if leave_request.status == LeaveRequestStatus.pending_approval:
                     if not (_can_approve_ceo_part(current_user, leave_request) or _can_approve_leadership_part(current_user, leave_request)):
@@ -2448,6 +2462,7 @@ def init_routes(app):
 
         return render_template(
             "manage_leave_limits.html",
+            leave_bases={kind: leave_basis(selected_contract, selected_year, kind) for kind in LeaveType} if selected_contract else {},
             users=users,
             all_contracts=all_contracts,
             selected_user=selected_user,
