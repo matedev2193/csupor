@@ -170,7 +170,7 @@ class AdministrationTests(unittest.TestCase):
         for locale in ("hu", "en"):
             self.login("hr", locale)
             profile = self.get_text("/profile")
-            expected = ["Telefonszám", "Pedagógusigazolvány száma (legfeljebb 64 karakter)", "Fogyatékosság, tartós betegség"] if locale == "hu" else ["Phone number", "Teacher ID card number (max. 64 characters)", "Disability, long-term illness"]
+            expected = ["Telefonszám", "Pedagógusigazolvány száma", "Fogyatékosság, tartós betegség"] if locale == "hu" else ["Phone number", "Teacher ID card number", "Disability, long-term illness"]
             for text in expected:
                 self.assertIn(text, profile)
             form = self.get_text(f"/contracts/{self.contracts['active'].id}/edit")

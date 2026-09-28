@@ -1,0 +1,7 @@
+{% macro basis_cell(basis, record=none) -%}
+<td class="leave-basis-cell">
+  {% if basis.reference %}<a href="{{ basis.url }}" target="_blank" rel="noopener noreferrer" class="text-link">{{ basis.reference }}</a>{% endif %}
+  {% for paragraph in basis.paragraphs %}<p>{{ paragraph }}</p>{% endfor %}
+  {% if record %}<small class="help-text">{{ _('Recorded allowance: %(days)s days.', days=record.limit_days) }}</small>{% endif %}
+</td>
+{%- endmacro %}

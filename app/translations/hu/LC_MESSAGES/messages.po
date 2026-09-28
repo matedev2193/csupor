@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  CSUPOR\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-09-27 05:37-0700\n"
+"POT-Creation-Date: 2026-09-28 10:32+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: hu\n"
@@ -14,12 +14,52 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
+#: app/approval_display.py:15
+msgid "Select an active contract to see who needs to approve your leave."
+msgstr "Válassz aktív szerződést a szükséges jóváhagyók megjelenítéséhez."
+
+#: app/approval_display.py:41
+#, python-format
+msgid "Approval from %(names)s is required."
+msgstr "%(names)s jóváhagyása szükséges."
+
+#: app/approval_display.py:42
+#, python-format
+msgid "Approval from any one of %(names)s is sufficient."
+msgstr "%(names)s közül bármelyikük jóváhagyása elegendő."
+
+#: app/approval_display.py:46 app/approval_display.py:53
+msgid "No director is assigned. Contact HR to arrange approval."
+msgstr "Nincs kijelölt igazgató. A jóváhagyás rendezéséhez keresd a HR-t."
+
+#: app/approval_display.py:48 app/approval_display.py:55
+msgid "No eligible nursery head or deputy is assigned. Contact HR to arrange approval."
+msgstr "Nincs jóváhagyásra jogosult óvodavezető vagy óvodavezető-helyettes kijelölve. Keresd a HR-t."
+
+#: app/approval_display.py:51
+msgid "No eligible approver is assigned. Contact HR to arrange approval."
+msgstr "Nincs kijelölt, jóváhagyásra jogosult személy. Keresd a HR-t."
+
+#: app/approval_display.py:63
+#, python-format
+msgid ""
+"Approval from %(shared)s alone, or one approval from %(directors)s and one from %(leaders)s, is "
+"required."
+msgstr ""
+"%(shared)s jóváhagyása önmagában elegendő; másik lehetőségként %(directors)s és %(leaders)s egy-"
+"egy jóváhagyása szükséges."
+
+#: app/approval_display.py:65
+#, python-format
+msgid "Both %(directors)s and %(leaders)s must approve."
+msgstr "%(directors)s és %(leaders)s jóváhagyása egyaránt szükséges."
+
 #: app/i18n.py:6
 msgid "Please log in to access this page."
 msgstr "Az oldal megnyitásához jelentkezz be."
 
 #: app/i18n.py:9 app/templates/contract_employee.html:6 app/templates/manage_contracts.html:18
-#: app/templates/manage_leave_limits.html:14 app/templates/manage_leaves.html:26
+#: app/templates/manage_leave_limits.html:15 app/templates/manage_leaves.html:26
 #: app/templates/manage_leaves.html:76
 msgid "Employee"
 msgstr "Munkavállaló"
@@ -28,9 +68,9 @@ msgstr "Munkavállaló"
 msgid "HR"
 msgstr "HR"
 
-#: app/i18n.py:11 app/routes.py:2007
-msgid "CEO"
-msgstr "Ügyvezető"
+#: app/i18n.py:11 app/routes.py:2021 app/templates/manage_leaves.html:106
+msgid "Director"
+msgstr "Igazgató"
 
 #: app/i18n.py:12
 msgid "Developer"
@@ -128,27 +168,27 @@ msgstr "Unoka születése után járó pótszabadság"
 msgid "Supplementary leave for first marriage"
 msgstr "Első házasságkötés után járó pótszabadság"
 
-#: app/i18n.py:36 app/routes.py:894
+#: app/i18n.py:36 app/routes.py:877
 msgid "Exemption from obligation to work"
 msgstr "Munkavégzés alóli mentesítés"
 
-#: app/i18n.py:37 app/routes.py:857
+#: app/i18n.py:37 app/routes.py:840
 msgid "Paid leave"
 msgstr "Fizetett szabadság"
 
-#: app/i18n.py:38 app/routes.py:863
+#: app/i18n.py:38 app/routes.py:846
 msgid "Health leave"
 msgstr "Egészségügyi távollét"
 
-#: app/i18n.py:39 app/routes.py:872
+#: app/i18n.py:39 app/routes.py:855
 msgid "Childcare sickness benefit"
 msgstr "Gyermekápolási táppénz"
 
-#: app/i18n.py:40 app/routes.py:886
+#: app/i18n.py:40 app/routes.py:869
 msgid "Childbirth leave"
 msgstr "Szülési szabadság"
 
-#: app/i18n.py:41 app/routes.py:903
+#: app/i18n.py:41 app/routes.py:886
 msgid "Unpaid leave"
 msgstr "Fizetés nélküli szabadság"
 
@@ -221,24 +261,24 @@ msgid "Research Teacher"
 msgstr "Kutatótanár"
 
 #: app/i18n.py:59 app/templates/manage_leadership.html:41
-msgid "Principal"
-msgstr "Igazgató"
+msgid "Nursery head"
+msgstr "Óvodavezető"
 
 #: app/i18n.py:60 app/templates/manage_leadership.html:42
-msgid "Deputy principal"
-msgstr "Igazgatóhelyettes"
+msgid "Deputy nursery head"
+msgstr "Óvodavezető-helyettes"
 
 #: app/i18n.py:61
 msgid "Sickness benefit"
 msgstr "Táppénz"
 
 #: app/leave_approval.py:12
-msgid "CEO only"
-msgstr "Csak az ügyvezető"
+msgid "Director only"
+msgstr "Csak az igazgató"
 
 #: app/leave_approval.py:13
-msgid "Principal/deputy only"
-msgstr "Csak az igazgató vagy helyettese"
+msgid "Nursery head/deputy only"
+msgstr "Csak az óvodavezető vagy helyettese"
 
 #: app/leave_approval.py:14
 msgid "Both"
@@ -249,262 +289,474 @@ msgid "Either"
 msgstr "Bármelyik"
 
 #: app/leave_approval.py:18
-msgid "A CEO approval is sufficient. Principal/deputy approval is not required."
-msgstr "Az ügyvezető jóváhagyása elegendő. Igazgatói vagy igazgatóhelyettesi jóváhagyás nem szükséges."
+msgid "A Director approval is sufficient. Nursery head/deputy approval is not required."
+msgstr ""
+"Az igazgató jóváhagyása elegendő. Óvodavezetői vagy óvodavezető-helyettesi jóváhagyás nem "
+"szükséges."
 
 #: app/leave_approval.py:19
-msgid "Approval from the relevant principal or deputy is sufficient. CEO approval is not required."
-msgstr "Az érintett igazgató vagy helyettese jóváhagyása elegendő. Ügyvezetői jóváhagyás nem szükséges."
+msgid ""
+"Approval from the relevant nursery head or deputy is sufficient. Director approval is not "
+"required."
+msgstr "Az érintett óvodavezető vagy helyettese jóváhagyása elegendő. Igazgatói jóváhagyás nem szükséges."
 
 #: app/leave_approval.py:20
-msgid "Approval from both the CEO and the relevant principal/deputy is required."
-msgstr "Az ügyvezető és az érintett igazgató vagy helyettese jóváhagyása egyaránt szükséges."
+msgid "Approval from both the Director and the relevant nursery head/deputy is required."
+msgstr "Az igazgató és az érintett óvodavezető vagy helyettese jóváhagyása egyaránt szükséges."
 
 #: app/leave_approval.py:21
-msgid "One approval from either the CEO or the relevant principal/deputy is sufficient."
-msgstr "Az ügyvezető vagy az érintett igazgató, illetve helyettese egyetlen jóváhagyása elegendő."
+msgid "One approval from either the Director or the relevant nursery head/deputy is sufficient."
+msgstr "Az igazgató vagy az érintett óvodavezető, illetve helyettese egyetlen jóváhagyása elegendő."
 
-#: app/routes.py:116
+#: app/leave_basis.py:61
+msgid "This category is not a statutory allowance under the Labour Code."
+msgstr "Ez a kategória az Mt. alapján nem jár külön jogszabályi szabadságkeretként."
+
+#: app/leave_basis.py:66
+msgid ""
+"For years before 2025, check the legislation applicable to that year before setting this "
+"allowance."
+msgstr "2025 előtti év keretének megadásához ellenőrizd az adott évben hatályos jogszabályszöveget."
+
+#: app/leave_basis.py:73
+#, python-format
+msgid ""
+"Under %(reference)s, annual basic leave is 50 working days; the employer may use up to 15 for the"
+" purposes specified there. The portal records the available allowance separately."
+msgstr ""
+"A %(reference)s alapján az alapszabadság évi 50 munkanap, amelyből a munkáltató legfeljebb 15 "
+"munkanapot a törvényben meghatározott célokra igénybe vehet. A felhasználható keret külön "
+"szerepel a nyilvántartásban."
+
+#: app/leave_basis.py:75
+#, python-format
+msgid "Under %(reference)s, the employee has 20 working days of basic leave per year."
+msgstr "A munkavállaló az %(reference)s alapján évi 20 munkanap alapszabadságra jogosult."
+
+#: app/leave_basis.py:78
+msgid "This employment regime does not provide a separate age-based supplementary allowance."
+msgstr "Ebben a jogviszonyban nem jár külön, életkor alapján meghatározott pótszabadság."
+
+#: app/leave_basis.py:80
+#, python-format
+msgid "Add the employee's date of birth to calculate the age-based entitlement under %(reference)s."
+msgstr ""
+"A %(reference)s szerinti, életkor alapján járó pótszabadság kiszámításához add meg a munkavállaló"
+" születési dátumát."
+
+#: app/leave_basis.py:82
+#, python-format
+msgid ""
+"Under %(reference)s, the employee turns %(age)s in %(year)s and is entitled to %(days)s working "
+"days of age-based supplementary leave per year."
+msgstr ""
+"A %(reference)s alapján a munkavállaló a %(year)s évben betöltött %(age)s éves életkora után évi "
+"%(days)s munkanap pótszabadságra jogosult."
+
+#: app/leave_basis.py:86
+#, python-format
+msgid ""
+"Under %(reference)s, the employee's %(count)s eligible children give an annual entitlement of "
+"%(days)s working days of supplementary leave. Children count from their birth year through the "
+"year they turn 16."
+msgstr ""
+"A munkavállaló a %(reference)s alapján %(count)s figyelembe vehető gyermeke után évi %(days)s "
+"munkanap pótszabadságra jogosult. A gyermek a születésének évétől a 16. életévének betöltési "
+"évéig számít bele."
+
+#: app/leave_basis.py:89
+#, python-format
+msgid ""
+"Under %(reference)s, each qualifying child adds 2 working days per year. Health information is "
+"recorded for %(count)s eligible children; confirm the statutory disability condition before "
+"assigning the additional days."
+msgstr ""
+"A %(reference)s alapján fogyatékos gyermekenként évi 2 munkanap további pótszabadság jár. A "
+"figyelembe vehető gyermekek közül %(count)s esetében szerepel egészségi adat; a többletnapok "
+"megadása előtt ellenőrizd a jogszabály szerinti jogosultságot."
+
+#: app/leave_basis.py:92
+msgid "This employment regime does not provide a separate young-employee supplementary allowance."
+msgstr "Ebben a jogviszonyban nem jár külön, fiatal munkavállalói pótszabadság."
+
+#: app/leave_basis.py:94
+#, python-format
+msgid ""
+"Under %(reference)s, young employees receive 5 working days per year, including the year they "
+"turn 18."
+msgstr ""
+"A %(reference)s alapján a fiatal munkavállalónak évi 5 munkanap pótszabadság jár, utoljára abban "
+"az évben, amikor betölti a 18. életévét."
+
+#: app/leave_basis.py:96
+#, python-format
+msgid ""
+"Under %(reference)s, qualifying reduced working capacity, disability support or a personal "
+"allowance for blind people gives 5 working days per year. A free-text illness note alone does not"
+" establish eligibility."
+msgstr ""
+"A %(reference)s alapján megváltozott munkaképesség, fogyatékossági támogatásra vagy vakok "
+"személyi járadékára való jogosultság esetén évi 5 munkanap pótszabadság jár. A betegségre "
+"vonatkozó szöveges megjegyzés önmagában nem igazolja a jogosultságot."
+
+#: app/leave_basis.py:98
+#, python-format
+msgid ""
+"Under %(reference)s, annual sick leave is 15 working days for qualifying incapacity due to "
+"illness. Occupational accidents, occupational diseases and high-risk pregnancy are excluded; a "
+"mid-year start requires proration."
+msgstr ""
+"A munkavállalónak a %(reference)s alapján betegség miatti keresőképtelenség esetén évi 15 "
+"munkanap betegszabadság jár. Üzemi baleset, foglalkozási betegség és veszélyeztetett várandósság "
+"esetén ez nem alkalmazható; évközi belépésnél időarányosítás szükséges."
+
+#: app/leave_basis.py:100
+#, python-format
+msgid ""
+"Under %(reference)s, leave is normally granted in its due year. Carry-over needs a permitted "
+"exception and the corresponding deadline; the previous balance alone does not establish "
+"entitlement."
+msgstr ""
+"A %(reference)s alapján a szabadságot főszabály szerint az esedékesség évében kell kiadni. "
+"Átvitelhez jogszabályban megengedett kivétel és az ahhoz tartozó határidő szükséges; a korábbi "
+"egyenleg önmagában nem jogosít átvitelre."
+
+#: app/leave_basis.py:107
+#, python-format
+msgid ""
+"Under %(reference)s, the child born on %(birth)s gives entitlement to 10 working days of "
+"paternity leave, usable by %(deadline)s, the end of the fourth month following birth."
+msgstr ""
+"A munkavállaló a %(reference)s alapján a %(birth)s napon született gyermeke után 10 munkanap "
+"apasági szabadságra jogosult. Felhasználási határidő: %(deadline)s, a születést követő negyedik "
+"hónap utolsó napja."
+
+#: app/leave_basis.py:109
+#, python-format
+msgid ""
+"Under %(reference)s, paternity leave is 10 working days, usable by the end of the fourth month "
+"after birth or the final adoption decision. No recorded birth has a window overlapping this year;"
+" check the supporting record."
+msgstr ""
+"A %(reference)s alapján 10 munkanap apasági szabadság jár, a születést vagy az örökbefogadási "
+"határozat véglegessé válását követő negyedik hónap végéig. Nincs erre az évre átnyúló "
+"felhasználási időszakú születés rögzítve; ellenőrizd az igazoló adatokat."
+
+#: app/leave_basis.py:111
+#, python-format
+msgid ""
+"Under %(reference)s, parental leave totals 44 working days until the child turns three, provided "
+"the employment relationship has lasted at least one year."
+msgstr ""
+"A %(reference)s alapján a gyermek hároméves koráig összesen 44 munkanap szülői szabadság jár, "
+"legalább egy éve fennálló jogviszony esetén."
+
+#: app/leave_basis.py:113
+#, python-format
+msgid ""
+"Under %(reference)s, maternity leave lasts 24 consecutive weeks, including at least two "
+"compulsory weeks. This is a period in weeks, not a 24-working-day allowance."
+msgstr ""
+"A %(reference)s alapján 24 egybefüggő hét szülési szabadság jár, ebből legalább két hetet "
+"kötelező igénybe venni. A tartam hetekben értendő."
+
+#: app/leave_basis.py:115
+#, python-format
+msgid ""
+"Under %(reference)s, childcare can justify unpaid leave, including during the specified "
+"childcare-benefit entitlement. Set the period from the supporting entitlement decision, not from "
+"a fixed annual day allowance."
+msgstr ""
+"A %(reference)s alapján a gyermek gondozása, illetve a meghatározott gyermekgondozási díj "
+"folyósítása alatt fizetés nélküli szabadság járhat. Az időszakot a jogosultságot igazoló "
+"határozat alapján rögzítsd."
+
+#: app/leave_basis.py:117
+#, python-format
+msgid ""
+"Under %(reference)s, unpaid leave for personal childcare can continue during childcare-allowance "
+"payments until the child turns ten."
+msgstr ""
+"A %(reference)s alapján a gyermek személyes gondozása érdekében a gyermekgondozást segítő ellátás"
+" folyósítása alatt, a gyermek tízéves koráig fizetés nélküli szabadság jár."
+
+#: app/leave_basis.py:119
+#, python-format
+msgid ""
+"Under %(reference)s, a grandparent may take 5 working days by the end of the second month after "
+"the grandchild's birth. The birth date is needed to establish the exact deadline."
+msgstr ""
+"A %(reference)s alapján az unoka születése után 5 munkanap pótszabadság vehető igénybe, a "
+"születést követő második hónap végéig. A pontos határidőhöz az unoka születési dátuma szükséges."
+
+#: app/leave_basis.py:121
+#, python-format
+msgid ""
+"Under %(reference)s, a first marriage gives 5 working days by the end of the second month after "
+"the wedding. The wedding date is needed to establish the exact deadline."
+msgstr ""
+"A %(reference)s alapján első házasságkötéskor 5 munkanap pótszabadság jár, a házasságkötést "
+"követő második hónap végéig. A pontos határidőhöz a házasságkötés dátuma szükséges."
+
+#: app/leave_basis.py:123
+#, python-format
+msgid ""
+"Under %(reference)s, the reason for exemption determines its duration and conditions. Record the "
+"specific reason and supporting dates; there is no single annual allowance for all exemptions."
+msgstr ""
+"A %(reference)s alapján a mentesülés jogcíme határozza meg annak tartamát és feltételeit. "
+"Rögzítsd a konkrét okot és az igazolt dátumokat; nincs minden mentesülésre egységes éves keret."
+
+#: app/leave_basis.py:129
+#, python-format
+msgid ""
+"This contract covers only part of %(year)s; the annual allowance is subject to proration under "
+"%(reference)s."
+msgstr ""
+"A szerződés a %(year)s évnek csak egy részére szól; az éves keretet a %(reference)s alapján "
+"időarányosítani kell."
+
+#: app/routes.py:119
 msgid "Complete"
 msgstr "Hiánytalan"
 
-#: app/routes.py:117
+#: app/routes.py:120
 #, python-format
 msgid "%(percent)s%% complete"
 msgstr "%(percent)s%% kész"
 
-#: app/routes.py:132
+#: app/routes.py:135
 #, python-format
 msgid "%(label)s must be exactly %(length)s digits."
 msgstr "%(label)s: pontosan %(length)s számjegyet adj meg."
 
-#: app/routes.py:157
+#: app/routes.py:160
 msgid "Social security number"
 msgstr "TAJ-szám"
 
-#: app/routes.py:158
+#: app/routes.py:161
 msgid "Personal tax identification number"
 msgstr "Adóazonosító jel"
 
-#: app/routes.py:159
+#: app/routes.py:162
 msgid "Education number"
 msgstr "Oktatási azonosító"
 
-#: app/routes.py:162
+#: app/routes.py:165
 #, python-format
 msgid "Teacher ID card number must be at most %(length)s characters."
 msgstr "A pedagógusigazolvány száma legfeljebb %(length)s karakter lehet."
 
-#: app/routes.py:205
+#: app/routes.py:208
 msgid "OM id must be exactly 6 digits."
 msgstr "Az OM-azonosítót pontosan 6 számjeggyel add meg."
 
-#: app/routes.py:219
+#: app/routes.py:222
 msgid "Contract type is required."
 msgstr "Válassz szerződéstípust."
 
-#: app/routes.py:224
+#: app/routes.py:227
 msgid "Invalid contract type selected."
 msgstr "Érvénytelen szerződéstípust választottál."
 
-#: app/routes.py:230
+#: app/routes.py:233
 msgid "Invalid teacher classification selected."
 msgstr "Érvénytelen besorolási fokozatot választottál."
 
-#: app/routes.py:236
+#: app/routes.py:239
 msgid "Enter valid dates in the contract form."
 msgstr "Érvényes dátumokat adj meg a szerződés űrlapján."
 
-#: app/routes.py:239 app/routes.py:296 app/routes.py:1393
+#: app/routes.py:242 app/routes.py:299 app/routes.py:1377
 msgid "Start date is required."
 msgstr "Add meg a kezdő dátumot."
 
-#: app/routes.py:241 app/routes.py:298 app/routes.py:1411
+#: app/routes.py:244 app/routes.py:301 app/routes.py:1395
 msgid "End date cannot be earlier than the start date."
 msgstr "A záró dátum nem lehet korábbi a kezdő dátumnál."
 
-#: app/routes.py:245
+#: app/routes.py:248
 msgid "Job title is required."
 msgstr "Add meg a munkakört."
 
-#: app/routes.py:247
+#: app/routes.py:250
 msgid "Job title must be at most 120 characters."
 msgstr "A munkakör megnevezése legfeljebb 120 karakter lehet."
 
-#: app/routes.py:250
+#: app/routes.py:253
 msgid "Certificate of good conduct number must be at most 64 characters."
 msgstr "Az erkölcsi bizonyítvány száma legfeljebb 64 karakter lehet."
 
-#: app/routes.py:253
+#: app/routes.py:256
 msgid "Working hours per week is required."
 msgstr "Add meg a heti munkaórák számát egész számként."
 
-#: app/routes.py:255
+#: app/routes.py:258
 msgid "Working hours per week must be greater than 0."
 msgstr "A heti munkaórák száma legyen nagyobb 0-nál."
 
-#: app/routes.py:260
+#: app/routes.py:263
 msgid "Employer is required."
 msgstr "Válassz munkáltatót."
 
-#: app/routes.py:262 app/routes.py:1782
+#: app/routes.py:265 app/routes.py:1796
 msgid "Selected employer does not exist."
 msgstr "A kiválasztott munkáltató nem létezik."
 
-#: app/routes.py:264
+#: app/routes.py:267
 msgid "Place of work is required."
 msgstr "Válassz munkahelyet."
 
-#: app/routes.py:268
+#: app/routes.py:271
 msgid "Selected place of work does not exist."
 msgstr "A kiválasztott munkahely nem létezik."
 
-#: app/routes.py:270
+#: app/routes.py:273
 msgid "Selected place of work does not belong to the selected employer."
 msgstr "A kiválasztott munkahely nem a megadott munkáltatóhoz tartozik."
 
-#: app/routes.py:290
+#: app/routes.py:293
 msgid "Legal entity is required."
 msgstr "Válassz jogi személyt."
 
-#: app/routes.py:292
+#: app/routes.py:295
 msgid "Contract is required."
 msgstr "Válassz szerződést."
 
-#: app/routes.py:294
+#: app/routes.py:297
 msgid "Leadership position is required."
 msgstr "Válassz vezetői pozíciót."
 
-#: app/routes.py:303 app/routes.py:2193
+#: app/routes.py:306 app/routes.py:2207
 msgid "Selected contract does not exist."
 msgstr "A kiválasztott szerződés nem létezik."
 
-#: app/routes.py:305
+#: app/routes.py:308
 msgid "Selected contract does not belong to the selected legal entity."
 msgstr "A kiválasztott szerződés nem a megadott jogi személyhez tartozik."
 
-#: app/routes.py:312 app/templates/leaves.html:106
+#: app/routes.py:315 app/templates/leaves.html:106
 msgid "Ongoing"
 msgstr "Folyamatban"
 
-#: app/routes.py:858
+#: app/routes.py:841
 msgid "Basic leave, supplementary leaves, parental leave, paternity leave, and leave carry-over."
 msgstr "Alapszabadság, pótszabadságok, szülői és apasági szabadság, valamint áthozott szabadság."
 
-#: app/routes.py:864
+#: app/routes.py:847
 msgid "Sick leave and sickness benefit."
 msgstr "Betegszabadság és táppénz."
 
-#: app/routes.py:873
+#: app/routes.py:856
 msgid "Available when a child dependent is recorded on your profile."
 msgstr "Akkor érhető el, ha az eltartottak között gyermek is szerepel."
 
-#: app/routes.py:887
+#: app/routes.py:870
 msgid "Maternity leave, childcare fee, and childcare allowance."
 msgstr "Szülési szabadság, gyermekgondozási díj és gyermekgondozást segítő ellátás."
 
-#: app/routes.py:895
+#: app/routes.py:878
 msgid "Request time away under an exemption from work obligation."
 msgstr "Távollét igénylése munkavégzési kötelezettség alóli mentesítés alapján."
 
-#: app/routes.py:904
+#: app/routes.py:887
 msgid "Available once paid leave days are exhausted for the selected year."
 msgstr "A kiválasztott év fizetett szabadságának felhasználása után érhető el."
 
-#: app/routes.py:1212
+#: app/routes.py:1195
 msgid "Language updated."
 msgstr "A nyelv frissítve."
 
-#: app/routes.py:1214
+#: app/routes.py:1197
 msgid "Selected language is not supported."
 msgstr "A kiválasztott nyelv nem támogatott."
 
-#: app/routes.py:1236
+#: app/routes.py:1219
 msgid "Email, username and password are required."
 msgstr "Add meg az e-mail-címedet, a felhasználónevedet és a jelszavadat."
 
-#: app/routes.py:1240
+#: app/routes.py:1223
 msgid "Email or username already exists."
 msgstr "Ez az e-mail-cím vagy felhasználónév már foglalt."
 
-#: app/routes.py:1253
-msgid "Registration successful. Your privilege is set to employee until HR or the CEO updates it."
-msgstr "Sikeres regisztráció. Munkavállalói jogosultságot kaptál; ezt a HR vagy az ügyvezető módosíthatja."
+#: app/routes.py:1236
+msgid "Registration successful. Your privilege is set to employee until HR or the Director updates it."
+msgstr "Sikeres regisztráció. Munkavállalói jogosultságot kaptál; ezt a HR vagy az igazgató módosíthatja."
 
-#: app/routes.py:1269
+#: app/routes.py:1252
 msgid "Invalid credentials."
 msgstr "Hibás bejelentkezési adatok."
 
-#: app/routes.py:1273
+#: app/routes.py:1256
 msgid "Logged in successfully."
 msgstr "Sikeresen bejelentkeztél."
 
-#: app/routes.py:1282
+#: app/routes.py:1265
 msgid "Logged out."
 msgstr "Kijelentkeztél."
 
-#: app/routes.py:1334
+#: app/routes.py:1318
 msgid "Please select one of your active contracts."
 msgstr "Válaszd ki az egyik aktív szerződésedet."
 
-#: app/routes.py:1350
+#: app/routes.py:1334
 msgid "You need an active contract before applying for leave."
 msgstr "Szabadság igényléséhez aktív szerződésre van szükséged."
 
-#: app/routes.py:1361
+#: app/routes.py:1345
 msgid "Leave request not found."
 msgstr "A szabadságigény nem található."
 
-#: app/routes.py:1367
+#: app/routes.py:1351
 msgid "Pending leave request cancelled."
 msgstr "A függőben lévő szabadságigény visszavonva."
 
-#: app/routes.py:1371
+#: app/routes.py:1355
 msgid "Leave cancellation requested."
 msgstr "A szabadság visszavonását kérted."
 
-#: app/routes.py:1373
+#: app/routes.py:1357
 msgid "Only approved or pending approval leaves can be cancelled here."
 msgstr "Itt csak jóváhagyott vagy jóváhagyásra váró szabadságot vonhatsz vissza."
 
-#: app/routes.py:1377
+#: app/routes.py:1361
 msgid "Leave cancellation request undone."
 msgstr "A visszavonási kérelmet visszaállítottad; a szabadság ismét jóváhagyott."
 
-#: app/routes.py:1379
+#: app/routes.py:1363
 msgid "Only pending cancellation leaves can be undone."
 msgstr "Csak a visszavonásra váró szabadság visszavonási kérelmét állíthatod vissza."
 
-#: app/routes.py:1384 app/routes.py:2028
+#: app/routes.py:1368 app/routes.py:2042
 msgid "Invalid leave action."
 msgstr "Érvénytelen szabadságkezelési művelet."
 
-#: app/routes.py:1401
+#: app/routes.py:1385
 msgid "Please choose an available leave type."
 msgstr "Válassz az elérhető szabadságtípusok közül."
 
-#: app/routes.py:1406
+#: app/routes.py:1390
 msgid "Paid leave requests require both start and end date."
 msgstr "Fizetett szabadsághoz kezdő és záró dátumot is adj meg."
 
-#: app/routes.py:1416
+#: app/routes.py:1400
 msgid "The request start date must fall within the selected active contract."
 msgstr "Az igény kezdő dátumának a kiválasztott aktív szerződés időszakába kell esnie."
 
-#: app/routes.py:1421
+#: app/routes.py:1405
 msgid "This calendar year is not open for leave requests yet. Please contact HR."
 msgstr "Erre az évre még nem igényelhetsz szabadságot. Keresd a HR-t."
 
-#: app/routes.py:1426
+#: app/routes.py:1410
 msgid "The request end date must fall within the selected active contract."
 msgstr "Az igény záró dátumának a kiválasztott aktív szerződés időszakába kell esnie."
 
-#: app/routes.py:1440
+#: app/routes.py:1424
 #, python-format
 msgid "This request overlaps with an existing %(status)s leave request (%(start)s → %(end)s)."
 msgstr "Az igény átfed egy meglévő szabadságigénnyel (%(start)s → %(end)s; állapot: %(status)s)."
 
-#: app/routes.py:1453
+#: app/routes.py:1437
 #, python-format
 msgid ""
 "Paid leave request needs %(requested)s available days within the requested validity interval, but"
@@ -513,306 +765,336 @@ msgstr ""
 "Az igényelt időszakban %(requested)s nap fizetett szabadságra lenne szükség, de csak "
 "%(remaining)s nap maradt."
 
-#: app/routes.py:1474
+#: app/routes.py:1458
 msgid "Leave request submitted and automatically approved."
 msgstr "A szabadságigény beküldve és automatikusan jóváhagyva."
 
-#: app/routes.py:1476
+#: app/routes.py:1460
 msgid "Leave request submitted and marked as pending approval."
 msgstr "A szabadságigény beküldve, jóváhagyásra vár."
 
-#: app/routes.py:1544 app/routes.py:1626 app/routes.py:1861
+#: app/routes.py:1529 app/routes.py:1611 app/routes.py:1875
 msgid "User not found."
 msgstr "A felhasználó nem található."
 
-#: app/routes.py:1550
+#: app/routes.py:1535
 msgid "Invalid privilege selected."
 msgstr "Érvénytelen jogosultságot választottál."
 
-#: app/routes.py:1554
+#: app/routes.py:1539
 msgid "That privilege cannot be assigned here."
 msgstr "Ezt a jogosultságot itt nem adhatod meg."
 
-#: app/routes.py:1559
+#: app/routes.py:1544
 #, python-format
 msgid "Updated %(username)s to %(privilege)s privilege."
 msgstr "%(username)s új jogosultsága: %(privilege)s."
 
-#: app/routes.py:1578
+#: app/routes.py:1563
 msgid "Current password is incorrect."
 msgstr "A jelenlegi jelszó hibás."
 
-#: app/routes.py:1582
+#: app/routes.py:1567
 msgid "New password is required."
 msgstr "Add meg az új jelszót."
 
-#: app/routes.py:1586
+#: app/routes.py:1571
 msgid "New password and confirmation do not match."
 msgstr "Az új jelszó és a megerősítése nem egyezik."
 
-#: app/routes.py:1592
+#: app/routes.py:1577
 msgid "Password updated successfully."
 msgstr "A jelszavad sikeresen módosult."
 
-#: app/routes.py:1610
+#: app/routes.py:1595
 msgid "Profile updated."
 msgstr "A profil frissítve."
 
-#: app/routes.py:1639
+#: app/routes.py:1624
 #, python-format
 msgid "Updated profile for %(username)s."
 msgstr "%(username)s profilja frissítve."
 
-#: app/routes.py:1652
+#: app/routes.py:1644
 msgid "Dependent name is required."
 msgstr "Add meg az eltartott nevét."
 
-#: app/routes.py:1655
+#: app/routes.py:1646
+msgid "Dependent name must be at most 120 characters."
+msgstr "Az eltartott neve legfeljebb 120 karakter lehet."
+
+#: app/routes.py:1650
 msgid "Dependent type is required."
 msgstr "Válaszd ki az eltartott típusát."
 
-#: app/routes.py:1658
-msgid "Dependent social security number"
-msgstr "Az eltartott TAJ-száma"
+#: app/routes.py:1653
+msgid "Enter the dependent's social security number using exactly nine digits."
+msgstr "Az eltartott TAJ-számát pontosan kilenc számjeggyel add meg."
 
-#: app/routes.py:1675
+#: app/routes.py:1660
+msgid "Enter a valid date of birth and dependency start date."
+msgstr "Adj meg érvényes születési dátumot és eltartási kezdő dátumot."
+
+#: app/routes.py:1663
+msgid "The date of birth cannot be in the future."
+msgstr "A születési dátum nem lehet jövőbeli."
+
+#: app/routes.py:1665
+msgid "Dependency cannot start before the dependent's birth."
+msgstr "Az eltartás kezdete nem lehet korábbi az eltartott születésénél."
+
+#: app/routes.py:1667
+msgid "The disability or illness note must be at most 255 characters."
+msgstr "A fogyatékosságra vagy tartós betegségre vonatkozó megjegyzés legfeljebb 255 karakter lehet."
+
+#: app/routes.py:1678
+msgid "Dependent updated."
+msgstr "Az eltartott adatai frissítve."
+
+#: app/routes.py:1678
 msgid "Dependent added."
 msgstr "Az eltartott hozzáadva."
 
-#: app/routes.py:1687
+#: app/routes.py:1701
 msgid "Year obtained must be a number."
 msgstr "A megszerzés évét számként add meg."
 
-#: app/routes.py:1705
+#: app/routes.py:1719
 msgid "Educational qualification added."
 msgstr "A képesítés hozzáadva."
 
-#: app/routes.py:1733
+#: app/routes.py:1747
 msgid "Name, address, and tax number are required."
 msgstr "Add meg a nevet, a címet és az adószámot."
 
-#: app/routes.py:1736 app/templates/manage_legal_entities.html:8
+#: app/routes.py:1750 app/templates/manage_legal_entities.html:8
 msgid "Tax number"
 msgstr "Adószám"
 
-#: app/routes.py:1748
+#: app/routes.py:1762
 msgid "Legal entity updated."
 msgstr "A jogi személy frissítve."
 
-#: app/routes.py:1748
+#: app/routes.py:1762
 msgid "Legal entity saved."
 msgstr "A jogi személy mentve."
 
-#: app/routes.py:1780
+#: app/routes.py:1794
 msgid "Employer and address are required."
 msgstr "Válassz munkáltatót, és add meg a címet."
 
-#: app/routes.py:1788
+#: app/routes.py:1802
 msgid "Place of work updated."
 msgstr "A munkahely frissítve."
 
-#: app/routes.py:1788
+#: app/routes.py:1802
 msgid "Place of work saved."
 msgstr "A munkahely mentve."
 
-#: app/routes.py:1873
+#: app/routes.py:1887
 #, python-format
 msgid "Contract created for %(username)s."
 msgstr "%(username)s szerződése létrehozva."
 
-#: app/routes.py:1895
+#: app/routes.py:1909
 msgid "Contract not found."
 msgstr "A szerződés nem található."
 
-#: app/routes.py:1906
+#: app/routes.py:1920
 #, python-format
 msgid "Contract updated for %(username)s."
 msgstr "%(username)s szerződése frissítve."
 
-#: app/routes.py:1941
-msgid "The approval rule was changed by another CEO. Review the current setting and try again."
+#: app/routes.py:1955
+msgid "The approval rule was changed by another Director. Review the current setting and try again."
 msgstr ""
-"Egy másik ügyvezető módosította a jóváhagyási szabályt. Ellenőrizd az aktuális beállítást, és "
+"Egy másik igazgató módosította a jóváhagyási szabályt. Ellenőrizd az aktuális beállítást, és "
 "próbáld újra."
 
-#: app/routes.py:1945
+#: app/routes.py:1959
 msgid "The approval rule is unchanged."
 msgstr "A jóváhagyási szabály nem változott."
 
-#: app/routes.py:1962
+#: app/routes.py:1976
 #, python-format
 msgid "Approval rule saved. Pending requests approved using recorded approvals: %(count)s."
 msgstr ""
 "A jóváhagyási szabály mentve. A már rögzített jóváhagyások alapján jóváhagyott függő igények "
 "száma: %(count)s."
 
-#: app/routes.py:1997
+#: app/routes.py:2011
 msgid "Leave request not found or not available to you."
 msgstr "A szabadságigény nem található, vagy nincs hozzáférésed."
 
-#: app/routes.py:2003
+#: app/routes.py:2017
 msgid "You cannot add another approval to this leave request."
 msgstr "Ehhez a szabadságigényhez nem adhatsz újabb jóváhagyást."
 
-#: app/routes.py:2005
+#: app/routes.py:2019
 msgid "Leave request fully approved."
 msgstr "A szabadságigény minden szükséges jóváhagyást megkapott."
 
-#: app/routes.py:2007
+#: app/routes.py:2021
 #, python-format
 msgid "Recorded your %(reviewers)s approval; another approval is still required."
 msgstr "A jóváhagyásod rögzítve (%(reviewers)s); még egy jóváhagyás szükséges."
 
-#: app/routes.py:2007
+#: app/routes.py:2021
 msgid " and "
 msgstr " és "
 
-#: app/routes.py:2007
-msgid "Principal / deputy principal"
-msgstr "Igazgató / igazgatóhelyettes"
+#: app/routes.py:2021 app/templates/manage_leaves.html:106
+msgid "Nursery head / deputy nursery head"
+msgstr "Óvodavezető / óvodavezető-helyettes"
 
-#: app/routes.py:2014
+#: app/routes.py:2028
 msgid "Leave request rejected."
 msgstr "A szabadságigény elutasítva."
 
-#: app/routes.py:2017
+#: app/routes.py:2031
 msgid "Leave cancellation rejected; request remains approved."
 msgstr "A visszavonási kérelem elutasítva; a szabadságigény jóváhagyott marad."
 
-#: app/routes.py:2019
+#: app/routes.py:2033
 msgid "Only pending approval or pending cancellation leave requests can be rejected."
 msgstr "Csak jóváhagyásra vagy visszavonásra váró igényt utasíthatsz el."
 
-#: app/routes.py:2024
+#: app/routes.py:2038
 msgid "Leave request cancelled."
 msgstr "A szabadságigény visszavonva."
 
-#: app/routes.py:2026
+#: app/routes.py:2040
 msgid "Only approved or pending cancellation leave requests can be cancelled."
 msgstr "Csak jóváhagyott vagy visszavonásra váró szabadságigényt vonhatsz vissza."
 
-#: app/routes.py:2077
+#: app/routes.py:2091
 msgid "Invalid status filter ignored."
 msgstr "Az érvénytelen állapotszűrőt nem alkalmaztuk."
 
-#: app/routes.py:2124
+#: app/routes.py:2138
 msgid "Please select a valid day."
 msgstr "Válassz érvényes napot."
 
-#: app/routes.py:2128
+#: app/routes.py:2142
 msgid "The day now follows the Hungarian calendar default again."
 msgstr "A nap ismét a magyar munkanaptár alapbeállítását követi."
 
-#: app/routes.py:2137
+#: app/routes.py:2151
 msgid "Working day calendar updated."
 msgstr "A munkanaptár frissítve."
 
-#: app/routes.py:2139
+#: app/routes.py:2153
 msgid "Invalid working day action."
 msgstr "Érvénytelen munkanaptár-művelet."
 
-#: app/routes.py:2195
+#: app/routes.py:2209
 msgid "Selected contract does not belong to the selected employee."
 msgstr "A kiválasztott szerződés nem a megadott munkavállalóhoz tartozik."
 
-#: app/routes.py:2204
+#: app/routes.py:2218
 msgid "Please provide a valid calendar year."
 msgstr "Adj meg érvényes naptári évet."
 
-#: app/routes.py:2209
+#: app/routes.py:2223
 #, python-format
 msgid "%(year)s is now open for employee leave requests."
 msgstr "%(year)s megnyitva a munkavállalói szabadságigények előtt."
 
-#: app/routes.py:2214
+#: app/routes.py:2228
 #, python-format
 msgid "%(year)s is now locked for employee leave requests."
 msgstr "%(year)s zárolva az új munkavállalói szabadságigények elől."
 
-#: app/routes.py:2220
+#: app/routes.py:2234
 #, python-format
 msgid "Default leave limits were loaded for active contracts in %(year)s."
 msgstr "Az alapértelmezett szabadságkeretek betöltve %(year)s aktív szerződéseihez."
 
-#: app/routes.py:2225
+#: app/routes.py:2239
 #, python-format
 msgid "Imported leave limits for %(year)s were removed."
 msgstr "%(year)s importált szabadságkeretei eltávolítva."
 
-#: app/routes.py:2228
+#: app/routes.py:2242
 msgid "Please select an employee first."
 msgstr "Először válassz munkavállalót."
 
-#: app/routes.py:2231
+#: app/routes.py:2245
 msgid "Please select a valid contract."
 msgstr "Válassz érvényes szerződést."
 
-#: app/routes.py:2234
+#: app/routes.py:2248
 msgid "The selected contract is not active in the selected calendar year."
 msgstr "A kiválasztott szerződés nem aktív a megadott naptári évben."
 
-#: app/routes.py:2247
+#: app/routes.py:2261
 msgid "Default leave limits were loaded for the selected contract."
 msgstr "Az alapértelmezett szabadságkeretek betöltve a kiválasztott szerződéshez."
 
-#: app/routes.py:2259
+#: app/routes.py:2273
 msgid "Imported leave limits were removed for the selected contract."
 msgstr "A kiválasztott szerződés importált szabadságkeretei eltávolítva."
 
-#: app/routes.py:2283 app/routes.py:2375
+#: app/routes.py:2297 app/routes.py:2389
 #, python-format
 msgid "%(category)s cannot be negative."
 msgstr "%(category)s: a keret nem lehet negatív."
 
-#: app/routes.py:2329
+#: app/routes.py:2343
 msgid "Invalid custom leave category submitted."
 msgstr "Érvénytelen egyedi szabadságkategóriát adtál meg."
 
-#: app/routes.py:2353
+#: app/routes.py:2367
 #, python-format
 msgid "%(category)s must include limit, start date, and end date."
 msgstr "%(category)s: add meg a keretet, a kezdő és a záró dátumot is."
 
-#: app/routes.py:2365
+#: app/routes.py:2379
 #, python-format
 msgid "%(category)s limit must be a whole number."
 msgstr "%(category)s: a keretet egész számként add meg."
 
-#: app/routes.py:2385
+#: app/routes.py:2399
 #, python-format
 msgid "%(category)s end date cannot be earlier than start date."
 msgstr "%(category)s: a záró dátum nem lehet korábbi a kezdő dátumnál."
 
-#: app/routes.py:2416
+#: app/routes.py:2430
 msgid "Leave limits saved for the selected contract and year."
 msgstr "A kiválasztott szerződés és év szabadságkeretei mentve."
 
-#: app/routes.py:2483 app/routes.py:2514
+#: app/routes.py:2498 app/routes.py:2529
 msgid "Leadership record not found."
 msgstr "A vezetői megbízás nem található."
 
-#: app/routes.py:2494
+#: app/routes.py:2509
 msgid "Leadership record updated."
 msgstr "A vezetői megbízás frissítve."
 
-#: app/routes.py:2494
+#: app/routes.py:2509
 msgid "Leadership record saved."
 msgstr "A vezetői megbízás mentve."
 
-#: app/routes.py:2538
+#: app/routes.py:2553
 msgid "Professional exam removed."
 msgstr "A szakvizsga eltávolítva."
 
-#: app/routes.py:2546
+#: app/routes.py:2561
 msgid "Year obtained is invalid."
 msgstr "A megszerzés éve érvénytelen."
 
-#: app/routes.py:2554
+#: app/routes.py:2569
 msgid "Professional exam saved."
 msgstr "A szakvizsga mentve."
 
+#: app/templates/_leave_basis.html:5
+#, python-format
+msgid "Recorded allowance: %(days)s days."
+msgstr "Rögzített keret: %(days)s nap."
+
 #: app/templates/base.html:14 app/templates/base.html:25 app/templates/base.html:84
 #: app/templates/contract_employee.html:2 app/templates/contract_form.html:2
+#: app/templates/dependent_form.html:2 app/templates/dependents.html:2
 #: app/templates/leave_approval_settings.html:2 app/templates/legal_entity_form.html:2
 #: app/templates/place_of_work_form.html:2
 msgid "CSUPOR Portal"
@@ -828,8 +1110,8 @@ msgid "Main navigation"
 msgstr "Főmenü"
 
 #: app/templates/base.html:27 app/templates/base.html:86
-msgid "Employee portal"
-msgstr "Munkatársi portál"
+msgid "Childcare Staff Unified Presence & Out-of-office Registry"
+msgstr "Csoportszintű Unifikált Pihenőnap-kezelő Óvodai Rendszer"
 
 #: app/templates/base.html:29 app/templates/base.html:72
 msgid "Close menu"
@@ -843,7 +1125,7 @@ msgstr "Saját felület"
 msgid "Dashboard"
 msgstr "Irányítópult"
 
-#: app/templates/base.html:34 app/templates/dashboard.html:77
+#: app/templates/base.html:34 app/templates/dashboard.html:91
 msgid "Leave calendar"
 msgstr "Szabadságnaptár"
 
@@ -855,64 +1137,65 @@ msgstr "Saját profil"
 msgid "My records"
 msgstr "Nyilvántartásaim"
 
-#: app/templates/base.html:37 app/templates/dashboard.html:31 app/templates/dashboard.html:91
+#: app/templates/base.html:37 app/templates/dashboard.html:45 app/templates/dashboard.html:105
+#: app/templates/dependents.html:2 app/templates/dependents.html:5
 msgid "Dependents"
 msgstr "Eltartottak"
 
-#: app/templates/base.html:38 app/templates/dashboard.html:36 app/templates/dashboard.html:100
+#: app/templates/base.html:38 app/templates/dashboard.html:50 app/templates/dashboard.html:114
 msgid "Qualifications"
 msgstr "Képesítések"
 
-#: app/templates/base.html:39 app/templates/dashboard.html:109
+#: app/templates/base.html:39 app/templates/dashboard.html:123
 msgid "Professional exam"
 msgstr "Szakvizsga"
 
-#: app/templates/base.html:43 app/templates/dashboard.html:118
+#: app/templates/base.html:43 app/templates/dashboard.html:132
 msgid "Management"
 msgstr "Kezelés"
 
-#: app/templates/base.html:46 app/templates/dashboard.html:120
+#: app/templates/base.html:46 app/templates/dashboard.html:134
 #: app/templates/manage_user_profiles.html:7
 msgid "User profiles"
 msgstr "Felhasználói profilok"
 
-#: app/templates/base.html:47 app/templates/dashboard.html:121 app/templates/manage_contracts.html:5
+#: app/templates/base.html:47 app/templates/dashboard.html:135 app/templates/manage_contracts.html:5
 msgid "Contracts"
 msgstr "Szerződések"
 
-#: app/templates/base.html:48 app/templates/dashboard.html:122
+#: app/templates/base.html:48 app/templates/dashboard.html:136
 msgid "Leave limits"
 msgstr "Szabadságkeretek"
 
-#: app/templates/base.html:49 app/templates/dashboard.html:125
+#: app/templates/base.html:49 app/templates/dashboard.html:139
 msgid "Working days"
 msgstr "Munkanapok"
 
-#: app/templates/base.html:51 app/templates/dashboard.html:123
+#: app/templates/base.html:51 app/templates/dashboard.html:137
 msgid "Leave approvals"
 msgstr "Szabadság-jóváhagyások"
 
-#: app/templates/base.html:52 app/templates/dashboard.html:124
+#: app/templates/base.html:52 app/templates/dashboard.html:138
 #: app/templates/leave_approval_settings.html:2 app/templates/leave_approval_settings.html:7
 #: app/templates/manage_leaves.html:12
 msgid "Approval settings"
 msgstr "Jóváhagyási beállítások"
 
-#: app/templates/base.html:54 app/templates/dashboard.html:126
+#: app/templates/base.html:54 app/templates/dashboard.html:140
 msgid "Leadership"
 msgstr "Vezetés"
 
-#: app/templates/base.html:55 app/templates/dashboard.html:127
+#: app/templates/base.html:55 app/templates/dashboard.html:141
 #: app/templates/manage_legal_entities.html:5
 msgid "Legal entities"
 msgstr "Jogi személyek"
 
-#: app/templates/base.html:56 app/templates/dashboard.html:127
+#: app/templates/base.html:56 app/templates/dashboard.html:141
 #: app/templates/manage_places_of_work.html:5
 msgid "Workplaces"
 msgstr "Munkahelyek"
 
-#: app/templates/base.html:58 app/templates/dashboard.html:128
+#: app/templates/base.html:58 app/templates/dashboard.html:142
 msgid "Privileges"
 msgstr "Jogosultságok"
 
@@ -1008,7 +1291,7 @@ msgstr "Jelszó mentése"
 #: app/templates/contract_form.html:96 app/templates/leaves.html:80
 #: app/templates/legal_entity_form.html:11 app/templates/manage_leaves.html:130
 #: app/templates/manage_leaves.html:132 app/templates/place_of_work_form.html:14
-#: app/templates/profile.html:136
+#: app/templates/profile.html:137
 msgid "Cancel"
 msgstr "Mégse"
 
@@ -1023,7 +1306,7 @@ msgstr ""
 "Válaszd ki, kinek szeretnél új szerződést rögzíteni. Olyan munkavállalót is választhatsz, akinek "
 "még nincs szerződése."
 
-#: app/templates/contract_employee.html:6 app/templates/manage_leave_limits.html:16
+#: app/templates/contract_employee.html:6 app/templates/manage_leave_limits.html:17
 msgid "Select employee"
 msgstr "Válassz munkavállalót"
 
@@ -1126,7 +1409,7 @@ msgstr "Üdv újra, %(name)s."
 msgid "Everything you need for your working day: your details, your records and your next time away."
 msgstr "A munkanapodhoz szükséges adatok, nyilvántartások és a következő szabadságod – egy helyen."
 
-#: app/templates/dashboard.html:10 app/templates/dashboard.html:77
+#: app/templates/dashboard.html:10 app/templates/dashboard.html:91
 msgid "Open leave calendar"
 msgstr "Szabadságnaptár megnyitása"
 
@@ -1138,213 +1421,252 @@ msgstr "Profil frissítése"
 msgid "User ID"
 msgstr "Felhasználói azonosító"
 
-#: app/templates/dashboard.html:26 app/templates/dashboard.html:27
+#: app/templates/dashboard.html:26
+#, python-format
+msgid "Happy birthday, %(name)s!"
+msgstr "Boldog születésnapot, %(name)s!"
+
+#: app/templates/dashboard.html:27
+msgid "Wishing you a wonderful day filled with joy!"
+msgstr "Kívánjuk, hogy sok örömben és szép pillanatban legyen részed ezen a napon!"
+
+#: app/templates/dashboard.html:29
+msgid "Today's birthdays at your workplace"
+msgstr "Mai születésnapok a munkahelyeden"
+
+#: app/templates/dashboard.html:30
+msgid "Remember to wish your colleagues a happy birthday:"
+msgstr "Ne felejtsd el felköszönteni a ma ünneplő munkatársaidat:"
+
+#: app/templates/dashboard.html:40 app/templates/dashboard.html:41
 #: app/templates/manage_user_profiles.html:28
 msgid "Profile status"
 msgstr "Profil állapota"
 
-#: app/templates/dashboard.html:31 app/templates/login.html:11 app/templates/register.html:11
+#: app/templates/dashboard.html:45 app/templates/login.html:11 app/templates/register.html:11
 msgid "Personal records"
 msgstr "Személyes adatok"
 
-#: app/templates/dashboard.html:32 app/templates/dashboard.html:91 app/templates/dependent_form.html:23
-msgid "Add dependent"
-msgstr "Eltartott hozzáadása"
+#: app/templates/dashboard.html:46
+msgid "View dependents"
+msgstr "Eltartottak megtekintése"
 
-#: app/templates/dashboard.html:36
+#: app/templates/dashboard.html:50
 msgid "Professional records"
 msgstr "Szakmai adatok"
 
-#: app/templates/dashboard.html:37 app/templates/dashboard.html:100
+#: app/templates/dashboard.html:51 app/templates/dashboard.html:114
 msgid "Add qualification"
 msgstr "Képesítés hozzáadása"
 
-#: app/templates/dashboard.html:43
+#: app/templates/dashboard.html:57
 msgid "Pending leave approvals"
 msgstr "Függőben lévő szabadság-jóváhagyások"
 
-#: app/templates/dashboard.html:43 app/templates/leave_approval_settings.html:11
+#: app/templates/dashboard.html:57 app/templates/leave_approval_settings.html:11
 #: app/templates/leaves.html:9 app/templates/manage_leaves.html:10
 msgid "Current approval rule"
 msgstr "Érvényes jóváhagyási szabály"
 
-#: app/templates/dashboard.html:43 app/templates/leave_approval_settings.html:40
+#: app/templates/dashboard.html:57 app/templates/leave_approval_settings.html:40
 msgid "Open leave manager"
 msgstr "Szabadságkezelő megnyitása"
 
-#: app/templates/dashboard.html:51 app/templates/manage_leaves.html:127
+#: app/templates/dashboard.html:65 app/templates/manage_leaves.html:127
 msgid "Approve"
 msgstr "Jóváhagyás"
 
-#: app/templates/dashboard.html:51 app/templates/dashboard.html:52 app/templates/manage_leaves.html:128
+#: app/templates/dashboard.html:65 app/templates/dashboard.html:66 app/templates/manage_leaves.html:128
 #: app/templates/manage_leaves.html:133
 msgid "Reject"
 msgstr "Elutasítás"
 
-#: app/templates/dashboard.html:52
+#: app/templates/dashboard.html:66
 msgid "Cancel leave"
 msgstr "Szabadság visszavonása"
 
-#: app/templates/dashboard.html:57
+#: app/templates/dashboard.html:71
 msgid "No pending leave requests currently require your review."
 msgstr "Jelenleg nincs döntésedre váró szabadságigény."
 
-#: app/templates/dashboard.html:63
+#: app/templates/dashboard.html:77
 msgid "Profile overview"
 msgstr "Profiláttekintés"
 
-#: app/templates/dashboard.html:63
+#: app/templates/dashboard.html:77
 msgid "Your personal and contact details."
 msgstr "Személyes adataid és elérhetőségeid."
 
-#: app/templates/dashboard.html:63 app/templates/manage_user_profiles.html:45
+#: app/templates/dashboard.html:77 app/templates/manage_user_profiles.html:45
 msgid "Edit profile"
 msgstr "Profil szerkesztése"
 
-#: app/templates/dashboard.html:66 app/templates/profile.html:49
+#: app/templates/dashboard.html:80 app/templates/profile.html:49
 msgid "Full name"
 msgstr "Teljes név"
 
-#: app/templates/dashboard.html:67 app/templates/profile.html:53
+#: app/templates/dashboard.html:81 app/templates/profile.html:53
 msgid "Name at birth"
 msgstr "Születési név"
 
-#: app/templates/dashboard.html:68 app/templates/dashboard.html:93 app/templates/dependent_form.html:43
-#: app/templates/profile.html:57
+#: app/templates/dashboard.html:82 app/templates/dashboard.html:107
+#: app/templates/dependent_form.html:44 app/templates/dependents.html:8 app/templates/profile.html:57
 msgid "Date of birth"
 msgstr "Születési dátum"
 
-#: app/templates/dashboard.html:69 app/templates/profile.html:61
+#: app/templates/dashboard.html:83 app/templates/profile.html:61
 msgid "Place of birth"
 msgstr "Születési hely"
 
-#: app/templates/dashboard.html:70
+#: app/templates/dashboard.html:84
 msgid "Phone"
 msgstr "Telefon"
 
-#: app/templates/dashboard.html:71 app/templates/profile.html:116
+#: app/templates/dashboard.html:85 app/templates/profile.html:116
 msgid "Marital status"
 msgstr "Családi állapot"
 
-#: app/templates/dashboard.html:73
+#: app/templates/dashboard.html:87
 msgid ""
 "Your profile has not been completed yet. Add your personal and contact information to make the "
 "portal more useful."
 msgstr "A profilod még nincs kitöltve. Add meg a személyes adataidat és az elérhetőségeidet."
 
-#: app/templates/dashboard.html:77
+#: app/templates/dashboard.html:91
 msgid "Your time away, at a glance."
 msgstr "Szabadságaid rövid áttekintése."
 
-#: app/templates/dashboard.html:80 app/templates/leaves.html:161
+#: app/templates/dashboard.html:94 app/templates/leaves.html:161
 #, python-format
 msgid "Leave used in %(year)s"
 msgstr "Szabadságok %(year)s-ben"
 
-#: app/templates/dashboard.html:80 app/templates/leaves.html:30
+#: app/templates/dashboard.html:94 app/templates/leaves.html:30
 msgid "Employer not set"
 msgstr "Nincs megadva munkáltató"
 
-#: app/templates/dashboard.html:82 app/templates/leaves.html:169
+#: app/templates/dashboard.html:96 app/templates/leaves.html:169
 msgid "Leave type"
 msgstr "Távollét típusa"
 
-#: app/templates/dashboard.html:82 app/templates/leaves.html:170
+#: app/templates/dashboard.html:96 app/templates/leaves.html:170
 msgid "Used"
 msgstr "Felhasznált"
 
-#: app/templates/dashboard.html:82 app/templates/leaves.html:171
+#: app/templates/dashboard.html:96 app/templates/leaves.html:171
 msgid "Available"
 msgstr "Elérhető"
 
-#: app/templates/dashboard.html:85 app/templates/leaves.html:162
+#: app/templates/dashboard.html:99 app/templates/leaves.html:162
 msgid "Pending approval, approved, and pending cancellation requests are included."
 msgstr "A jóváhagyásra vagy visszavonásra váró és a jóváhagyott igényeket is tartalmazza."
 
-#: app/templates/dashboard.html:87 app/templates/leaves.html:202
+#: app/templates/dashboard.html:101 app/templates/leaves.html:202
 msgid "No active contract found"
 msgstr "Nincs aktív szerződés"
 
-#: app/templates/dashboard.html:87 app/templates/leaves.html:203
+#: app/templates/dashboard.html:101 app/templates/leaves.html:203
 msgid "You can apply for leave once HR records an active contract for your account."
 msgstr "Amint a HR rögzíti az aktív szerződésedet, itt igényelhetsz szabadságot."
 
-#: app/templates/dashboard.html:91
+#: app/templates/dashboard.html:105
 msgid "Family details for your employee records."
 msgstr "Családi adatok a munkavállalói nyilvántartáshoz."
 
-#: app/templates/dashboard.html:93 app/templates/dependent_form.html:30
-#: app/templates/manage_legal_entities.html:8 app/templates/manage_user_profiles.html:26
+#: app/templates/dashboard.html:105 app/templates/dependent_form.html:2
+#: app/templates/dependent_form.html:23 app/templates/dependents.html:5
+msgid "Add dependent"
+msgstr "Eltartott hozzáadása"
+
+#: app/templates/dashboard.html:107 app/templates/dependent_form.html:31
+#: app/templates/dependents.html:8 app/templates/manage_legal_entities.html:8
+#: app/templates/manage_user_profiles.html:26
 msgid "Name"
 msgstr "Név"
 
-#: app/templates/dashboard.html:93
+#: app/templates/dashboard.html:107 app/templates/dependents.html:8
 msgid "SSN"
 msgstr "TAJ-szám"
 
-#: app/templates/dashboard.html:93
+#: app/templates/dashboard.html:107 app/templates/dependents.html:8
 msgid "Dependency start"
 msgstr "Eltartás kezdete"
 
-#: app/templates/dashboard.html:93 app/templates/dependent_form.html:55 app/templates/profile.html:130
+#: app/templates/dashboard.html:107 app/templates/dependent_form.html:56
+#: app/templates/dependents.html:8 app/templates/profile.html:130
 msgid "Disability, long-term illness"
 msgstr "Fogyatékosság, tartós betegség"
 
-#: app/templates/dashboard.html:96
+#: app/templates/dashboard.html:107 app/templates/dependents.html:8
+#: app/templates/manage_contracts.html:18 app/templates/manage_leave_limits.html:83
+#: app/templates/manage_leave_limits.html:200 app/templates/manage_leaves.html:81
+#: app/templates/manage_legal_entities.html:8 app/templates/manage_places_of_work.html:7
+msgid "Actions"
+msgstr "Műveletek"
+
+#: app/templates/dashboard.html:108 app/templates/dependents.html:11
+#: app/templates/manage_contracts.html:29 app/templates/manage_leadership.html:88
+#: app/templates/manage_leadership.html:100 app/templates/manage_legal_entities.html:9
+#: app/templates/manage_places_of_work.html:8 app/templates/profile.html:2
+msgid "Edit"
+msgstr "Szerkesztés"
+
+#: app/templates/dashboard.html:110 app/templates/dependents.html:14
 msgid "No dependents have been added yet. Add one to keep benefit-related records complete."
 msgstr "Még nincs rögzített eltartottad. Add meg az eltartottjaidat a juttatások nyilvántartásához."
 
-#: app/templates/dashboard.html:100
+#: app/templates/dashboard.html:114
 msgid "Your education and certificates."
 msgstr "Tanulmányaid és bizonyítványaid."
 
-#: app/templates/dashboard.html:103
+#: app/templates/dashboard.html:117
 msgid "Highest"
 msgstr "Legmagasabb"
 
-#: app/templates/dashboard.html:103
+#: app/templates/dashboard.html:117
 msgid "Degree #"
 msgstr "Oklevél #"
 
-#: app/templates/dashboard.html:105
+#: app/templates/dashboard.html:119
 msgid ""
 "No educational qualifications are listed yet. Add your latest degree or certification to get "
 "started."
 msgstr "Még nincs rögzített képesítésed. Kezdd a legutóbbi végzettséged vagy bizonyítványod hozzáadásával."
 
-#: app/templates/dashboard.html:109
+#: app/templates/dashboard.html:123
 msgid "Optional teaching certification or professional exam details."
 msgstr "Opcionális pedagógus-tanúsítvány vagy szakvizsga adatai."
 
-#: app/templates/dashboard.html:109
+#: app/templates/dashboard.html:123
 msgid "Manage exam"
 msgstr "Vizsga kezelése"
 
-#: app/templates/dashboard.html:111
+#: app/templates/dashboard.html:125
 msgid "Qualification"
 msgstr "Képesítés"
 
-#: app/templates/dashboard.html:111 app/templates/professional_exam_form.html:32
+#: app/templates/dashboard.html:125 app/templates/professional_exam_form.html:32
 #: app/templates/qualification_form.html:44
 msgid "Year obtained"
 msgstr "Megszerzés éve"
 
-#: app/templates/dashboard.html:111 app/templates/professional_exam_form.html:36
+#: app/templates/dashboard.html:125 app/templates/professional_exam_form.html:36
 #: app/templates/qualification_form.html:40
 msgid "Degree number"
 msgstr "Oklevél száma"
 
-#: app/templates/dashboard.html:112
+#: app/templates/dashboard.html:126
 msgid "No professional exam is recorded yet. Use the dedicated form to add it now or come back later."
 msgstr "Még nincs rögzített szakvizsgád. Add meg az adatait a külön űrlapon, vagy térj vissza később."
 
-#: app/templates/dashboard.html:118
+#: app/templates/dashboard.html:132
 msgid "Quick access to your administrative tools."
 msgstr "Gyors elérés az adminisztrációs feladatokhoz."
 
-#: app/templates/dependent_form.html:2
-msgid "Add Dependent · CSUPOR Portal"
-msgstr "Eltartott hozzáadása · CSUPOR Portál"
+#: app/templates/dependent_form.html:2 app/templates/dependent_form.html:7
+#: app/templates/dependent_form.html:23
+msgid "Edit dependent"
+msgstr "Eltartott szerkesztése"
 
 #: app/templates/dependent_form.html:6
 msgid "Family records"
@@ -1379,41 +1701,48 @@ msgid "You can optionally add information about a disability or long-term illnes
 msgstr "Szükség esetén a fogyatékosságot vagy a tartós betegséget is megadhatod."
 
 #: app/templates/dependent_form.html:24
+msgid "Update the details of your dependent."
+msgstr "Frissítsd az eltartottad adatait."
+
+#: app/templates/dependent_form.html:24
 msgid "Create a new dependent entry for your employee record."
 msgstr "Rögzíts új eltartottat a munkavállalói adatlapodon."
 
-#: app/templates/dependent_form.html:31
+#: app/templates/dependent_form.html:32
 msgid "Dependent full name"
 msgstr "Eltartott teljes neve"
 
-#: app/templates/dependent_form.html:34
+#: app/templates/dependent_form.html:35 app/templates/dependents.html:8
 msgid "Dependent type"
 msgstr "Eltartott típusa"
 
-#: app/templates/dependent_form.html:36
+#: app/templates/dependent_form.html:37
 msgid "Select dependent type"
 msgstr "Válaszd ki az eltartott típusát"
 
-#: app/templates/dependent_form.html:47 app/templates/profile.html:87
+#: app/templates/dependent_form.html:48 app/templates/profile.html:87
 msgid "Social security number (9 digits)"
 msgstr "TAJ-szám (9 számjegy)"
 
-#: app/templates/dependent_form.html:51
+#: app/templates/dependent_form.html:52
 msgid "Start of dependency"
 msgstr "Eltartás kezdete"
 
-#: app/templates/dependent_form.html:56
+#: app/templates/dependent_form.html:57
 msgid "Optional note"
 msgstr "Opcionális megjegyzés"
 
-#: app/templates/dependent_form.html:60
+#: app/templates/dependent_form.html:61
 msgid "Save dependent"
 msgstr "Eltartott mentése"
 
-#: app/templates/dependent_form.html:61 app/templates/professional_exam_form.html:42
-#: app/templates/qualification_form.html:54
-msgid "Back to dashboard"
-msgstr "Vissza az irányítópultra"
+#: app/templates/dependent_form.html:62
+msgid "Back to dependents"
+msgstr "Vissza az eltartottakhoz"
+
+#: app/templates/dependents.html:5
+msgid "Review and update your recorded dependents."
+msgstr "Tekintsd át és szerkeszd a már rögzített eltartottjaidat."
 
 #: app/templates/leave_approval_settings.html:6 app/templates/manage_leaves.html:7
 msgid "Leave governance"
@@ -1424,8 +1753,8 @@ msgid "Choose whose approval is needed for leave requests across all legal entit
 msgstr "Válaszd ki, kinek a jóváhagyása szükséges a szabadságigényekhez az összes jogi személynél."
 
 #: app/templates/leave_approval_settings.html:13
-msgid "Only users with CEO privilege can change this setting."
-msgstr "Ezt a beállítást csak ügyvezetői jogosultsággal lehet módosítani."
+msgid "Only users with Director privilege can change this setting."
+msgstr "Ezt a beállítást csak igazgatói jogosultsággal lehet módosítani."
 
 #: app/templates/leave_approval_settings.html:21
 msgid "Required approvals"
@@ -1446,12 +1775,12 @@ msgstr ""
 
 #: app/templates/leave_approval_settings.html:34
 msgid ""
-"Principals and deputies can review requests only for their own legal entities. Deputies cannot "
-"approve their own requests. Existing automatic approvals for CEO and principal applicants follow "
-"the selected rule."
+"Nursery heads and deputies can review requests only for their own legal entities. Deputies cannot"
+" approve their own requests. Existing automatic approvals for Director and nursery head "
+"applicants follow the selected rule."
 msgstr ""
-"Az igazgatók és helyetteseik csak a saját jogi személyükhöz tartozó igényekről dönthetnek. A "
-"helyettesek nem hagyhatják jóvá a saját igényüket. Az ügyvezetők és igazgatók saját igényeinek "
+"Az óvodavezetők és helyetteseik csak a saját jogi személyükhöz tartozó igényekről dönthetnek. A "
+"helyettesek nem hagyhatják jóvá a saját igényüket. Az igazgatók és óvodavezetők saját igényeinek "
 "automatikus jóváhagyása a kiválasztott szabályt követi."
 
 #: app/templates/leave_approval_settings.html:35
@@ -1569,7 +1898,7 @@ msgid "Start date *"
 msgstr "Kezdő dátum *"
 
 #: app/templates/leaves.html:145 app/templates/manage_leadership.html:54
-#: app/templates/manage_leadership.html:87 app/templates/manage_leave_limits.html:194
+#: app/templates/manage_leadership.html:87 app/templates/manage_leave_limits.html:198
 msgid "End date"
 msgstr "Záró dátum"
 
@@ -1733,7 +2062,7 @@ msgid "Reset"
 msgstr "Visszaállítás"
 
 #: app/templates/manage_contracts.html:18 app/templates/manage_leadership.html:84
-#: app/templates/manage_leave_limits.html:24 app/templates/manage_leaves.html:35
+#: app/templates/manage_leave_limits.html:25 app/templates/manage_leaves.html:35
 msgid "Contract"
 msgstr "Szerződés"
 
@@ -1753,26 +2082,14 @@ msgstr "Időszak"
 msgid "Hours/week"
 msgstr "Óra/hét"
 
-#: app/templates/manage_contracts.html:18 app/templates/manage_leave_limits.html:81
+#: app/templates/manage_contracts.html:18 app/templates/manage_leave_limits.html:82
 #: app/templates/manage_leaves.html:46 app/templates/manage_leaves.html:78
 msgid "Status"
 msgstr "Állapot"
 
-#: app/templates/manage_contracts.html:18 app/templates/manage_leave_limits.html:82
-#: app/templates/manage_leave_limits.html:195 app/templates/manage_leaves.html:81
-#: app/templates/manage_legal_entities.html:8 app/templates/manage_places_of_work.html:7
-msgid "Actions"
-msgstr "Műveletek"
-
 #: app/templates/manage_contracts.html:26
 msgid "Open-ended"
 msgstr "Határozatlan"
-
-#: app/templates/manage_contracts.html:29 app/templates/manage_leadership.html:88
-#: app/templates/manage_leadership.html:100 app/templates/manage_legal_entities.html:9
-#: app/templates/manage_places_of_work.html:8 app/templates/profile.html:2
-msgid "Edit"
-msgstr "Szerkesztés"
 
 #: app/templates/manage_contracts.html:32
 msgid "No contracts match the selected filters."
@@ -1802,7 +2119,7 @@ msgstr "Válassz jogi személyt"
 msgid "Contract *"
 msgstr "Szerződés *"
 
-#: app/templates/manage_leadership.html:27 app/templates/manage_leave_limits.html:26
+#: app/templates/manage_leadership.html:27 app/templates/manage_leave_limits.html:27
 msgid "Select contract"
 msgstr "Válassz szerződést"
 
@@ -1838,7 +2155,7 @@ msgstr "Vezetői megbízások kezelése jogi személy és szerződés szerint."
 msgid "Position"
 msgstr "Pozíció"
 
-#: app/templates/manage_leadership.html:86 app/templates/manage_leave_limits.html:193
+#: app/templates/manage_leadership.html:86 app/templates/manage_leave_limits.html:197
 msgid "Start date"
 msgstr "Kezdő dátum"
 
@@ -1846,15 +2163,15 @@ msgstr "Kezdő dátum"
 msgid "No leadership records have been added yet."
 msgstr "Még nincs rögzített vezetői megbízás."
 
-#: app/templates/manage_leave_limits.html:2
+#: app/templates/manage_leave_limits.html:3
 msgid "Leave limits · CSUPOR Portal"
 msgstr "Szabadságkeretek · CSUPOR Portál"
 
-#: app/templates/manage_leave_limits.html:8
+#: app/templates/manage_leave_limits.html:9
 msgid "Assign leave limits to active contracts"
 msgstr "Szabadságkeretek hozzárendelése aktív szerződésekhez"
 
-#: app/templates/manage_leave_limits.html:9
+#: app/templates/manage_leave_limits.html:10
 msgid ""
 "Select an employee and contract to edit one contract, or choose only a year to manage year "
 "availability and defaults."
@@ -1862,108 +2179,120 @@ msgstr ""
 "Egy szerződés szerkesztéséhez válassz munkavállalót és szerződést. Az év megnyitásához és az "
 "alapértékek kezeléséhez csak az évet válaszd ki."
 
-#: app/templates/manage_leave_limits.html:38
+#: app/templates/manage_leave_limits.html:39
 msgid "Select an employee first to load available contracts."
 msgstr "Az elérhető szerződések betöltéséhez először válassz munkavállalót."
 
-#: app/templates/manage_leave_limits.html:41 app/templates/manage_leave_limits.html:65
-#: app/templates/manage_leave_limits.html:80
+#: app/templates/manage_leave_limits.html:42 app/templates/manage_leave_limits.html:66
+#: app/templates/manage_leave_limits.html:81
 msgid "Calendar year"
 msgstr "Naptári év"
 
-#: app/templates/manage_leave_limits.html:45
+#: app/templates/manage_leave_limits.html:46
 msgid "Load"
 msgstr "Betöltés"
 
-#: app/templates/manage_leave_limits.html:54
+#: app/templates/manage_leave_limits.html:55
 msgid "Year availability"
 msgstr "Év megnyitása és zárolása"
 
-#: app/templates/manage_leave_limits.html:57
+#: app/templates/manage_leave_limits.html:58
 #, python-format
 msgid "%(year)s is open for employee leave requests."
 msgstr "%(year)s meg van nyitva a munkavállalói szabadságigények előtt."
 
-#: app/templates/manage_leave_limits.html:59
+#: app/templates/manage_leave_limits.html:60
 #, python-format
 msgid "%(year)s is closed. Employees cannot request leave in this year until HR opens it."
 msgstr "%(year)s zárolva van. Erre az évre addig nem igényelhető szabadság, amíg a HR meg nem nyitja."
 
-#: app/templates/manage_leave_limits.html:69
+#: app/templates/manage_leave_limits.html:70
 msgid "Open year"
 msgstr "Év megnyitása"
 
-#: app/templates/manage_leave_limits.html:74
+#: app/templates/manage_leave_limits.html:75
 msgid "Opened years"
 msgstr "Megnyitott évek"
 
-#: app/templates/manage_leave_limits.html:89
+#: app/templates/manage_leave_limits.html:90
 msgid "Open"
 msgstr "Nyitott"
 
-#: app/templates/manage_leave_limits.html:89
+#: app/templates/manage_leave_limits.html:90
 msgid "Locked"
 msgstr "Zárolt"
 
-#: app/templates/manage_leave_limits.html:95
+#: app/templates/manage_leave_limits.html:96
 msgid "Lock year"
 msgstr "Év zárolása"
 
-#: app/templates/manage_leave_limits.html:99
+#: app/templates/manage_leave_limits.html:100
 msgid "Reopen year"
 msgstr "Év újranyitása"
 
-#: app/templates/manage_leave_limits.html:103
+#: app/templates/manage_leave_limits.html:104
 msgid "Load default values for all employees"
 msgstr "Alapértékek betöltése minden munkavállalóhoz"
 
-#: app/templates/manage_leave_limits.html:113
+#: app/templates/manage_leave_limits.html:114
 msgid "No years have been opened yet."
 msgstr "Még nincs megnyitott év."
 
-#: app/templates/manage_leave_limits.html:122
+#: app/templates/manage_leave_limits.html:123
 #, python-format
 msgid "Leave limits for %(year)s"
 msgstr "Szabadságkeretek – %(year)s"
 
-#: app/templates/manage_leave_limits.html:124
+#: app/templates/manage_leave_limits.html:125
 #, python-format
 msgid "Contract: %(contract)s"
 msgstr "Szerződés: %(contract)s"
 
-#: app/templates/manage_leave_limits.html:126
+#: app/templates/manage_leave_limits.html:127
 msgid "· Not active in selected year"
 msgstr "· Nem aktív a kiválasztott évben"
 
-#: app/templates/manage_leave_limits.html:139
+#: app/templates/manage_leave_limits.html:140
 msgid "Revert imported values for this contract"
 msgstr "A szerződés importált értékeinek visszavonása"
 
-#: app/templates/manage_leave_limits.html:143
+#: app/templates/manage_leave_limits.html:144
 msgid "Load default values for this contract"
 msgstr "Alapértékek betöltése ehhez a szerződéshez"
 
-#: app/templates/manage_leave_limits.html:153
+#: app/templates/manage_leave_limits.html:154
+msgid ""
+"Legal references checked on 28 September 2026. The statutory entitlement and the recorded "
+"allowance are shown separately."
+msgstr ""
+"Jogszabályi hivatkozások ellenőrizve: 2026. szeptember 28. A jogszabályi mérték és a rögzített "
+"keret külön szerepel."
+
+#: app/templates/manage_leave_limits.html:155
 msgid "Calendar year bounded categories"
 msgstr "Naptári évhez kötött kategóriák"
 
-#: app/templates/manage_leave_limits.html:158 app/templates/manage_leave_limits.html:191
+#: app/templates/manage_leave_limits.html:160 app/templates/manage_leave_limits.html:195
 msgid "Leave category"
 msgstr "Szabadságkategória"
 
-#: app/templates/manage_leave_limits.html:159 app/templates/manage_leave_limits.html:192
+#: app/templates/manage_leave_limits.html:161 app/templates/manage_leave_limits.html:196
 msgid "Limit (days)"
 msgstr "Keret (nap)"
 
-#: app/templates/manage_leave_limits.html:160
+#: app/templates/manage_leave_limits.html:162
 msgid "Bounded period"
 msgstr "Kötött időszak"
 
-#: app/templates/manage_leave_limits.html:185
+#: app/templates/manage_leave_limits.html:163 app/templates/manage_leave_limits.html:199
+msgid "Legal basis and entitlement"
+msgstr "Jogalap és jogosultság"
+
+#: app/templates/manage_leave_limits.html:189
 msgid "Categories with custom start/end date"
 msgstr "Egyedi kezdő/záró dátumú kategóriák"
 
-#: app/templates/manage_leave_limits.html:186
+#: app/templates/manage_leave_limits.html:190
 #, python-format
 msgid ""
 "Use “Add another” when one employee has multiple eligible instances of the same category in "
@@ -1972,23 +2301,23 @@ msgstr ""
 "Ha egy munkavállaló %(year)s során ugyanabban a kategóriában többször is jogosult szabadságra, "
 "használd az „Új hozzáadása” gombot."
 
-#: app/templates/manage_leave_limits.html:218 app/templates/manage_leave_limits.html:336
+#: app/templates/manage_leave_limits.html:224 app/templates/manage_leave_limits.html:341
 msgid "Remove"
 msgstr "Eltávolítás"
 
-#: app/templates/manage_leave_limits.html:242
+#: app/templates/manage_leave_limits.html:249
 msgid "Add another"
 msgstr "Új hozzáadása"
 
-#: app/templates/manage_leave_limits.html:251
+#: app/templates/manage_leave_limits.html:258
 msgid "Categories without assigned limit"
 msgstr "Hozzárendelt keret nélküli kategóriák"
 
-#: app/templates/manage_leave_limits.html:259
+#: app/templates/manage_leave_limits.html:266
 msgid "Save leave limits"
 msgstr "Szabadságkeretek mentése"
 
-#: app/templates/manage_leave_limits.html:264
+#: app/templates/manage_leave_limits.html:271
 #, python-format
 msgid ""
 "The selected contract is not active in %(year)s. Choose an active contract-year combination to "
@@ -2027,11 +2356,11 @@ msgstr "Szabadságigények"
 
 #: app/templates/manage_leaves.html:67
 msgid ""
-"CEO and legal-entity principal approvals are tracked separately. A single approver with both "
-"roles can satisfy both requirements."
+"Director and legal-entity nursery head approvals are tracked separately. A single approver with "
+"both roles can satisfy both requirements."
 msgstr ""
-"Az ügyvezető és a jogi személy igazgatójának jóváhagyását külön rögzítjük. Ha ugyanaz a személy "
-"mindkét szerepet betölti, mindkét jóváhagyást megadhatja."
+"Az igazgató és a jogi személy óvodavezetőjának jóváhagyását külön rögzítjük. Ha ugyanaz a személy"
+" mindkét szerepet betölti, mindkét jóváhagyást megadhatja."
 
 #: app/templates/manage_leaves.html:77
 msgid "Leave"
@@ -2287,6 +2616,10 @@ msgstr "Képesítés megnevezése"
 msgid "Save professional exam"
 msgstr "Szakvizsga mentése"
 
+#: app/templates/professional_exam_form.html:42 app/templates/qualification_form.html:54
+msgid "Back to dashboard"
+msgstr "Vissza az irányítópultra"
+
 #: app/templates/profile.html:2
 msgid "Profile"
 msgstr "Profil"
@@ -2338,7 +2671,7 @@ msgstr "A hivatalos azonosítókat az okmányokon szereplő formában add meg."
 
 #: app/templates/profile.html:25
 msgid "Add both permanent and temporary addresses where applicable."
-msgstr "Add meg az állandó és – ha van – az ideiglenes lakcímedet is."
+msgstr "Add meg az állandó lakcímedet és – ha van – a tartózkodási helyedet is."
 
 #: app/templates/profile.html:26
 msgid "Save regularly to keep HR information current."
@@ -2385,8 +2718,8 @@ msgid "Education number (11 digits)"
 msgstr "Oktatási azonosító (11 számjegy)"
 
 #: app/templates/profile.html:99
-msgid "Teacher ID card number (max. 64 characters)"
-msgstr "Pedagógusigazolvány száma (legfeljebb 64 karakter)"
+msgid "Teacher ID card number"
+msgstr "Pedagógusigazolvány száma"
 
 #: app/templates/profile.html:102
 msgid "Address and other details"
@@ -2398,7 +2731,7 @@ msgstr "Állandó lakcím"
 
 #: app/templates/profile.html:108
 msgid "Temporary address"
-msgstr "Ideiglenes lakcím"
+msgstr "Tartózkodási hely"
 
 #: app/templates/profile.html:112
 msgid "Bank account number"
@@ -2408,7 +2741,11 @@ msgstr "Bankszámlaszám"
 msgid "Select marital status"
 msgstr "Válaszd ki a családi állapotot"
 
-#: app/templates/profile.html:135
+#: app/templates/profile.html:132
+msgid "If none, leave this blank."
+msgstr "Ha nincs, hagyd üresen."
+
+#: app/templates/profile.html:136
 msgid "Save profile"
 msgstr "Profil mentése"
 

@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}{{ _('Add Dependent · CSUPOR Portal') }}{% endblock %}
+{% block title %}{{ _('Edit dependent') if dependent else _('Add dependent') }} · {{ _('CSUPOR Portal') }}{% endblock %}
 {% block content %}
 <section class="form-page">
   <aside class="form-sidebar">
     <span class="eyebrow">{{ _("Family records") }}</span>
-    <h2>{{ _("Add a dependent record.") }}</h2>
+    <h2>{{ _('Edit dependent') if dependent else _("Add a dependent record.") }}</h2>
     <p>
       {{ _('Add family details needed for benefits and leave entitlements.') }}
     </p>
@@ -20,45 +20,46 @@
   <section class="form-shell">
     <div class="section-heading">
       <div>
-        <h2>{{ _('Add dependent') }}</h2>
-        <p>{{ _("Create a new dependent entry for your employee record.") }}</p>
+        <h2>{{ _('Edit dependent') if dependent else _('Add dependent') }}</h2>
+        <p>{{ _('Update the details of your dependent.') if dependent else _('Create a new dependent entry for your employee record.') }}</p>
       </div>
     </div>
     <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <div class="form-grid">
         <div class="field field-full">
           <label for="name">{{ _('Name') }}</label>
-          <input id="name" name="name" required placeholder="{{ _('Dependent full name') }}">
+          <input id="name" maxlength="120" name="name" value="{{ request.form.get('name', dependent.name if dependent and dependent.name else '') }}" required placeholder="{{ _('Dependent full name') }}">
         </div>
         <div class="field">
           <label for="dependent_type">{{ _("Dependent type") }}</label>
           <select id="dependent_type" name="dependent_type" required>
             <option value="">{{ _("Select dependent type") }}</option>
             {% for dependent_type in dependent_types %}
-            <option value="{{ dependent_type.value }}">{{ enum_label(dependent_type) }}</option>
+            <option value="{{ dependent_type.value }}"{% if request.form.get('dependent_type', dependent.dependent_type.value if dependent else '') == dependent_type.value %} selected{% endif %}>{{ enum_label(dependent_type) }}</option>
             {% endfor %}
           </select>
         </div>
         <div class="field">
           <label for="date_of_birth">{{ _('Date of birth') }}</label>
-          <input id="date_of_birth" type="date" name="date_of_birth" required>
+          <input id="date_of_birth" type="date" name="date_of_birth" value="{{ request.form.get('date_of_birth', dependent.date_of_birth if dependent and dependent.date_of_birth else '') }}" required>
         </div>
         <div class="field">
           <label for="social_security_number">{{ _("Social security number (9 digits)") }}</label>
-          <input id="social_security_number" name="social_security_number" required>
+          <input id="social_security_number" inputmode="numeric" pattern="[0-9]{9}" maxlength="9" name="social_security_number" value="{{ request.form.get('social_security_number', dependent.social_security_number if dependent and dependent.social_security_number else '') }}" required>
         </div>
         <div class="field">
           <label for="dependency_start">{{ _("Start of dependency") }}</label>
-          <input id="dependency_start" type="date" name="dependency_start" required>
+          <input id="dependency_start" type="date" name="dependency_start" value="{{ request.form.get('dependency_start', dependent.dependency_start if dependent and dependent.dependency_start else '') }}" required>
         </div>
         <div class="field">
           <label for="disability">{{ _('Disability, long-term illness') }}</label>
-          <input id="disability" name="disability" placeholder="{{ _('Optional note') }}">
+          <input id="disability" maxlength="255" name="disability" value="{{ request.form.get('disability', dependent.disability if dependent and dependent.disability else '') }}" placeholder="{{ _('Optional note') }}">
         </div>
       </div>
       <div class="button-row">
         <button type="submit">{{ _("Save dependent") }}</button>
-        <a class="button button-secondary" href="{{ url_for('dashboard') }}">{{ _("Back to dashboard") }}</a>
+        <a class="button button-secondary" href="{{ url_for('manage_dependents') }}">{{ _('Back to dependents') }}</a>
       </div>
     </form>
   </section>

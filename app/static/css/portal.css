@@ -264,3 +264,28 @@ textarea.address-field { min-height: 72px; height: 72px; }
 .contracts-table { min-width: 950px; }
 .contract-ended { background: var(--surface-muted); }
 @media (max-width: 850px) { .contract-filters { grid-template-columns: 1fr; } }
+
+/* Expanded product name, family records and contextual leave information. */
+.brand-copy { min-width: 0; max-width: 100%; }
+.brand-copy small { white-space: normal; overflow-wrap: anywhere; line-height: 1.45; }
+.public-page .brand-copy { max-width: 290px; }
+.birthday-card { display: flex; align-items: flex-start; gap: 18px; padding: 22px 26px; margin-top: 22px; border: 1px solid #efd4b5; border-radius: 16px; background: #fff8ed; }
+.birthday-symbol { display: inline-grid; place-items: center; flex: 0 0 40px; width: 40px; height: 40px; border-radius: 12px; color: var(--primary); background: #ffebce; }
+.birthday-symbol .icon { width: 26px; height: 26px; }
+.birthday-card h2 { margin: 0 0 8px; font-size: 1.2rem; }
+.birthday-card p { margin: 0; color: var(--text-soft); }
+.birthday-card ul { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 12px 0 0; padding-left: 18px; }
+.leave-basis-cell p { margin: 8px 0; line-height: 1.6; font-size: 12px; }
+.leave-limits-table-calendar { min-width: 960px; }
+.leave-limits-table-calendar th:first-child, .leave-limits-table-calendar td:first-child { width: 22%; }
+.leave-limits-table-calendar th:nth-child(2), .leave-limits-table-calendar td:nth-child(2) { width: 12%; }
+.leave-limits-table-calendar th:nth-child(3), .leave-limits-table-calendar td:nth-child(3) { width: 21%; }
+.leave-limits-table-calendar th:nth-child(4), .leave-limits-table-calendar td:nth-child(4) { width: 45%; }
+.leave-limits-table-range { min-width: 1160px; }
+.leave-limits-table-range th:first-child, .leave-limits-table-range td:first-child { width: 17%; }
+.leave-limits-table-range th:nth-child(2), .leave-limits-table-range td:nth-child(2) { width: 9%; }
+.leave-limits-table-range th:nth-child(3), .leave-limits-table-range td:nth-child(3), .leave-limits-table-range th:nth-child(4), .leave-limits-table-range td:nth-child(4) { width: 14%; }
+.leave-limits-table-range th:nth-child(5), .leave-limits-table-range td:nth-child(5) { width: 34%; }
+.leave-limits-table-range th:nth-child(6), .leave-limits-table-range td:nth-child(6) { width: 12%; }
+@media (max-width: 600px) { .public-page .brand-copy { max-width: 190px; }.birthday-card { padding: 18px; gap: 12px; } }
+@media (max-width: 360px) { .auth-panel h1 { font-size: 1.8rem; } }

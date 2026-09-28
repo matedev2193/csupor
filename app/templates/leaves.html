@@ -6,7 +6,7 @@
     <span class="eyebrow">{{ _("Leave planning") }}</span>
     <h1>{{ _("Plan time away with confidence.") }}</h1>
     <p>{{ _('Select an active contract, review your leave calendar and submit a request.') }}</p>
-    <p>{{ _('Current approval rule') }}: <strong>{{ leave_approval_policy_labels[leave_approval_policy] }}</strong>. {{ leave_approval_policy_descriptions[leave_approval_policy] }}</p>
+    <p>{{ _('Current approval rule') }}: {{ named_approval_description }}</p>
   </div>
   <div class="leave-status-panel">
     <strong>{{ _("Request statuses") }}</strong>

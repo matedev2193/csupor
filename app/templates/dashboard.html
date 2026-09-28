@@ -19,6 +19,20 @@
   </aside>
 </section>
 
+{% if is_own_birthday or birthday_colleagues %}
+<section class="birthday-card" aria-labelledby="birthday-heading">
+  <span class="birthday-symbol" aria-hidden="true">{{ icon('cake') }}</span>
+  <div>{% if is_own_birthday %}
+    <h2 id="birthday-heading">{{ _('Happy birthday, %(name)s!', name=current_user.profile.full_name or current_user.username) }}</h2>
+    <p>{{ _('Wishing you a wonderful day filled with joy!') }}</p>
+  {% else %}
+    <h2 id="birthday-heading">{{ _("Today's birthdays at your workplace") }}</h2>
+    <p>{{ _('Remember to wish your colleagues a happy birthday:') }}</p>
+    <ul>{% for colleague in birthday_colleagues %}<li>{{ colleague.profile.full_name or colleague.username }}</li>{% endfor %}</ul>
+  {% endif %}</div>
+</section>
+{% endif %}
+
 <section class="layout-stack">
   <div class="stats-grid">
     <a class="stat-card" href="{{ url_for('edit_profile') }}">
@@ -26,10 +40,10 @@
       <div class="stat-copy"><div><span>{{ _('Profile status') }}</span><strong>{{ profile_completion_percentage }}%</strong></div><span class="stat-caption">{{ profile_status_label }}</span></div>
       <progress value="{{ profile_completion_percentage }}" max="100" aria-label="{{ _('Profile status') }}">{{ profile_completion_percentage }}%</progress>
     </a>
-    <a class="stat-card" href="{{ url_for('add_dependent') }}">
+    <a class="stat-card" href="{{ url_for('manage_dependents') }}">
       <div class="stat-top"><span class="stat-icon">{{ icon('users') }}</span>{{ icon('arrow') }}</div>
       <div class="stat-copy"><div><span>{{ _('Dependents') }}</span><strong>{{ current_user.dependents|length }}</strong></div><span class="stat-caption">{{ _('Personal records') }}</span></div>
-      <div class="stat-foot">{{ _('Add dependent') }} →</div>
+      <div class="stat-foot">{{ _('View dependents') }} →</div>
     </a>
     <a class="stat-card" href="{{ url_for('add_qualification') }}">
       <div class="stat-top"><span class="stat-icon">{{ icon('graduate') }}</span>{{ icon('arrow') }}</div>
@@ -90,8 +104,8 @@
     <section class="table-card span-7">
       <div class="section-heading"><div><h2 class="heading-icon">{{ icon('users') }} {{ _('Dependents') }}</h2><p>{{ _('Family details for your employee records.') }}</p></div><a class="button button-secondary" href="{{ url_for('add_dependent') }}">{{ icon('plus') }} {{ _('Add dependent') }}</a></div>
       {% if current_user.dependents %}
-      <div class="table-wrap"><table><thead><tr><th>{{ _('Name') }}</th><th>{{ _('Date of birth') }}</th><th>{{ _('SSN') }}</th><th>{{ _('Dependency start') }}</th><th>{{ _('Disability, long-term illness') }}</th></tr></thead><tbody>
-      {% for dep in current_user.dependents %}<tr><td><strong>{{ dep.name }}</strong></td><td>{{ dep.date_of_birth }}</td><td>{{ dep.social_security_number }}</td><td>{{ dep.dependency_start }}</td><td>{{ dep.disability or '—' }}</td></tr>{% endfor %}
+      <div class="table-wrap"><table><thead><tr><th>{{ _('Name') }}</th><th>{{ _('Date of birth') }}</th><th>{{ _('SSN') }}</th><th>{{ _('Dependency start') }}</th><th>{{ _('Disability, long-term illness') }}</th><th>{{ _('Actions') }}</th></tr></thead><tbody>
+      {% for dep in current_user.dependents %}<tr><td><strong>{{ dep.name }}</strong></td><td>{{ dep.date_of_birth }}</td><td>{{ dep.social_security_number }}</td><td>{{ dep.dependency_start }}</td><td>{{ dep.disability or '—' }}</td><td><a class="button button-secondary" href="{{ url_for('edit_dependent', dependent_id=dep.id) }}">{{ _('Edit') }}</a></td></tr>{% endfor %}
       </tbody></table></div>
       {% else %}<div class="empty-state">{{ icon('users') }}{{ _('No dependents have been added yet. Add one to keep benefit-related records complete.') }}</div>{% endif %}
     </section>

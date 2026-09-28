@@ -9,16 +9,16 @@ from .models import LeaveApprovalPolicy, LeaveApprovalSettings
 
 
 POLICY_LABELS = {
-    LeaveApprovalPolicy.ceo_only: lazy_gettext("CEO only"),
-    LeaveApprovalPolicy.leadership_only: lazy_gettext("Principal/deputy only"),
+    LeaveApprovalPolicy.ceo_only: lazy_gettext('Director only'),
+    LeaveApprovalPolicy.leadership_only: lazy_gettext('Nursery head/deputy only'),
     LeaveApprovalPolicy.both: lazy_gettext("Both"),
     LeaveApprovalPolicy.either: lazy_gettext("Either"),
 }
 POLICY_DESCRIPTIONS = {
-    LeaveApprovalPolicy.ceo_only: lazy_gettext("A CEO approval is sufficient. Principal/deputy approval is not required."),
-    LeaveApprovalPolicy.leadership_only: lazy_gettext("Approval from the relevant principal or deputy is sufficient. CEO approval is not required."),
-    LeaveApprovalPolicy.both: lazy_gettext("Approval from both the CEO and the relevant principal/deputy is required."),
-    LeaveApprovalPolicy.either: lazy_gettext("One approval from either the CEO or the relevant principal/deputy is sufficient."),
+    LeaveApprovalPolicy.ceo_only: lazy_gettext('A Director approval is sufficient. Nursery head/deputy approval is not required.'),
+    LeaveApprovalPolicy.leadership_only: lazy_gettext('Approval from the relevant nursery head or deputy is sufficient. Director approval is not required.'),
+    LeaveApprovalPolicy.both: lazy_gettext('Approval from both the Director and the relevant nursery head/deputy is required.'),
+    LeaveApprovalPolicy.either: lazy_gettext('One approval from either the Director or the relevant nursery head/deputy is sufficient.'),
 }
 
 

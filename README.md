@@ -31,6 +31,8 @@ Enum display labels live in `app/i18n.py`; keep the stored enum values unchanged
 
 See [Hungarian administration and contract lists](docs/design/admin-localisation.md) for the updated workflows and previews.
 
+See [personal records, named approvals and legal entitlements](docs/design/people-context.md) for the full system names, dependent editing, workplace birthdays and personalised Púétv./Mt. references.
+
 ## SQL schema file
 
 An explicit MySQL schema script is available at `sql/schema.sql`.
@@ -73,20 +75,20 @@ The portal uses a responsive light interface with sidebar navigation, a mobile m
 
 ### Configurable leave approvals
 
-Users with CEO privilege can open **Management → Approval settings** (also linked from the dashboard and leave manager). [Preview the settings screen](docs/design/approval-settings.png). The preview uses fictional records. The application-wide rule covers all legal entities:
+Users with Director privilege (stored as `ceo`) can open **Management → Approval settings** (also linked from the dashboard and leave manager). The application-wide rule covers all legal entities:
 
 | Rule | Approval needed |
 | --- | --- |
-| CEO only | One CEO approval |
-| Principal/deputy only | One approval from the relevant principal or deputy |
-| Both (default) | CEO approval and principal/deputy approval |
+| Director only | One director approval |
+| Nursery head/deputy only | One approval from the relevant nursery head or deputy |
+| Both (default) | Director approval and nursery head/deputy approval |
 | Either | One approval from either group |
 
-Saving applies the rule to new and pending requests. Pending requests whose recorded approvals satisfy the new rule become approved in the same transaction; the CEO who changed the rule is recorded as the decision-maker, while the original approval records are preserved. Approved, rejected, cancelled and pending-cancellation requests are unchanged. Selecting a stricter rule does not reopen completed decisions.
+Saving applies the rule to new and pending requests. Pending requests whose recorded approvals satisfy the new rule become approved in the same transaction; the director who changed the rule is recorded as the decision-maker, while the original approval records are preserved. Approved, rejected, cancelled and pending-cancellation requests are unchanged. Selecting a stricter rule does not reopen completed decisions.
 
-Principal/deputy approvals remain scoped to their legal entities. Deputies cannot approve their own requests. Existing CEO/principal self-approvals follow the selected rule. An eligible reviewer may reject a pending request in any mode; a rejection closes it. Existing cancellation permissions remain unchanged. Review lists and approval buttons follow the current rule.
+Nursery head/deputy approvals remain scoped to their legal entities. Deputies cannot approve their own requests. Existing director/nursery head self-approvals follow the selected rule. An eligible reviewer may reject a pending request in any mode; a rejection closes it. Existing cancellation permissions remain unchanged. Review lists and approval buttons follow the current rule. The calendar names eligible people for the selected contract and combines overlapping roles.
 
-The new `leave_approval_settings` table and its default **Both** row are created automatically on startup; this feature needs no changes to existing tables or manual migration. Its user foreign key uses the same signed/unsigned compatibility handling as the other newly created tables. The setting persists in the database, records its latest editor/time, and is shared by all workers. On MySQL, a settings row lock serialises rule changes with leave submissions and manager decisions. Stale settings forms cannot silently overwrite another CEO's change.
+The new `leave_approval_settings` table and its default **Both** row are created automatically on startup; this feature needs no changes to existing tables or manual migration. Its user foreign key uses the same signed/unsigned compatibility handling as the other newly created tables. The setting persists in the database, records its latest editor/time, and is shared by all workers. On MySQL, a settings row lock serialises rule changes with leave submissions and manager decisions. Stale settings forms cannot silently overwrite another director's change.
 
 Run the regression suite with `python -m unittest discover -s tests -v`.
 
