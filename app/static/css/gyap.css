@@ -1,0 +1,28 @@
+/* Annual childcare sickness benefit forms. */
+.gyap-heading h1 { margin: 0; font-size: clamp(1.65rem, 2.5vw, 2.2rem); }
+.gyap-heading p { max-width: 76ch; }
+.gyap-management-grid { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: 23px; align-items: start; }
+.gyap-management-grid > * { min-width: 0; }
+.gyap-upload-form { display: grid; gap: 19px; }
+.gyap-upload-form .button-row { margin-top: 0; }
+.gyap-upload-form .help-text { display: block; margin-top: 7px; }
+.gyap-upload-form input[type='file'] { max-width: 100%; padding: 10px; font-size: 12px; }
+.gyap-upload-form input::file-selector-button { margin-right: 10px; padding: 7px 9px; color: var(--text); background: var(--surface-muted); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; }
+.gyap-form-list, .gyap-download-list { list-style: none; padding: 0; margin: 0; }
+.gyap-form-record { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 17px 0; border-top: 1px solid var(--border); }
+.gyap-form-record:first-child { padding-top: 0; border-top: 0; }
+.gyap-form-record:last-child { padding-bottom: 0; }
+.gyap-form-info { display: grid; gap: 4px; min-width: 0; }
+.gyap-form-year { font-size: 16px; }
+.gyap-form-filename { overflow-wrap: anywhere; font-size: 12px; }
+.gyap-form-record > .button { flex-shrink: 0; }
+.gyap-download-panel { padding: 14px 16px; border: 1px solid #eadbcf; border-radius: 10px; background: var(--primary-tint); }
+.gyap-download-panel h3 { margin: 0 0 8px; font-size: 13px; }
+.gyap-download-list { display: grid; gap: 8px; }
+.gyap-download-list a { text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.gyap-download-list .help-text { display: block; }
+.request-item > div:first-child { min-width: 0; }
+.gyap-request-downloads { margin-top: 10px; }
+.gyap-request-downloads .help-text { font-size: 11px; }
+@media (max-width: 1000px) { .gyap-management-grid { grid-template-columns: 1fr; gap: 18px; } }
+@media (max-width: 420px) { .gyap-form-record { flex-wrap: wrap; gap: 10px; }.gyap-form-record > .button { width: 100%; } }

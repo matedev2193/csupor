@@ -73,6 +73,8 @@ The portal uses a responsive light interface with sidebar navigation, a mobile m
 
 See [compact leave limits and grouped navigation](docs/design/compact-limits-navigation.md) for the responsive allowance editor, desktop flyout groups and dependent birth-date validation.
 
+See [year boundaries and annual GYÁP forms](docs/design/year-boundaries-gyap.md) for leave requests spanning calendar years and HR-managed childcare sickness benefit documents.
+
 ## Manual portal testing
 
 ### Configurable leave approvals

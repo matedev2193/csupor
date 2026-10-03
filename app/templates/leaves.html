@@ -1,4 +1,11 @@
 {% extends "base.html" %}
+{% macro gyap_form_link(form) -%}
+  {% if form.url %}
+  <a class="text-link" href="{{ form.url }}" download>{{ _('Download the %(year)s GYÁP form', year=form.year) }}</a>
+  {% else %}
+  <span class="help-text">{{ _('The %(year)s GYÁP form is not available yet. Please contact HR.', year=form.year) }}</span>
+  {% endif %}
+{%- endmacro %}
 {% block title %}{{ _('Leave calendar · CSUPOR Portal') }}{% endblock %}
 {% block content %}
 <section class="leave-hero">
@@ -67,6 +74,13 @@
         <div>
           <strong>{{ enum_label(leave_request.category) }}</strong>
           <p>{{ leave_request.start_date }}{% if leave_request.end_date %} → {{ leave_request.end_date }}{% else %} · {{ _('Open-ended or single day') }}{% endif %}</p>
+          {% if leave_request.category.value == 'childcare sickness benefit' %}
+          <ul class="gyap-download-list gyap-request-downloads">
+            {% for form in gyap_forms_for_period(leave_request.start_date, leave_request.end_date) %}
+            <li>{{ gyap_form_link(form) }}</li>
+            {% endfor %}
+          </ul>
+          {% endif %}
         </div>
         <div class="request-actions">
           <span class="status-pill status-{{ leave_request.status.value|replace(' ', '-') }}">{{ enum_label(leave_request.status) }}</span>
@@ -149,6 +163,26 @@
       </div>
       <small id="calendar-selection-help" class="help-text">{{ _("Tip: click a day in the calendar to choose the start date, then click another day to choose the end date.") }}</small>
 
+      {% if 'childcare sickness benefit' in available_categories|map(attribute='category.value')|list %}
+      <section id="gyap-request-forms" class="gyap-download-panel" aria-labelledby="gyap-download-heading" hidden>
+        <h3 id="gyap-download-heading">{{ _('Childcare sickness benefit form') }}</h3>
+        <ul id="gyap-download-list" class="gyap-download-list" aria-live="polite" aria-atomic="true"></ul>
+      </section>
+      <noscript>
+        <section class="gyap-download-panel">
+          <h3>{{ _('Childcare sickness benefit form') }}</h3>
+          <p class="help-text">{{ _('Download the form for each year of your childcare sickness benefit absence. If a form is missing, please contact HR.') }}</p>
+          <ul class="gyap-download-list">
+            {% for year, form in gyap_forms_by_year|dictsort %}
+            <li>{{ gyap_form_link(form) }}</li>
+            {% else %}
+            <li class="help-text">{{ _('The %(year)s GYÁP form is not available yet. Please contact HR.', year=selected_year) }}</li>
+            {% endfor %}
+          </ul>
+        </section>
+      </noscript>
+      {% endif %}
+
       <label for="note">{{ _("Note") }}</label>
       <textarea id="note" name="note" placeholder="{{ _('Add context for HR, if needed.') }}"></textarea>
 
@@ -214,6 +248,45 @@
   const endDateRequiredLabel = document.getElementById("end-date-required-label");
   const helpBlocks = document.querySelectorAll("[data-category-help]");
   const selectableDays = document.querySelectorAll("[data-calendar-date]");
+  const gyapDownloadPanel = document.getElementById("gyap-request-forms");
+  const gyapDownloadList = document.getElementById("gyap-download-list");
+  const gyapFormsByYear = {{ gyap_forms_by_year|default({})|tojson }};
+  const gyapDefaultYear = {{ selected_year|default(0)|tojson }};
+  const gyapDownloadLabel = {{ _('Download the %(year)s GYÁP form', year='__YEAR__')|tojson }};
+  const gyapMissingLabel = {{ _('The %(year)s GYÁP form is not available yet. Please contact HR.', year='__YEAR__')|tojson }};
+  let renderedGyapYears = "";
+
+  const updateGyapDownloads = () => {
+    if (!gyapDownloadPanel || !gyapDownloadList || !categorySelect) return;
+    const isGyap = categorySelect.value === "childcare sickness benefit";
+    gyapDownloadPanel.hidden = !isGyap;
+    if (!isGyap) return;
+
+    const startYear = Number(startDateInput.value.slice(0, 4)) || gyapDefaultYear;
+    const endYear = Number(endDateInput.value.slice(0, 4)) || startYear;
+    const lastYear = Math.max(startYear, endYear);
+    const yearsKey = `${startYear}:${lastYear}`;
+    if (renderedGyapYears === yearsKey) return;
+    renderedGyapYears = yearsKey;
+    gyapDownloadList.replaceChildren();
+
+    for (let year = startYear; year <= lastYear; year += 1) {
+      const item = document.createElement("li");
+      const form = gyapFormsByYear[year];
+      if (form?.url) {
+        const link = document.createElement("a");
+        link.className = "text-link";
+        link.href = form.url;
+        link.setAttribute("download", "");
+        link.textContent = gyapDownloadLabel.replace("__YEAR__", String(year));
+        item.appendChild(link);
+      } else {
+        item.className = "help-text";
+        item.textContent = gyapMissingLabel.replace("__YEAR__", String(year));
+      }
+      gyapDownloadList.appendChild(item);
+    }
+  };
 
   const updateLeaveTypeUi = () => {
     if (!categorySelect || !endDateInput) return;
@@ -224,6 +297,7 @@
     helpBlocks.forEach((block) => {
       block.hidden = block.dataset.categoryHelp !== categorySelect.value;
     });
+    updateGyapDownloads();
   };
 
   const syncCalendarSelection = () => {
@@ -245,6 +319,7 @@
         startsRange || endsRange || inRange ? "true" : "false"
       );
     });
+    updateGyapDownloads();
   };
 
   const selectCalendarDate = (selectedDate) => {
@@ -269,6 +344,7 @@
 
   [startDateInput, endDateInput].forEach((input) => {
     input?.addEventListener("change", syncCalendarSelection);
+    input?.addEventListener("input", syncCalendarSelection);
   });
 
   if (categorySelect) {

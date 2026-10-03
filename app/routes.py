@@ -507,16 +507,18 @@ def _is_leave_year_open(year: int) -> bool:
     return bool(leave_year and leave_year.is_open)
 
 
-def _paid_leave_limits_by_expiry(contract: Contract, year: int) -> list[ContractLeaveLimit]:
-    year_start, year_end = _leave_request_year_bounds(year)
+def _paid_leave_limits_by_expiry(contract: Contract, year: int | None = None) -> list[ContractLeaveLimit]:
     limits = []
     for limit in contract.leave_limits:
         if limit.leave_type not in PAID_LEAVE_LIMIT_TYPES or limit.limit_days <= 0:
             continue
         period_start = limit.period_start or date(limit.calendar_year, 1, 1)
         period_end = limit.period_end or date(limit.calendar_year, 12, 31)
-        if period_start <= year_end and period_end >= year_start:
-            limits.append(limit)
+        if year is not None:
+            year_start, year_end = _leave_request_year_bounds(year)
+            if period_start > year_end or period_end < year_start:
+                continue
+        limits.append(limit)
     return sorted(
         limits,
         key=lambda limit: (
@@ -534,6 +536,7 @@ def _consume_paid_leave_days(
     end_date: date,
 ) -> bool:
     overrides_by_day = _working_day_overrides(start_date, end_date)
+    has_capacity = True
     for day in _iter_dates(start_date, end_date):
         if not _is_working_day(day, overrides_by_day):
             continue
@@ -548,9 +551,41 @@ def _consume_paid_leave_days(
             None,
         )
         if matching_limit is None:
-            return False
+            # Keep accounting for later covered days even if historical requests
+            # no longer fit a subsequently edited limit.
+            has_capacity = False
+            continue
         capacity_by_limit[matching_limit.id] -= 1
-    return True
+    return has_capacity
+
+
+def _paid_leave_remaining_capacity(
+    contract: Contract,
+    excluding_request_id: int | None = None,
+) -> dict[int, int]:
+    # A custom validity period may span several years. Build one shared capacity
+    # map and charge all existing requests before selecting a calendar year.
+    limits = _paid_leave_limits_by_expiry(contract)
+    capacity_by_limit = {limit.id: limit.limit_days for limit in limits if limit.id is not None}
+    if not limits:
+        return capacity_by_limit
+    period_start = min(limit.period_start or date(limit.calendar_year, 1, 1) for limit in limits)
+    period_end = max(limit.period_end or date(limit.calendar_year, 12, 31) for limit in limits)
+    query = LeaveRequest.query.filter(
+        LeaveRequest.contract_id == contract.id,
+        LeaveRequest.category == LeaveRequestCategory.paid_leave,
+        LeaveRequest.status.in_(BLOCKING_LEAVE_REQUEST_STATUSES),
+        LeaveRequest.start_date <= period_end,
+        db.or_(LeaveRequest.end_date.is_(None), LeaveRequest.end_date >= period_start),
+    )
+    if excluding_request_id is not None:
+        query = query.filter(LeaveRequest.id != excluding_request_id)
+    requests = query.order_by(LeaveRequest.start_date.asc(), LeaveRequest.id.asc()).all()
+    for leave_request in requests:
+        request_start = max(leave_request.start_date, period_start)
+        request_end = min(_leave_request_end_date(leave_request), period_end)
+        _consume_paid_leave_days(capacity_by_limit, limits, request_start, request_end)
+    return {limit_id: max(remaining, 0) for limit_id, remaining in capacity_by_limit.items()}
 
 
 def _paid_leave_remaining_by_limit(
@@ -558,34 +593,34 @@ def _paid_leave_remaining_by_limit(
     year: int,
     excluding_request_id: int | None = None,
 ) -> dict[int, int]:
-    year_start, year_end = _leave_request_year_bounds(year)
-    limits = _paid_leave_limits_by_expiry(contract, year)
-    capacity_by_limit = {limit.id: limit.limit_days for limit in limits if limit.id is not None}
-    query = LeaveRequest.query.filter(
-        LeaveRequest.contract_id == contract.id,
-        LeaveRequest.category == LeaveRequestCategory.paid_leave,
-        LeaveRequest.status.in_(BLOCKING_LEAVE_REQUEST_STATUSES),
-        LeaveRequest.start_date <= year_end,
-        db.or_(LeaveRequest.end_date.is_(None), LeaveRequest.end_date >= year_start),
-    )
-    if excluding_request_id is not None:
-        query = query.filter(LeaveRequest.id != excluding_request_id)
-    requests = query.order_by(LeaveRequest.start_date.asc(), LeaveRequest.id.asc()).all()
-    for leave_request in requests:
-        request_start = max(leave_request.start_date, year_start)
-        request_end = min(_leave_request_end_date(leave_request), year_end)
-        _consume_paid_leave_days(capacity_by_limit, limits, request_start, request_end)
-    return {limit_id: max(remaining, 0) for limit_id, remaining in capacity_by_limit.items()}
+    capacity_by_limit = _paid_leave_remaining_capacity(contract, excluding_request_id)
+    return {
+        limit.id: capacity_by_limit.get(limit.id, 0)
+        for limit in _paid_leave_limits_by_expiry(contract, year)
+        if limit.id is not None
+    }
 
 
-def _paid_leave_request_has_capacity(contract: Contract, start_date: date, end_date: date) -> bool:
-    capacity_by_limit = _paid_leave_remaining_by_limit(contract, start_date.year)
-    return _consume_paid_leave_days(
-        capacity_by_limit,
-        _paid_leave_limits_by_expiry(contract, start_date.year),
-        start_date,
-        end_date,
-    )
+def _paid_leave_request_capacity_error(contract: Contract, start_date: date, end_date: date) -> str | None:
+    capacity_by_limit = _paid_leave_remaining_capacity(contract)
+    for year in range(start_date.year, end_date.year + 1):
+        year_start, year_end = _leave_request_year_bounds(year)
+        request_start = max(start_date, year_start)
+        request_end = min(end_date, year_end)
+        limits = _paid_leave_limits_by_expiry(contract, year)
+        requested_days = _working_day_count(request_start, request_end)
+        remaining_days = sum(capacity_by_limit.get(limit.id, 0) for limit in limits)
+        if requested_days > remaining_days:
+            return _(
+                "Paid leave requested for %(year)s needs %(requested)s days, but only %(remaining)s days remain for that year.",
+                year=year, requested=requested_days, remaining=remaining_days,
+            )
+        if not _consume_paid_leave_days(capacity_by_limit, limits, request_start, request_end):
+            return _(
+                "The paid leave balances valid on the requested dates in %(year)s do not cover every working day. Please contact HR to check the validity periods.",
+                year=year,
+            )
+    return None
 
 
 def _age_on_year_end(birth_date: date | None, year: int) -> int | None:
@@ -1401,8 +1436,16 @@ def init_routes(app):
                 return redirect(
                     url_for("leaves", contract_id=selected_contract.id, year=selected_year, month=selected_month)
                 )
-            if not _is_leave_year_open(start_date.year):
-                flash(_("This calendar year is not open for leave requests yet. Please contact HR."), "error")
+            closed_years = [
+                year
+                for year in range(start_date.year, (end_date or start_date).year + 1)
+                if not _is_leave_year_open(year)
+            ]
+            if closed_years:
+                flash(
+                    _("The following calendar years are not open for leave requests: %(years)s. Please contact HR.", years=", ".join(str(year) for year in closed_years)),
+                    "error",
+                )
                 return redirect(
                     url_for("leaves", contract_id=selected_contract.id, year=selected_year, month=selected_month)
                 )
@@ -1430,13 +1473,9 @@ def init_routes(app):
 
             if category_definition["category"] == LeaveRequestCategory.paid_leave:
                 request_end_date = end_date or start_date
-                requested_days = _working_day_count(start_date, request_end_date)
-                remaining_days = _paid_leave_remaining_days(selected_contract, start_date.year)
-                if requested_days > remaining_days or not _paid_leave_request_has_capacity(selected_contract, start_date, request_end_date):
-                    flash(
-                        _("Paid leave request needs %(requested)s available days within the requested validity interval, but only %(remaining)s remain.", requested=requested_days, remaining=remaining_days),
-                        "error",
-                    )
+                capacity_error = _paid_leave_request_capacity_error(selected_contract, start_date, request_end_date)
+                if capacity_error:
+                    flash(capacity_error, "error")
                     return redirect(
                         url_for("leaves", contract_id=selected_contract.id, year=selected_year, month=selected_month)
                     )
