@@ -42,7 +42,7 @@
         </div>
         <div class="field">
           <label for="date_of_birth">{{ _('Date of birth') }}</label>
-          <input id="date_of_birth" type="date" name="date_of_birth" value="{{ request.form.get('date_of_birth', dependent.date_of_birth if dependent and dependent.date_of_birth else '') }}" required>
+          <input id="date_of_birth" type="date" name="date_of_birth" max="{{ latest_birth_date }}" value="{{ request.form.get('date_of_birth', dependent.date_of_birth if dependent and dependent.date_of_birth else '') }}" required>
         </div>
         <div class="field">
           <label for="social_security_number">{{ _("Social security number (9 digits)") }}</label>

@@ -203,7 +203,7 @@ table { width: 100%; border-collapse: collapse; font-size: 12px; }th, td { paddi
 th { font-size: 10px; font-weight: 650; color: #737c8c; background: #f8f9fb; text-transform: uppercase; letter-spacing: .045em; }td { color: #5d6675; }td strong { color: var(--text); font-weight: 600; }tr:last-child td { border-bottom: 0; }tbody tr:hover { background: #fcfcfd; }
 td .button { white-space: nowrap; font-size: 11px; min-height: 34px; padding: 7px 11px; }
 .leave-usage-table { font-size: 12px; }.leave-usage-table th, .leave-usage-table td { padding: 12px 10px; }.leave-usage-table th:nth-child(n+2), .leave-usage-table td:nth-child(n+2) { text-align: right; white-space: nowrap; }.leave-usage-dashboard .table-wrap { margin-top: 16px; }
-.leave-limits-table { min-width: 660px; table-layout: fixed; }.leave-limits-table .leave-category-column { width: 24%; }.leave-limits-table-calendar th:nth-child(n+2), .leave-limits-table-calendar td:nth-child(n+2) { width: 38%; }.leave-limits-table-range th:nth-child(n+2), .leave-limits-table-range td:nth-child(n+2) { width: 21%; }.leave-limits-table-range th:nth-child(5), .leave-limits-table-range td:nth-child(5) { width: 13%; }
+.leave-limits-table { table-layout: fixed; }
 .flash-stack { display: grid; gap: 10px; margin-bottom: 23px; }.flash { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 11px 15px; border: 1px solid #dce5f4; border-radius: 10px; background: #eef3fb; color: #3e5f88; font-size: 12px; }.flash-error { background: #fff1ee; border-color: #f1d5cc; color: #aa352a; }.flash-success { background: #edf6ef; border-color: #d8e9dd; color: #38734c; }.flash .icon-button { color: inherit; padding: 4px; min-width: 28px; min-height: 28px; }.flash .icon { width: 16px; height: 16px; }
 
 /* Sign in and registration. The illustration contains no personal or sample data. */
@@ -276,16 +276,50 @@ textarea.address-field { min-height: 72px; height: 72px; }
 .birthday-card p { margin: 0; color: var(--text-soft); }
 .birthday-card ul { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 12px 0 0; padding-left: 18px; }
 .leave-basis-cell p { margin: 8px 0; line-height: 1.6; font-size: 12px; }
-.leave-limits-table-calendar { min-width: 960px; }
-.leave-limits-table-calendar th:first-child, .leave-limits-table-calendar td:first-child { width: 22%; }
-.leave-limits-table-calendar th:nth-child(2), .leave-limits-table-calendar td:nth-child(2) { width: 12%; }
-.leave-limits-table-calendar th:nth-child(3), .leave-limits-table-calendar td:nth-child(3) { width: 21%; }
-.leave-limits-table-calendar th:nth-child(4), .leave-limits-table-calendar td:nth-child(4) { width: 45%; }
-.leave-limits-table-range { min-width: 1160px; }
-.leave-limits-table-range th:first-child, .leave-limits-table-range td:first-child { width: 17%; }
-.leave-limits-table-range th:nth-child(2), .leave-limits-table-range td:nth-child(2) { width: 9%; }
-.leave-limits-table-range th:nth-child(3), .leave-limits-table-range td:nth-child(3), .leave-limits-table-range th:nth-child(4), .leave-limits-table-range td:nth-child(4) { width: 14%; }
-.leave-limits-table-range th:nth-child(5), .leave-limits-table-range td:nth-child(5) { width: 34%; }
-.leave-limits-table-range th:nth-child(6), .leave-limits-table-range td:nth-child(6) { width: 12%; }
+/* Keep allowance editing within the card; supporting legal text opens in place. */
+.leave-limits-table th, .leave-limits-table td { padding: 13px 10px; overflow-wrap: anywhere; }
+.leave-limits-table td { vertical-align: top; }
+.leave-limits-table-calendar th:first-child { width: 48%; }
+.leave-limits-table-calendar th:nth-child(2) { width: 16%; }
+.leave-limits-table-calendar th:nth-child(3) { width: 36%; }
+.leave-limits-table-range th:first-child { width: 38%; }
+.leave-limits-table-range th:nth-child(2) { width: 14%; }
+.leave-limits-table-range th:nth-child(3) { width: 29%; }
+.leave-limits-table-range th:nth-child(4) { width: 19%; }
+.leave-limits-table input { min-height: 40px; padding: 8px; font-size: 12px; }
+.leave-limits-table input[type='number'] { max-width: 90px; }
+.leave-limits-table input[type='date'] { max-width: 190px; }
+.leave-limits-table button { max-width: 100%; padding: 9px 11px; font-size: 11px; white-space: normal; overflow-wrap: anywhere; }
+.leave-basis-details { margin-top: 9px; font-weight: 400; }
+.leave-basis-details summary { color: var(--primary-strong); cursor: pointer; font-size: 11px; line-height: 1.5; }
+.leave-basis-details summary:hover { text-decoration: underline; }
+.leave-basis-content { padding-top: 10px; font-size: 12px; }
+.leave-basis-content p { margin: 8px 0; line-height: 1.6; }
+.leave-basis-content .help-text { display: block; margin-top: 10px; }
+.leave-bound-period { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 8px; padding-top: 10px; }
+.leave-bound-period time { white-space: nowrap; }
+.leave-period-fields { display: grid; gap: 10px; }
+.leave-period-fields label { display: grid; gap: 4px; font-size: 10px; font-weight: 500; }
+.leave-years-table th:first-child { width: 18%; }
+.leave-years-table th:nth-child(2) { width: 18%; }
+.leave-years-table th:nth-child(3) { width: 64%; }
+.leave-years-table .button-row { margin-top: 0; padding-top: 0; border-top: 0; }
+
+@media (max-width: 760px) {
+  .leave-limits-table, .leave-limits-table tbody { display: block; }
+  .leave-limits-table thead { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+  .leave-limits-table tbody { display: grid; gap: 14px; }
+  .leave-limits-table tr { display: grid; grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr); gap: 15px; padding: 16px; border: 1px solid var(--border); border-radius: 10px; }
+  .leave-limits-table td { display: block; width: auto; min-width: 0; padding: 0; border: 0; }
+  .leave-limits-table td[data-label]::before { display: block; content: attr(data-label); margin-bottom: 7px; font-size: 10px; font-weight: 600; color: var(--text-soft); }
+  .leave-limits-table .leave-category-column, .leave-limits-table .leave-actions-cell, .leave-years-table td:last-child { grid-column: 1 / -1; }
+  .leave-limits-table .leave-category-column > strong { font-size: 13px; }
+  .leave-limits-table .leave-actions-cell { padding-top: 12px; border-top: 1px solid var(--border); }
+  .leave-limits-table .leave-actions-cell::before { display: none; }
+  .leave-bound-period { padding-top: 0; }
+}
+@media (max-width: 480px) {
+  .leave-limits-table tr { grid-template-columns: minmax(0, 1fr); }
+}
 @media (max-width: 600px) { .public-page .brand-copy { max-width: 190px; }.birthday-card { padding: 18px; gap: 12px; } }
 @media (max-width: 360px) { .auth-panel h1 { font-size: 1.8rem; } }

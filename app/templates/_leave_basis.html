@@ -1,7 +1,18 @@
-{% macro basis_cell(basis, record=none) -%}
-<td class="leave-basis-cell">
+{% macro basis_content(basis, record=none) -%}
   {% if basis.reference %}<a href="{{ basis.url }}" target="_blank" rel="noopener noreferrer" class="text-link">{{ basis.reference }}</a>{% endif %}
   {% for paragraph in basis.paragraphs %}<p>{{ paragraph }}</p>{% endfor %}
   {% if record %}<small class="help-text">{{ _('Recorded allowance: %(days)s days.', days=record.limit_days) }}</small>{% endif %}
+{%- endmacro %}
+
+{% macro basis_cell(basis, record=none) -%}
+<td class="leave-basis-cell">
+  {{ basis_content(basis, record) }}
 </td>
+{%- endmacro %}
+
+{% macro basis_details(basis, record=none) -%}
+<details class="leave-basis-details">
+  <summary>{{ _('Legal basis and entitlement') }}</summary>
+  <div class="leave-basis-content">{{ basis_content(basis, record) }}</div>
+</details>
 {%- endmacro %}

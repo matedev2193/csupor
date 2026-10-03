@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_leave_basis.html" import basis_cell %}
+{% from "_leave_basis.html" import basis_details %}
 {% block title %}{{ _('Leave limits · CSUPOR Portal') }}{% endblock %}
 {% block content %}
 <section class="dashboard-grid">
@@ -86,9 +86,9 @@
         <tbody>
           {% for opened_year in opened_leave_years %}
           <tr>
-            <td>{{ opened_year.year }}</td>
-            <td>{{ _('Open') if opened_year.is_open else _('Locked') }}</td>
-            <td>
+            <td data-label="{{ _('Calendar year') }}">{{ opened_year.year }}</td>
+            <td data-label="{{ _('Status') }}">{{ _('Open') if opened_year.is_open else _('Locked') }}</td>
+            <td data-label="{{ _('Actions') }}">
               <form method="post" class="button-row">
                 <input type="hidden" name="calendar_year" value="{{ opened_year.year }}">
                 {% if opened_year.is_open %}
@@ -160,7 +160,6 @@
               <th class="leave-category-column">{{ _('Leave category') }}</th>
               <th>{{ _('Limit (days)') }}</th>
               <th>{{ _('Bounded period') }}</th>
-              <th>{{ _('Legal basis and entitlement') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -168,17 +167,26 @@
               {% if leave_type_available_for_contract(leave_type, selected_contract.contract_type, selected_contract.user) %}
               {% set existing = existing_limits.get(leave_type) %}
               <tr>
-                <td class="leave-category-column">{{ enum_label(leave_type) }}</td>
-                <td>
+                <td class="leave-category-column">
+                  <strong>{{ enum_label(leave_type) }}</strong>
+                  {{ basis_details(leave_bases[leave_type], existing) }}
+                </td>
+                <td data-label="{{ _('Limit (days)') }}">
                   <input
                     type="number"
                     min="0"
                     name="limit_days_{{ leave_type.name }}"
+                    aria-label="{{ _('Limit (days)') }} · {{ enum_label(leave_type) }}"
                     value="{{ existing.limit_days if existing else '' }}"
                   >
                 </td>
-                <td>{{ existing.period_start if existing and existing.period_start else selected_year|string ~ '-01-01' }} → {{ existing.period_end if existing and existing.period_end else selected_year|string ~ '-12-31' }}</td>
-                {{ basis_cell(leave_bases[leave_type], existing) }}
+                <td data-label="{{ _('Bounded period') }}">
+                  <div class="leave-bound-period">
+                    <time>{{ existing.period_start if existing and existing.period_start else selected_year|string ~ '-01-01' }}</time>
+                    <span aria-hidden="true">→</span>
+                    <time>{{ existing.period_end if existing and existing.period_end else selected_year|string ~ '-12-31' }}</time>
+                  </div>
+                </td>
               </tr>
               {% endif %}
             {% endfor %}
@@ -194,9 +202,7 @@
             <tr>
               <th class="leave-category-column">{{ _('Leave category') }}</th>
               <th>{{ _('Limit (days)') }}</th>
-              <th>{{ _('Start date') }}</th>
-              <th>{{ _("End date") }}</th>
-              <th>{{ _('Legal basis and entitlement') }}</th>
+              <th>{{ _('Bounded period') }}</th>
               <th>{{ _('Actions') }}</th>
             </tr>
           </thead>
@@ -207,40 +213,48 @@
                 {% for existing in existing_records %}
                 <tr data-range-row="{{ leave_type.name }}">
                   <td class="leave-category-column">
-                    {{ enum_label(leave_type) }}
+                    <strong>{{ enum_label(leave_type) }}</strong>
                     <input type="hidden" name="range_leave_type" value="{{ leave_type.name }}">
+                    {{ basis_details(leave_bases[leave_type], existing) }}
                   </td>
-                  <td>
-                    <input type="number" min="0" name="range_limit_days" value="{{ existing.limit_days }}">
+                  <td data-label="{{ _('Limit (days)') }}">
+                    <input type="number" min="0" name="range_limit_days" value="{{ existing.limit_days }}" aria-label="{{ _('Limit (days)') }} · {{ enum_label(leave_type) }}">
                   </td>
-                  <td>
-                    <input type="date" name="range_period_start" value="{{ existing.period_start if existing.period_start else '' }}">
+                  <td class="leave-period-cell">
+                    <div class="leave-period-fields">
+                      <label>{{ _('Start date') }}
+                        <input type="date" name="range_period_start" value="{{ existing.period_start if existing.period_start else '' }}">
+                      </label>
+                      <label>{{ _('End date') }}
+                        <input type="date" name="range_period_end" value="{{ existing.period_end if existing.period_end else '' }}">
+                      </label>
+                    </div>
                   </td>
-                  <td>
-                    <input type="date" name="range_period_end" value="{{ existing.period_end if existing.period_end else '' }}">
-                  </td>
-                  {{ basis_cell(leave_bases[leave_type], existing) }}
-                  <td>
+                  <td class="leave-actions-cell" data-label="{{ _('Actions') }}">
                     <button type="button" class="button-secondary remove-range-row">{{ _('Remove') }}</button>
                   </td>
                 </tr>
                 {% endfor %}
                 <tr data-range-row="{{ leave_type.name }}">
                   <td class="leave-category-column">
-                    {{ enum_label(leave_type) }}
+                    <strong>{{ enum_label(leave_type) }}</strong>
                     <input type="hidden" name="range_leave_type" value="{{ leave_type.name }}">
+                    {{ basis_details(leave_bases[leave_type]) }}
                   </td>
-                  <td>
-                    <input type="number" min="0" name="range_limit_days" value="">
+                  <td data-label="{{ _('Limit (days)') }}">
+                    <input type="number" min="0" name="range_limit_days" value="" aria-label="{{ _('Limit (days)') }} · {{ enum_label(leave_type) }}">
                   </td>
-                  <td>
-                    <input type="date" name="range_period_start" value="">
+                  <td class="leave-period-cell">
+                    <div class="leave-period-fields">
+                      <label>{{ _('Start date') }}
+                        <input type="date" name="range_period_start" value="">
+                      </label>
+                      <label>{{ _('End date') }}
+                        <input type="date" name="range_period_end" value="">
+                      </label>
+                    </div>
                   </td>
-                  <td>
-                    <input type="date" name="range_period_end" value="">
-                  </td>
-                  {{ basis_cell(leave_bases[leave_type]) }}
-                  <td>
+                  <td class="leave-actions-cell" data-label="{{ _('Actions') }}">
                     <button
                       type="button"
                       class="button-secondary add-range-row"
@@ -335,12 +349,14 @@
         const template = addButton.closest("tr");
         const newRow = template.cloneNode(true);
         newRow.querySelectorAll("input:not([type=hidden])").forEach(input => { input.value = ""; });
+        newRow.querySelectorAll("details").forEach(details => { details.open = false; });
         const removeButton = document.createElement("button");
         removeButton.type = "button";
         removeButton.className = "button-secondary remove-range-row";
         removeButton.textContent = {{ _('Remove')|tojson }};
         newRow.querySelector(".add-range-row").replaceWith(removeButton);
         template.before(newRow);
+        newRow.querySelector("input:not([type=hidden])").focus();
         return;
       }
 

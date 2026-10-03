@@ -1634,6 +1634,7 @@ def init_routes(app):
 
     def dependent_editor(dependent=None):
         session.setdefault("dependent_csrf_token", token_urlsafe(32))
+        today = local_today()
         if request.method == "POST":
             if not compare_digest(session["dependent_csrf_token"].encode(), request.form.get("csrf_token", "").encode()):
                 abort(400)
@@ -1659,7 +1660,7 @@ def init_routes(app):
             if not values["date_of_birth"] or not values["dependency_start"]:
                 errors.append(_("Enter a valid date of birth and dependency start date."))
             else:
-                if values["date_of_birth"] > local_today():
+                if values["date_of_birth"] > today:
                     errors.append(_("The date of birth cannot be in the future."))
                 if values["dependency_start"] < values["date_of_birth"]:
                     errors.append(_("Dependency cannot start before the dependent's birth."))
@@ -1678,7 +1679,7 @@ def init_routes(app):
                 flash(_("Dependent updated.") if editing else _("Dependent added."), "success")
                 return redirect(url_for("manage_dependents"))
         return render_template("dependent_form.html", dependent=dependent, dependent_types=DependentType,
-                               csrf_token=session["dependent_csrf_token"])
+                               csrf_token=session["dependent_csrf_token"], latest_birth_date=today.isoformat())
 
     @app.route("/dependents/add", methods=["GET", "POST"])
     @login_required
