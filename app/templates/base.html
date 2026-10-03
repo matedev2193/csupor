@@ -15,6 +15,7 @@
     <link rel="icon" type="image/png" sizes="96x96" href="{{ url_for('static', filename='images/csupor-favicon.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/portal.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/navigation.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/gyap.css') }}">
     <script>document.documentElement.classList.add('js');</script>
     <script defer src="{{ url_for('static', filename='js/portal.js') }}"></script>
   </head>
@@ -53,7 +54,7 @@
           </div>
         </details>
         {% if current_user.privilege.value in ['hr', 'ceo', 'developer'] or can_manage_leaves_global %}
-        {% set management_pages = ['manage_user_profiles', 'edit_user_profile', 'manage_privileges', 'manage_contracts', 'create_contract', 'edit_contract', 'manage_legal_entities', 'create_legal_entity', 'edit_legal_entity', 'manage_places_of_work', 'create_place_of_work', 'edit_place_of_work', 'select_contract_employee', 'manage_leadership', 'manage_leave_limits', 'manage_working_days', 'manage_leaves', 'leave_approval_settings'] %}
+        {% set management_pages = ['manage_user_profiles', 'edit_user_profile', 'manage_privileges', 'manage_contracts', 'create_contract', 'edit_contract', 'manage_legal_entities', 'create_legal_entity', 'edit_legal_entity', 'manage_places_of_work', 'create_place_of_work', 'edit_place_of_work', 'select_contract_employee', 'manage_leadership', 'manage_leave_limits', 'manage_working_days', 'manage_leaves', 'leave_approval_settings', 'gyap.manage_forms'] %}
         <details class="nav-group{% if request.endpoint in management_pages %} has-current{% endif %}"{% if request.endpoint in management_pages %} open{% endif %}>
           <summary class="nav-group-trigger" id="management-trigger" aria-controls="management-menu">
             {{ icon('briefcase', 'nav-group-icon') }}<span>{{ _('Management') }}</span>{{ icon('chevron', 'nav-group-chevron') }}
@@ -64,6 +65,7 @@
             {{ nav_item('manage_contracts', _('Contracts'), 'briefcase', ['create_contract', 'edit_contract', 'select_contract_employee']) }}
             {{ nav_item('manage_leave_limits', _('Leave limits'), 'calendar') }}
             {{ nav_item('manage_working_days', _('Working days'), 'calendar') }}
+            {{ nav_item('gyap.manage_forms', _('GYÁP forms'), 'briefcase') }}
             {% endif %}
             {% if can_manage_leaves_global %}{{ nav_item('manage_leaves', _('Leave approvals'), 'check') }}{% endif %}
             {% if current_user.privilege.value == 'ceo' %}{{ nav_item('leave_approval_settings', _('Approval settings'), 'lock') }}{% endif %}

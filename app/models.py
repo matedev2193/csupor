@@ -4,6 +4,7 @@ import enum
 from datetime import date
 
 from flask_login import UserMixin
+from sqlalchemy.dialects.mysql import MEDIUMBLOB
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from . import db, login_manager
@@ -92,6 +93,26 @@ class LeaveApprovalSettings(db.Model):
     updated_by_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
     updated_at = db.Column(db.DateTime, nullable=True)
     updated_by = db.relationship("User")
+
+
+class GyapForm(db.Model):
+    """An annual blank childcare sickness benefit form, kept in durable storage."""
+
+    __tablename__ = "gyap_forms"
+    __table_args__ = (
+        db.CheckConstraint("year BETWEEN 1970 AND 2100", name="gyap_form_year"),
+        db.CheckConstraint("size_bytes > 0 AND size_bytes <= 10485760", name="gyap_form_size"),
+    )
+
+    year = db.Column(db.Integer, primary_key=True, autoincrement=False)
+    filename = db.Column(db.String(255), nullable=False)
+    mime_type = db.Column(db.String(100), nullable=False)
+    size_bytes = db.Column(db.Integer, nullable=False)
+    # Normal leave/list pages must not fetch up to 10 MiB per annual document.
+    data = db.deferred(db.Column(db.LargeBinary().with_variant(MEDIUMBLOB(), "mysql", "mariadb"), nullable=False))
+    uploaded_by_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    uploaded_at = db.Column(db.DateTime, nullable=False)
+    uploaded_by = db.relationship("User")
 
 
 class MaritalStatus(enum.Enum):

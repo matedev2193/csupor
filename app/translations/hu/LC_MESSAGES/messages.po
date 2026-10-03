@@ -2850,3 +2850,81 @@ msgstr "Regisztráció"
 #: app/templates/register.html:27
 msgid "Already have an account?"
 msgstr "Már van fiókod?"
+
+msgid "The following calendar years are not open for leave requests: %(years)s. Please contact HR."
+msgstr "Az alábbi naptári évek még nincsenek megnyitva szabadságigénylésre: %(years)s. Kérjük, jelezd a HR-nek."
+
+msgid "Paid leave requested for %(year)s needs %(requested)s days, but only %(remaining)s days remain for that year."
+msgstr "A(z) %(year)s. évre eső időszakhoz %(requested)s nap fizetett szabadság szükséges, de erre az évre csak %(remaining)s nap maradt."
+
+msgid "The paid leave balances valid on the requested dates in %(year)s do not cover every working day. Please contact HR to check the validity periods."
+msgstr "A(z) %(year)s. évre eső igényelt időszak egyes munkanapjaira nincs felhasználható szabadságkeret. Kérjük, egyeztesd a HR-rel a keretek érvényességi időszakát."
+
+msgid "GYÁP forms"
+msgstr "GYÁP-nyomtatványok"
+
+msgid "GYÁP forms · CSUPOR Portal"
+msgstr "GYÁP-nyomtatványok · CSUPOR"
+
+msgid "Upload the blank childcare sickness benefit form for each year. Employees can download it when requesting this type of absence."
+msgstr "Töltsd fel az adott év üres gyermekápolási táppénz-nyomtatványát. A munkatársak GYÁP-távollét igénylésekor tudják letölteni."
+
+msgid "Upload a form"
+msgstr "Nyomtatvány feltöltése"
+
+msgid "Uploading another form for the same year replaces the previous file."
+msgstr "Az ugyanahhoz az évhez feltöltött új nyomtatvány lecseréli a korábbi fájlt."
+
+msgid "Blank GYÁP form"
+msgstr "Üres GYÁP-nyomtatvány"
+
+msgid "PDF, DOC or DOCX, up to %(size)s MB."
+msgstr "PDF, DOC vagy DOCX formátum, legfeljebb %(size)s MB."
+
+msgid "Upload form"
+msgstr "Nyomtatvány feltöltése"
+
+msgid "Uploaded forms"
+msgstr "Feltöltött nyomtatványok"
+
+msgid "One form is available per calendar year."
+msgstr "Minden naptári évhez egy nyomtatvány tartozik."
+
+msgid "Uploaded"
+msgstr "Feltöltve"
+
+msgid "Download"
+msgstr "Letöltés"
+
+msgid "Download the %(year)s GYÁP form"
+msgstr "A(z) %(year)s. évi GYÁP-nyomtatvány letöltése"
+
+msgid "No GYÁP forms have been uploaded yet."
+msgstr "Még nincs feltöltött GYÁP-nyomtatvány."
+
+msgid "The %(year)s GYÁP form is not available yet. Please contact HR."
+msgstr "A(z) %(year)s. évi GYÁP-nyomtatvány még nem érhető el. Kérjük, jelezd a HR-nek."
+
+msgid "Childcare sickness benefit form"
+msgstr "GYÁP-nyomtatvány"
+
+msgid "Download the form for each year of your childcare sickness benefit absence. If a form is missing, please contact HR."
+msgstr "Töltsd le a GYÁP-távolléted által érintett évek nyomtatványait. Ha valamelyik hiányzik, jelezd a HR-nek."
+
+msgid "The GYAP form must be no larger than 10 MB."
+msgstr "A GYÁP-nyomtatvány mérete legfeljebb 10 MB lehet."
+
+msgid "Choose a year between 1970 and 2100."
+msgstr "Válassz egy évet 1970 és 2100 között."
+
+msgid "Choose a GYAP form to upload."
+msgstr "Válaszd ki a feltöltendő GYÁP-nyomtatványt."
+
+msgid "Upload a PDF, DOC or DOCX document."
+msgstr "PDF, DOC vagy DOCX formátumú dokumentumot tölts fel."
+
+msgid "The document is empty, damaged or does not match its file type."
+msgstr "A dokumentum üres, sérült, vagy a tartalma nem felel meg a fájltípusának."
+
+msgid "GYAP form saved for %(year)s."
+msgstr "A(z) %(year)s. évi GYÁP-nyomtatvány mentve."

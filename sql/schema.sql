@@ -29,6 +29,22 @@ ON DUPLICATE KEY UPDATE
   password_hash = VALUES(password_hash),
   privilege = VALUES(privilege);
 
+CREATE TABLE IF NOT EXISTS gyap_forms (
+  year INT NOT NULL,
+  filename VARCHAR(255) NOT NULL,
+  mime_type VARCHAR(100) NOT NULL,
+  size_bytes INT NOT NULL,
+  data MEDIUMBLOB NOT NULL,
+  uploaded_by_id INT UNSIGNED NULL,
+  uploaded_at DATETIME NOT NULL,
+  PRIMARY KEY (year),
+  CONSTRAINT fk_gyap_forms_uploaded_by_id
+    FOREIGN KEY (uploaded_by_id) REFERENCES users(id)
+    ON DELETE SET NULL,
+  CONSTRAINT chk_gyap_form_year CHECK (year BETWEEN 1970 AND 2100),
+  CONSTRAINT chk_gyap_form_size CHECK (size_bytes > 0 AND size_bytes <= 10485760)
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS user_profiles (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id INT UNSIGNED NOT NULL,

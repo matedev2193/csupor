@@ -71,6 +71,10 @@ def create_app() -> Flask:
 
     routes.init_routes(app)
 
+    from .gyap_forms import gyap
+
+    app.register_blueprint(gyap)
+
     with app.app_context():
         from .schema import create_missing_tables
 

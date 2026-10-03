@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}{{ _('GYÁP forms · CSUPOR Portal') }}{% endblock %}
+{% block content %}
+<section class="section-heading gyap-heading">
+  <div>
+    <span class="eyebrow">{{ _('Management') }}</span>
+    <h1>{{ _('GYÁP forms') }}</h1>
+    <p>{{ _('Upload the blank childcare sickness benefit form for each year. Employees can download it when requesting this type of absence.') }}</p>
+  </div>
+</section>
+
+<div class="gyap-management-grid">
+  <section class="form-shell">
+    <div class="section-heading">
+      <div>
+        <h2>{{ _('Upload a form') }}</h2>
+        <p>{{ _('Uploading another form for the same year replaces the previous file.') }}</p>
+      </div>
+    </div>
+    <form id="gyap-upload-form" method="post" action="{{ url_for('gyap.manage_forms') }}" enctype="multipart/form-data" class="gyap-upload-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div>
+        <label for="calendar_year">{{ _('Calendar year') }}</label>
+        <input id="calendar_year" name="calendar_year" type="number" min="1970" max="2100" step="1" value="{{ selected_year }}" required>
+      </div>
+      <div>
+        <label for="document">{{ _('Blank GYÁP form') }}</label>
+        <input id="document" name="document" type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" aria-describedby="gyap-upload-help" required>
+        <small id="gyap-upload-help" class="help-text">{{ _('PDF, DOC or DOCX, up to %(size)s MB.', size=max_upload_mb) }}</small>
+      </div>
+      <div class="button-row">
+        <button type="submit">{{ _('Upload form') }}</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="section-heading">
+      <div>
+        <h2>{{ _('Uploaded forms') }}</h2>
+        <p>{{ _('One form is available per calendar year.') }}</p>
+      </div>
+    </div>
+    {% if forms %}
+    <ul class="gyap-form-list">
+      {% for form in forms %}
+      <li class="gyap-form-record">
+        <div class="gyap-form-info">
+          <strong class="gyap-form-year">{{ form.year }}</strong>
+          <span class="gyap-form-filename">{{ form.filename }}</span>
+          <small class="help-text">{{ _('Uploaded') }}: {{ form.uploaded_at|dateformat('y. MM. dd.' if current_locale == 'hu' else 'd MMM y') }}</small>
+        </div>
+        <a class="button button-secondary" href="{{ url_for('gyap.download_form', year=form.year) }}" download aria-label="{{ _('Download the %(year)s GYÁP form', year=form.year) }}">{{ _('Download') }}</a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-state">{{ _('No GYÁP forms have been uploaded yet.') }}</div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

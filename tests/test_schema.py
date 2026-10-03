@@ -89,6 +89,24 @@ class MissingTableTests(unittest.TestCase):
         self.assertIn("imported_by_id INTEGER,", leave_years)
         inspector.get_columns.assert_not_called()
 
+    def test_gyap_forms_uses_mediumblob_and_matches_existing_user_ids(self):
+        existing = [name for name in db.metadata.tables if name != "gyap_forms"]
+        original_type = models.GyapForm.__table__.c.uploaded_by_id.type
+        for reference_type, expected in [
+            (mysql.INTEGER(unsigned=True), "INTEGER UNSIGNED"),
+            (mysql.INTEGER(), "INTEGER"),
+        ]:
+            with self.subTest(reference_type=expected):
+                statements, inspector = self.compile_missing_tables(
+                    db.metadata, existing, {"users": {"id": reference_type}}
+                )
+                self.assertEqual(len(statements), 1)
+                self.assertIn("CREATE TABLE gyap_forms", statements[0])
+                self.assertIn("data MEDIUMBLOB NOT NULL", statements[0])
+                self.assertIn(f"uploaded_by_id {expected},", statements[0])
+                self.assertIn("FOREIGN KEY(uploaded_by_id) REFERENCES users (id) ON DELETE SET NULL", statements[0])
+                self.assertIs(models.GyapForm.__table__.c.uploaded_by_id.type, original_type)
+
     def test_completed_schema_is_not_recreated_or_altered(self):
         statements, inspector = self.compile_missing_tables(
             db.metadata, list(db.metadata.tables), {}
