@@ -115,6 +115,55 @@ class PeopleContextTests(unittest.TestCase):
         self.assertEqual(self.client.post(f"/dependents/{child.id}/edit", data=self.form(csrf_token="wrong")).status_code, 400)
         self.assertEqual(Dependent.query.count(), 1)
 
+    def test_dependent_birth_date_picker_uses_budapest_today_for_create_and_edit(self):
+        child = self.child(date(2020, 1, 1))
+        with patch("app.people.datetime") as clock:
+            clock.now.side_effect = lambda tz: datetime(2026, 9, 27, 22, 30, tzinfo=timezone.utc).astimezone(tz)
+            for path in ("/dependents/add", f"/dependents/{child.id}/edit"):
+                with self.subTest(path=path):
+                    response = self.client.get(path)
+                    self.assertEqual(response.status_code, 200)
+                    self.assertRegex(response.text, r'<input id="date_of_birth"[^>]*max="2026-09-28"')
+
+    def test_future_dependent_birth_is_rejected_without_partial_create_or_edit(self):
+        child = self.child(date(2020, 1, 1), disability="Existing note")
+        tomorrow = (self.today + timedelta(days=1)).isoformat()
+        original = (child.name, child.date_of_birth, child.dependency_start,
+                    child.social_security_number, child.disability, child.user_id)
+        with patch("app.routes.local_today", return_value=self.today):
+            for path in ("/dependents/add", f"/dependents/{child.id}/edit"):
+                with self.subTest(path=path):
+                    response = self.client.post(path, data=self.form(
+                        name="Keep future input", date_of_birth=tomorrow, dependency_start=tomorrow,
+                        social_security_number="987654321", disability="Changed note"))
+                    self.assertEqual(response.status_code, 200)
+                    self.assertIn("The date of birth cannot be in the future.", response.text)
+                    self.assertIn('value="Keep future input"', response.text)
+                    self.assertRegex(response.text, rf'<input id="date_of_birth"[^>]*value="{tomorrow}"')
+                    self.assertIn('value="Changed note"', response.text)
+                    self.assertEqual(Dependent.query.count(), 1)
+                    db.session.refresh(child)
+                    self.assertEqual((child.name, child.date_of_birth, child.dependency_start,
+                                      child.social_security_number, child.disability, child.user_id), original)
+
+    def test_dependent_born_today_can_be_created_and_edited_with_future_dependency_start(self):
+        start = self.today + timedelta(days=1)
+        with patch("app.routes.local_today", return_value=self.today):
+            response = self.client.post("/dependents/add", data=self.form(
+                name="Born today", date_of_birth=self.today.isoformat(), dependency_start=start.isoformat()))
+            self.assertEqual(response.status_code, 302)
+            child = Dependent.query.one()
+            self.assertEqual(child.date_of_birth, self.today)
+            self.assertEqual(child.dependency_start, start)
+            response = self.client.post(f"/dependents/{child.id}/edit", data=self.form(
+                name="Updated newborn", date_of_birth=self.today.isoformat(), dependency_start=start.isoformat()))
+            self.assertEqual(response.status_code, 302)
+            db.session.refresh(child)
+            self.assertEqual(child.name, "Updated newborn")
+            self.assertEqual(child.date_of_birth, self.today)
+            self.assertEqual(child.dependency_start, start)
+            self.assertEqual(Dependent.query.count(), 1)
+
     def test_named_approvals_for_all_four_policies(self):
         for policy, expected, excluded in [
             (LeaveApprovalPolicy.ceo_only, ["Director Test"], ["Head Test", "Deputy Test"]),

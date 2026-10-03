@@ -71,6 +71,8 @@ Missing tables are created automatically on startup. On MySQL/MariaDB, new integ
 
 The portal uses a responsive light interface with sidebar navigation, a mobile menu, and shared styling for employee and management screens. See [the design preview and verification notes](docs/design/README.md) for screenshots. Front-end assets are served locally by Flask; no additional build step or CDN is required.
 
+See [compact leave limits and grouped navigation](docs/design/compact-limits-navigation.md) for the responsive allowance editor, desktop flyout groups and dependent birth-date validation.
+
 ## Manual portal testing
 
 ### Configurable leave approvals
