@@ -48,17 +48,66 @@
       <span class="avatar profile-photo-preview" aria-hidden="true">
         {% if own_photo_url %}<img src="{{ own_photo_url }}" alt="" width="80" height="80">{% else %}{{ current_account.initial }}{% endif %}
       </span>
-      <form class="profile-photo-form" action="{{ url_for('profile_photos.upload_photo') }}" method="post" enctype="multipart/form-data">
+      <form class="profile-photo-form" action="{{ url_for('profile_photos.upload_photo') }}" method="post" enctype="multipart/form-data"
+        data-photo-editor-form data-editor-url="{{ url_for('profile_photos.photo_editor') }}"
+        data-loading-label="{{ _('Loading photo…') }}" data-saving-label="{{ _('Saving photo…') }}"
+        data-saved-label="{{ _('Profile photo updated.') }}" data-load-error="{{ _('The photo could not be opened. Please try again.') }}"
+        data-save-error="{{ _('The photo could not be saved. Please try again.') }}"
+        data-type-error="{{ _('Upload a JPEG, PNG or WebP photo.') }}"
+        data-size-error="{{ _('The profile photo must be no larger than 5 MB.') }}"
+        data-pixels-error="{{ _('The photo is too large. Use an image up to 20 megapixels and 10,000 pixels per side.') }}"
+        data-max-bytes="{{ profile_photo_max_mb * 1024 * 1024 }}">
         <input type="hidden" name="csrf_token" value="{{ profile_photo_csrf_token }}">
+        <input type="hidden" name="photo_version" value="{{ current_user.photo.version if current_user.photo else '' }}">
         <h3 id="profile-photo-heading">{{ _('Profile photo') }}</h3>
         <div class="field">
           <label for="profile-photo-file">{{ _('Choose a photo') }}</label>
           <input id="profile-photo-file" type="file" name="photo" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" aria-describedby="profile-photo-help" required>
           <small class="help-text" id="profile-photo-help">{{ _('JPEG, PNG or WebP, up to %(size)s MB.', size=profile_photo_max_mb) }}</small>
         </div>
-        <button type="submit" class="button button-secondary">{{ _('Upload photo') }}</button>
+        <div class="profile-photo-actions">
+          <button type="submit" class="button button-secondary" data-photo-plain-upload>{{ _('Upload photo') }}</button>
+          <button type="button" class="button button-secondary" data-photo-edit hidden>{{ _('Edit photo') }}</button>
+        </div>
+        <p class="help-text profile-photo-feedback" data-photo-feedback role="status" aria-live="polite" hidden></p>
       </form>
     </section>
+
+    <dialog class="photo-editor" id="profile-photo-editor" aria-labelledby="photo-editor-title" aria-describedby="photo-editor-instructions">
+      <div class="photo-editor-heading">
+        <div><span class="eyebrow">{{ _('Profile photo') }}</span><h2 id="photo-editor-title">{{ _('Edit photo') }}</h2></div>
+        <button type="button" class="icon-button" data-photo-close aria-label="{{ _('Close photo editor') }}">{{ icon('close') }}</button>
+      </div>
+      <p class="help-text" id="photo-editor-instructions">{{ _('Drag the photo to position it. Use the zoom slider or mouse wheel to resize it.') }}</p>
+      <p class="sr-only" id="photo-editor-keyboard">{{ _('Use arrow keys to move the photo. Hold Shift for larger steps.') }}</p>
+      <p class="photo-editor-status help-text" data-photo-status role="status" aria-live="polite"></p>
+      <div class="photo-editor-workspace" data-photo-workspace aria-busy="true">
+        <div class="photo-crop-surface" data-photo-surface tabindex="0" role="group" aria-label="{{ _('Photo crop area') }}" aria-describedby="photo-editor-instructions photo-editor-keyboard" aria-disabled="true">
+          <canvas data-photo-canvas width="640" height="640" aria-hidden="true"></canvas>
+          <span class="photo-crop-mask" aria-hidden="true"></span>
+        </div>
+        <div class="photo-editor-tools">
+          <div class="photo-zoom-field">
+            <div class="photo-zoom-label"><label for="photo-editor-zoom">{{ _('Zoom') }}</label><output for="photo-editor-zoom" data-photo-zoom-value>100%</output></div>
+            <input id="photo-editor-zoom" data-photo-zoom type="range" min="1" max="8" step="0.01" value="1" disabled>
+          </div>
+          <div class="photo-pan-buttons" role="group" aria-label="{{ _('Photo position') }}">
+            <button type="button" class="icon-button" data-photo-pan="left" aria-label="{{ _('Move photo left') }}" disabled><span aria-hidden="true">←</span></button>
+            <button type="button" class="icon-button" data-photo-pan="up" aria-label="{{ _('Move photo up') }}" disabled><span aria-hidden="true">↑</span></button>
+            <button type="button" class="icon-button" data-photo-pan="down" aria-label="{{ _('Move photo down') }}" disabled><span aria-hidden="true">↓</span></button>
+            <button type="button" class="icon-button" data-photo-pan="right" aria-label="{{ _('Move photo right') }}" disabled><span aria-hidden="true">→</span></button>
+          </div>
+          <button type="button" class="button button-secondary" data-photo-reset disabled>{{ _('Reset position') }}</button>
+          <div class="photo-editor-preview"><canvas data-photo-avatar width="128" height="128" aria-hidden="true"></canvas><span>{{ _('Preview') }}</span></div>
+        </div>
+      </div>
+      <p class="photo-editor-error" data-photo-error role="alert" hidden></p>
+      <div class="photo-editor-actions">
+        <button type="button" class="button button-secondary" data-photo-cancel>{{ _('Cancel') }}</button>
+        <button type="button" class="button button-primary" data-photo-save disabled>{{ _('Save photo') }}</button>
+      </div>
+    </dialog>
+    <script defer src="{{ url_for('static', filename='js/profile_photo_editor.js') }}"></script>
     {% endif %}
 
     <form method="post">
