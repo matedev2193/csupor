@@ -16,7 +16,7 @@ from .worktime_models import WorkAssignment, WorkGroup, WorkGroupMerge, WorkSche
 
 
 # Increment when allocation rules change, so older registers require regeneration.
-SCHEDULING_RULE_VERSION = 2
+SCHEDULING_RULE_VERSION = 3
 
 
 class WorktimeError(ValueError):
@@ -86,7 +86,7 @@ def _contract_dict(contract, assignments=()):
         "weekly_hours": contract.working_hours_per_week,
         "start_date": _iso(contract.start_date), "end_date": _iso(contract.end_date),
         "classification_start_date": _iso(contract.classification_start_date), "job_title": contract.job_title,
-        "assignments": [{"id": row.id, "group_id": row.group_id, "start_date": _iso(row.start_date), "end_date": _iso(row.end_date), "shift_phase": row.shift_phase} for row in assignments if row.contract_id == contract.id],
+        "assignments": [{"id": row.id, "group_id": row.group_id, "start_date": _iso(row.start_date), "end_date": _iso(row.end_date), "shift_phase": None if row.flexible_shift else row.shift_phase} for row in assignments if row.contract_id == contract.id],
     }
 
 
@@ -156,14 +156,22 @@ def build_payload(place_id, year, month):
     return payload, fingerprint
 
 
-def settings_revision(place_id):
-    groups = WorkGroup.query.filter_by(place_of_work_id=place_id).order_by(WorkGroup.id).all()
-    contracts = Contract.query.filter_by(place_of_work_id=place_id).order_by(Contract.id).all()
-    assignments = WorkAssignment.query.filter(WorkAssignment.group_id.in_([row.id for row in groups])).order_by(WorkAssignment.id).all() if groups else []
+def settings_revision(place_id, *, lock=False):
+    def records(query):
+        # Mutations first lock the workplace. Current locking reads also bypass
+        # an older MySQL repeatable-read snapshot; populate_existing refreshes
+        # any group loaded before that lock was acquired.
+        if lock:
+            query = query.populate_existing().with_for_update()
+        return query.all()
+
+    groups = records(WorkGroup.query.filter_by(place_of_work_id=place_id).order_by(WorkGroup.id))
+    contracts = records(Contract.query.filter_by(place_of_work_id=place_id).order_by(Contract.id))
+    assignments = records(WorkAssignment.query.filter(WorkAssignment.group_id.in_([row.id for row in groups])).order_by(WorkAssignment.id)) if groups else []
     values = {
         "groups": [{"id": row.id, "name": row.name, "start": _iso(row.start_date), "end": _iso(row.end_date)} for row in groups],
         "contracts": [_contract_dict(row) for row in contracts],
-        "assignments": [{"id": row.id, "group": row.group_id, "contract": row.contract_id, "start": _iso(row.start_date), "end": _iso(row.end_date), "phase": row.shift_phase} for row in assignments],
+        "assignments": [{"id": row.id, "group": row.group_id, "contract": row.contract_id, "start": _iso(row.start_date), "end": _iso(row.end_date), "phase": row.shift_phase, "flexible": row.flexible_shift} for row in assignments],
     }
     return hashlib.sha256(json.dumps(values, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
 

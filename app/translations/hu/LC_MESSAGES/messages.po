@@ -4241,3 +4241,67 @@ msgstr "Erre a hónapra még nem készült el a munkaidő-nyilvántartásod."
 #: app/templates/worktime.html
 msgid "Work schedule"
 msgstr "Munkaidő-beosztás"
+
+#: app/templates/worktime_groups.html app/templates/worktime_group_form.html
+msgid "No assigned shift"
+msgstr "Nincs hozzárendelt műszak"
+
+#: app/templates/worktime_groups.html app/templates/worktime_group_form.html
+msgid "Without an assigned shift, the employee can work mornings or afternoons according to the group’s needs. A selected rotation alternates weekly."
+msgstr "Hozzárendelt műszak nélkül a munkavállaló a csoport igényei szerint délelőttre vagy délutánra osztható be. A kiválasztott műszakrend hetente váltakozik."
+
+#: app/templates/worktime_groups.html app/templates/worktime_group_form.html
+msgid "Edit group · CSUPOR Portal"
+msgstr "Csoport szerkesztése · CSUPOR"
+
+#: app/templates/worktime_groups.html app/templates/worktime_group_form.html
+msgid "Add group · CSUPOR Portal"
+msgstr "Csoport hozzáadása · CSUPOR"
+
+#: app/templates/worktime_groups.html app/templates/worktime_group_form.html
+msgid "Add group"
+msgstr "Csoport hozzáadása"
+
+#: app/templates/worktime_groups.html app/templates/worktime_group_form.html
+msgid "Back to groups"
+msgstr "Vissza a csoportokhoz"
+
+#: app/templates/worktime_groups.html app/templates/worktime_group_form.html
+msgid "Group details"
+msgstr "A csoport adatai"
+
+#: app/templates/worktime_groups.html app/templates/worktime_group_form.html
+msgid "Save the group first, then assign its employees."
+msgstr "Először mentsd a csoportot, utána hozzáadhatod a munkavállalókat."
+
+#: app/templates/worktime_groups.html app/templates/worktime_group_form.html
+msgid "Assigned employees"
+msgstr "Hozzárendelt munkavállalók"
+
+#: app/templates/worktime_groups.html app/templates/worktime_group_form.html
+msgid "Edit assignment"
+msgstr "Hozzárendelés szerkesztése"
+
+#: app/templates/worktime_groups.html app/templates/worktime_group_form.html
+msgid "Add an employee contract at this workplace to make assignments."
+msgstr "A hozzárendeléshez előbb rögzíts munkavállalói szerződést ehhez a munkavégzési helyhez."
+
+#: app/templates/worktime_groups.html app/templates/worktime_group_form.html
+msgid "Groups · CSUPOR Portal"
+msgstr "Csoportok · CSUPOR"
+
+#: app/templates/worktime_groups.html app/templates/worktime_group_form.html
+msgid "View workplace groups and manage their assigned employees."
+msgstr "A munkavégzési hely csoportjai és a hozzájuk rendelt munkavállalók."
+
+#: app/templates/worktime_groups.html app/templates/worktime_group_form.html
+msgid "Edit group: %(name)s"
+msgstr "Csoport szerkesztése: %(name)s"
+
+#: app/templates/worktime_groups.html app/templates/worktime_group_form.html
+msgid "Select a workplace to view its groups."
+msgstr "Válassz munkavégzési helyet a csoportjai megtekintéséhez."
+
+#: app/templates/worktime.html
+msgid "Morning shifts start at 08:00; afternoon shifts end at 17:30. Assigned shift patterns alternate weekly; employees without an assigned shift are scheduled according to the group’s needs. Early starts at 06:00 for one nanny and 07:00 for one teacher rotate fairly within each workplace."
+msgstr "A délelőtti műszak 08:00-kor kezdődik, a délutáni 17:30-kor ér véget. A rögzített műszakrend hetente váltakozik; hozzárendelt műszak nélkül a csoport igényei határozzák meg a beosztást. Munkavégzési helyenként egy dajka 06:00-kor, egy óvodapedagógus 07:00-kor kezd, egyenletesen váltva egymást."

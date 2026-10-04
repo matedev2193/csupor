@@ -1,13 +1,13 @@
 """Create missing tables and add compatible optional fields to existing records."""
 
-from sqlalchemy import Integer, MetaData, inspect
+from sqlalchemy import Boolean, Integer, MetaData, false, inspect
 from sqlalchemy.exc import DBAPIError
 
 
 QUALIFICATION_DATE_TABLES = ("educational_qualifications", "professional_exams")
 
 
-def _is_duplicate_date_column(error, dialect_name):
+def _is_duplicate_column(error, dialect_name, column_name):
     """Recognise only the duplicate-column error expected from a startup race."""
     original = error.orig
     if dialect_name in {"mysql", "mariadb"}:
@@ -16,7 +16,7 @@ def _is_duplicate_date_column(error, dialect_name):
             code = original.args[0]
         return code == 1060
     if dialect_name == "sqlite":
-        return str(original).casefold() == "duplicate column name: date_obtained"
+        return str(original).casefold() == f"duplicate column name: {column_name}".casefold()
     return False
 
 
@@ -39,11 +39,42 @@ def ensure_qualification_date_columns(engine) -> None:
         except DBAPIError as error:
             # Another worker may have added it after our initial inspection.
             # Do not hide lock, permission, connectivity or unrelated DDL errors.
-            if not _is_duplicate_date_column(error, engine.dialect.name):
+            if not _is_duplicate_column(error, engine.dialect.name, "date_obtained"):
                 raise
             refreshed_columns = inspect(engine).get_columns(table_name)
             if not any(column["name"] == "date_obtained" for column in refreshed_columns):
                 raise
+
+
+def ensure_work_assignment_flexible_shift_column(engine) -> None:
+    """Add opt-in flexible shifts while preserving every existing phase and row.
+
+    The non-null false default keeps all existing assignments on their original
+    alternating shift. Only an explicitly saved true flag removes the assigned
+    shift; the legacy 0/1 phase and its constraint remain unchanged.
+    """
+    table_name, column_name = "work_assignments", "flexible_shift"
+    columns = inspect(engine).get_columns(table_name)
+    if any(column["name"] == column_name for column in columns):
+        return
+    quote = engine.dialect.identifier_preparer.quote_identifier
+    boolean_type = Boolean().compile(dialect=engine.dialect)
+    default = false().compile(dialect=engine.dialect)
+    statement = (
+        f"ALTER TABLE {quote(table_name)} ADD COLUMN {quote(column_name)} "
+        f"{boolean_type} NOT NULL DEFAULT {default}"
+    )
+    try:
+        with engine.begin() as connection:
+            connection.exec_driver_sql(statement)
+    except DBAPIError as error:
+        # A concurrent worker may already have added the same column. Confirm
+        # that outcome and propagate all unrelated or permission failures.
+        if not _is_duplicate_column(error, engine.dialect.name, column_name):
+            raise
+        refreshed_columns = inspect(engine).get_columns(table_name)
+        if not any(column["name"] == column_name for column in refreshed_columns):
+            raise
 
 
 def create_missing_tables(engine, metadata) -> None:

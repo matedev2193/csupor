@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% macro security_fields() -%}
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<input type="hidden" name="settings_revision" value="{{ settings_revision }}">
+<input type="hidden" name="place_id" value="{{ selected_place_id }}">
+{%- endmacro %}
+{% macro phase_label(phase) -%}{{ _('Morning in the week of %(date)s', date=shift_phase_weeks[phase]) }}{%- endmacro %}
+{% macro assignment_fields(suffix, values) -%}
+<div class="field"><label for="assignment-contract-{{ suffix }}">{{ _('Employee / contract') }}</label><select id="assignment-contract-{{ suffix }}" name="contract_id" required><option value="">{{ _('Select a contract') }}</option>{% for contract in contracts %}<option value="{{ contract.id }}"{% if values.get('contract_id', '')|string == contract.id|string %} selected{% endif %}>{{ user_display_name(contract.user) }} · {{ contract.job_title }} · {{ contract.start_date }}</option>{% endfor %}</select></div>
+<div class="form-grid">
+  <div class="field"><label for="assignment-start-{{ suffix }}">{{ _('Valid from') }}</label><input id="assignment-start-{{ suffix }}" name="start_date" type="date" value="{{ values.get('start_date', '') }}" required></div>
+  <div class="field"><label for="assignment-end-{{ suffix }}">{{ _('Valid until (optional)') }}</label><input id="assignment-end-{{ suffix }}" name="end_date" type="date" value="{{ values.get('end_date', '') }}"></div>
+</div>
+<div class="field"><label for="assignment-phase-{{ suffix }}">{{ _('Weekly shift rotation') }}</label><select id="assignment-phase-{{ suffix }}" name="shift_phase" aria-describedby="assignment-phase-help-{{ suffix }}"><option value=""{% if values.get('shift_phase', '')|string == '' %} selected{% endif %}>{{ _('No assigned shift') }}</option>{% for phase in [0, 1] %}<option value="{{ phase }}"{% if values.get('shift_phase', '')|string == phase|string %} selected{% endif %}>{{ phase_label(phase) }}</option>{% endfor %}</select><small id="assignment-phase-help-{{ suffix }}" class="help-text">{{ _('Without an assigned shift, the employee can work mornings or afternoons according to the group’s needs. A selected rotation alternates weekly.') }}</small></div>
+{%- endmacro %}
+{% block title %}{{ _('Edit group · CSUPOR Portal') if group else _('Add group · CSUPOR Portal') }}{% endblock %}
+{% block content %}
+{% set form_action = url_for('worktime.group_edit', group_id=group.id) if group else url_for('worktime.group_new', place_id=selected_place_id) %}
+<div class="worktime-page groups-page groups-edit-page">
+  <section class="section-heading worktime-heading">
+    <div><span class="eyebrow">{{ _('Groups') }}</span><h1>{{ group.name if group else _('Add group') }}</h1><p>{{ selected_place.address }}</p></div>
+    <a class="button button-secondary" href="{{ url_for('worktime.groups', place_id=selected_place_id) }}">{{ _('Back to groups') }}</a>
+  </section>
+  <section class="form-shell groups-details-card">
+    <div class="section-heading"><div><h2>{{ _('Group details') }}</h2><p>{{ _('Close a date range when a group or assignment changes, so earlier months keep their original organisation.') }}</p></div></div>
+    <form method="post" action="{{ form_action }}">
+      {{ security_fields() }}<input type="hidden" name="action" value="group">
+      <div class="field"><label for="group-name">{{ _('Group name') }}</label><input id="group-name" name="name" value="{{ group_values.get('name', '') }}" maxlength="120" required></div>
+      <div class="form-grid">
+        <div class="field"><label for="group-start">{{ _('Valid from') }}</label><input id="group-start" name="start_date" type="date" value="{{ group_values.get('start_date', '') }}" required></div>
+        <div class="field"><label for="group-end">{{ _('Valid until (optional)') }}</label><input id="group-end" name="end_date" type="date" value="{{ group_values.get('end_date', '') }}"></div>
+      </div>
+      {% if not group %}<p class="help-text groups-form-note">{{ _('Save the group first, then assign its employees.') }}</p>{% endif %}
+      <div class="button-row"><button type="submit">{{ _('Save changes') if group else _('Create group') }}</button></div>
+    </form>
+  </section>
+  {% if group %}
+  <section class="card groups-assignment-card" id="group-assignments">
+    <div class="section-heading"><div><h2>{{ _('Assigned employees') }}</h2><p>{{ _('Assignments apply only within both the assignment and contract dates.') }}</p></div></div>
+    {% if assignments %}
+    <div class="groups-assignment-list">
+      {% for assignment in assignments %}
+      {% set is_editing = editing_assignment_id|string == assignment.id|string %}
+      {% set saved_values = {'contract_id': assignment.contract_id, 'start_date': assignment.start_date, 'end_date': assignment.end_date or '', 'shift_phase': '' if assignment.flexible_shift else assignment.shift_phase} %}
+      <article class="groups-assignment-item">
+        <div class="groups-assignment-summary">
+          <div><h3>{{ user_display_name(assignment.contract.user) }}</h3><p>{{ assignment.contract.job_title }}</p></div>
+          <div class="groups-assignment-meta"><span>{{ assignment.start_date }} – {{ assignment.end_date or _('Open-ended') }}</span><span class="groups-shift-label">{{ _('No assigned shift') if assignment.flexible_shift else phase_label(assignment.shift_phase) }}</span></div>
+        </div>
+        <details class="worktime-disclosure groups-assignment-editor"{% if is_editing %} open{% endif %}>
+          <summary>{{ _('Edit assignment') }}</summary>
+          <form method="post" action="{{ form_action }}">
+            {{ security_fields() }}<input type="hidden" name="action" value="assignment"><input type="hidden" name="assignment_id" value="{{ assignment.id }}">
+            {{ assignment_fields(assignment.id, assignment_values if is_editing else saved_values) }}
+            <div class="button-row"><button type="submit">{{ _('Save changes') }}</button></div>
+          </form>
+          <form method="post" action="{{ form_action }}" class="worktime-remove-form">
+            {{ security_fields() }}<input type="hidden" name="action" value="delete_assignment"><input type="hidden" name="assignment_id" value="{{ assignment.id }}">
+            <button type="submit" class="button-secondary">{{ _('Remove assignment') }}</button>
+          </form>
+        </details>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}<div class="empty-state">{{ _('No employees have been assigned yet.') }}</div>{% endif %}
+    <div class="groups-add-assignment">
+      <div class="section-heading"><div><h3>{{ _('Assign an employee') }}</h3></div></div>
+      {% if contracts %}
+      <form method="post" action="{{ form_action }}">
+        {{ security_fields() }}<input type="hidden" name="action" value="assignment">
+        {% set add_values = assignment_values if not editing_assignment_id else {'contract_id': '', 'start_date': group.start_date, 'end_date': '', 'shift_phase': ''} %}
+        {{ assignment_fields('new', add_values) }}
+        <div class="button-row"><button type="submit">{{ icon('plus') }} {{ _('Save assignment') }}</button></div>
+      </form>
+      {% else %}<div class="empty-state">{{ _('Add an employee contract at this workplace to make assignments.') }}</div>{% endif %}
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

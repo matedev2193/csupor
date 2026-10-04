@@ -109,7 +109,7 @@ class WorktimeRoutesTests(unittest.TestCase):
         self.assertEqual(self.post("/worktime/generate").status_code, 403)
         self.assertEqual(self.client.get(f"/worktime/export/{self.users['teacher1'].id}?year=2026&month=2").status_code, 403)
         self.login("ceo")
-        self.assertEqual(self.client.get("/worktime/groups").status_code, 200)
+        self.assertEqual(self.client.get("/groups").status_code, 200)
 
     def test_csrf_and_month_validation_never_write(self):
         for values in ({"csrf_token": "wrong"}, {"year": "1969"}, {"year": "2101"}, {"month": "13"}, {"month": "2.5"}):

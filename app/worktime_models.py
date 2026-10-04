@@ -1,5 +1,7 @@
 """Dated group assignments and durable monthly working-time registers."""
 
+from sqlalchemy import false
+
 from . import db
 
 
@@ -29,6 +31,7 @@ class WorkAssignment(db.Model):
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=True)
     shift_phase = db.Column(db.Integer, nullable=False, default=0)
+    flexible_shift = db.Column(db.Boolean, nullable=False, default=False, server_default=false())
     contract = db.relationship("Contract", backref=db.backref("work_assignments", cascade="all, delete-orphan"))
     group = db.relationship("WorkGroup")
 
