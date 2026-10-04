@@ -1,6 +1,49 @@
-"""Create missing tables while respecting identifiers in an existing database."""
+"""Create missing tables and add compatible optional fields to existing records."""
 
 from sqlalchemy import Integer, MetaData, inspect
+from sqlalchemy.exc import DBAPIError
+
+
+QUALIFICATION_DATE_TABLES = ("educational_qualifications", "professional_exams")
+
+
+def _is_duplicate_date_column(error, dialect_name):
+    """Recognise only the duplicate-column error expected from a startup race."""
+    original = error.orig
+    if dialect_name in {"mysql", "mariadb"}:
+        code = getattr(original, "errno", None)
+        if code is None and getattr(original, "args", ()):
+            code = original.args[0]
+        return code == 1060
+    if dialect_name == "sqlite":
+        return str(original).casefold() == "duplicate column name: date_obtained"
+    return False
+
+
+def ensure_qualification_date_columns(engine) -> None:
+    """Add nullable exact dates without inventing dates for year-only records.
+
+    Fresh databases already have these columns from the ORM metadata. Existing
+    SQLite/MySQL/MariaDB installations receive only the two missing DATE fields;
+    the legacy year, constraints, identifiers and all existing rows stay intact.
+    """
+    quote = engine.dialect.identifier_preparer.quote_identifier
+    for table_name in QUALIFICATION_DATE_TABLES:
+        columns = inspect(engine).get_columns(table_name)
+        if any(column["name"] == "date_obtained" for column in columns):
+            continue
+        statement = f"ALTER TABLE {quote(table_name)} ADD COLUMN {quote('date_obtained')} DATE NULL"
+        try:
+            with engine.begin() as connection:
+                connection.exec_driver_sql(statement)
+        except DBAPIError as error:
+            # Another worker may have added it after our initial inspection.
+            # Do not hide lock, permission, connectivity or unrelated DDL errors.
+            if not _is_duplicate_date_column(error, engine.dialect.name):
+                raise
+            refreshed_columns = inspect(engine).get_columns(table_name)
+            if not any(column["name"] == "date_obtained" for column in refreshed_columns):
+                raise
 
 
 def create_missing_tables(engine, metadata) -> None:

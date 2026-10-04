@@ -257,6 +257,7 @@ class EducationalQualification(db.Model):
     institution_name = db.Column(db.String(120), nullable=False)
     degree_number = db.Column(db.String(80), nullable=False)
     year_obtained = db.Column(db.Integer, nullable=False)
+    date_obtained = db.Column(db.Date, nullable=True)
     highest = db.Column(db.Boolean, nullable=False, default=False)
 
     user = db.relationship("User", back_populates="qualifications")
@@ -270,6 +271,7 @@ class ProfessionalExam(db.Model):
 
     qualification_name = db.Column(db.String(120), nullable=False)
     year_obtained = db.Column(db.Integer, nullable=False)
+    date_obtained = db.Column(db.Date, nullable=True)
     degree_number = db.Column(db.String(80), nullable=False)
 
     user = db.relationship("User", back_populates="professional_exam")

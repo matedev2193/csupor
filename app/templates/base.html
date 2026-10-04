@@ -43,14 +43,14 @@
             {{ nav_item('edit_profile', _('My profile'), 'user') }}
           </div>
         </details>
-        {% set records_active = request.endpoint in ['manage_dependents', 'add_dependent', 'edit_dependent', 'add_qualification', 'professional_exam'] %}
+        {% set records_active = request.endpoint in ['manage_dependents', 'add_dependent', 'edit_dependent', 'add_qualification', 'edit_qualification', 'professional_exam'] %}
         <details class="nav-group{% if records_active %} has-current{% endif %}"{% if records_active %} open{% endif %}>
           <summary class="nav-group-trigger" id="records-trigger" aria-controls="records-menu">
             {{ icon('graduate', 'nav-group-icon') }}<span>{{ _('My records') }}</span>{{ icon('chevron', 'nav-group-chevron') }}
           </summary>
           <div class="nav-group-menu" id="records-menu" aria-labelledby="records-trigger">
             {{ nav_item('manage_dependents', _('Dependents'), 'users', ['add_dependent', 'edit_dependent']) }}
-            {{ nav_item('add_qualification', _('Qualifications'), 'graduate') }}
+            {{ nav_item('add_qualification', _('Qualifications'), 'graduate', ['edit_qualification']) }}
             {{ nav_item('professional_exam', _('Professional exam'), 'award') }}
           </div>
         </details>

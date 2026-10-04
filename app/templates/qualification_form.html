@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ _('Add Qualification · CSUPOR Portal') }}{% endblock %}
+{% block title %}{{ _('Edit qualification') if qualification else _('Add qualification') }} · {{ _('CSUPOR Portal') }}{% endblock %}
 {% block content %}
 <section class="form-page">
   <aside class="form-sidebar">
@@ -9,43 +9,47 @@
       {{ _('Add the details shown on your diploma or certificate.') }}
     </p>
     <ul>
-      <li>{{ _('Use the exact degree or certificate number from the issuing institution.') }}</li>
+      <li>{{ _('Use the document number shown by the issuing institution.') }}</li>
       <li>{{ _('Mark only one qualification as the highest to keep records consistent.') }}</li>
-      <li>{{ _('Enter the year obtained as a numeric year.') }}</li>
+      <li>{{ _('Enter the exact date obtained as shown on the document.') }}</li>
     </ul>
   </aside>
 
   <section class="form-shell">
     <div class="section-heading">
       <div>
-        <h2>{{ _('Add educational qualification') }}</h2>
-        <p>{{ _('Save a new qualification and optionally flag it as your highest achievement.') }}</p>
+        <h2>{{ _('Edit qualification') if qualification else _('Add educational qualification') }}</h2>
+        <p>{{ _('Update your educational qualification details.') if qualification else _('Save a new qualification and optionally flag it as your highest achievement.') }}</p>
       </div>
     </div>
     <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <div class="form-grid">
         <div class="field">
           <label for="level_or_type">{{ _('Level or type') }}</label>
-          <input id="level_or_type" name="level_or_type" required placeholder="{{ _('Bachelor, Master, Certificate...') }}">
+          <input id="level_or_type" name="level_or_type" required placeholder="{{ _('Bachelor, Master, Certificate...') }}" value="{{ form_values.get('level_or_type', '') }}">
         </div>
         <div class="field">
           <label for="qualification_name">{{ _('Qualification name') }}</label>
-          <input id="qualification_name" name="qualification_name" required>
+          <input id="qualification_name" name="qualification_name" required value="{{ form_values.get('qualification_name', '') }}">
         </div>
         <div class="field field-full">
           <label for="institution_name">{{ _('Institution name') }}</label>
-          <input id="institution_name" name="institution_name" required>
+          <input id="institution_name" name="institution_name" required value="{{ form_values.get('institution_name', '') }}">
         </div>
         <div class="field">
-          <label for="degree_number">{{ _('Degree number') }}</label>
-          <input id="degree_number" name="degree_number" required>
+          <label for="degree_number">{{ _('Document number') }}</label>
+          <input id="degree_number" name="degree_number" required value="{{ form_values.get('degree_number', '') }}">
         </div>
         <div class="field">
-          <label for="year_obtained">{{ _('Year obtained') }}</label>
-          <input id="year_obtained" type="number" name="year_obtained" required>
+          <label for="date_obtained">{{ _('Date obtained') }}</label>
+          <input id="date_obtained" type="date" name="date_obtained" min="1900-01-01" max="{{ latest_obtained_date }}" value="{{ form_values.get('date_obtained', '') }}"{% if qualification and not qualification.date_obtained and qualification.year_obtained %} aria-describedby="qualification-date-help"{% endif %} required>
+          {% if qualification and not qualification.date_obtained and qualification.year_obtained %}
+          <small class="help-text" id="qualification-date-help">{{ qualification.year_obtained }} — {{ _('Exact date not recorded') }}</small>
+          {% endif %}
         </div>
         <label class="checkbox-field field-full" for="highest">
-          <input id="highest" type="checkbox" name="highest">
+          <input id="highest" type="checkbox" name="highest"{% if form_values.get('highest', false) %} checked{% endif %}>
           <span>{{ _('Mark this as my highest qualification') }}</span>
         </label>
       </div>

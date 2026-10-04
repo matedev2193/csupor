@@ -3175,3 +3175,59 @@ msgstr "Felhasználó végleges törlése"
 #: app/templates/manage_user_profiles.html:63
 msgid "Enable JavaScript to open the user deletion confirmation."
 msgstr "A törlés megerősítő ablakának megnyitásához engedélyezd a JavaScriptet."
+
+#: app/routes.py:154
+msgid "Enter the full date obtained in YYYY-MM-DD format."
+msgstr "Add meg a megszerzés pontos dátumát ÉÉÉÉ-HH-NN formátumban."
+
+#: app/routes.py:156
+msgid "Date obtained must be on or after 1900-01-01."
+msgstr "A megszerzés dátuma nem lehet 1900. január 1. előtti."
+
+#: app/routes.py:158
+msgid "Date obtained cannot be in the future."
+msgstr "A megszerzés dátuma nem lehet jövőbeli."
+
+#: app/routes.py:1858
+msgid "Complete all qualification fields."
+msgstr "Töltsd ki a képesítés minden adatmezőjét."
+
+#: app/routes.py:1878
+msgid "Educational qualification updated."
+msgstr "A képesítés adatai frissítve."
+
+#: app/templates/dashboard.html:135 app/templates/qualification_form.html:2
+#: app/templates/qualification_form.html:21
+msgid "Edit qualification"
+msgstr "Képesítés szerkesztése"
+
+#: app/templates/dashboard.html:140
+msgid "Document #"
+msgstr "Okirat száma:"
+
+#: app/templates/dashboard.html:143 app/templates/dashboard.html:157
+#: app/templates/professional_exam_form.html:36 app/templates/qualification_form.html:48
+msgid "Exact date not recorded"
+msgstr "A pontos dátum még nincs rögzítve"
+
+#: app/templates/dashboard.html:156 app/templates/professional_exam_form.html:33
+#: app/templates/qualification_form.html:45
+msgid "Date obtained"
+msgstr "Megszerzés dátuma"
+
+#: app/templates/dashboard.html:159 app/templates/professional_exam_form.html:40
+#: app/templates/qualification_form.html:41
+msgid "Document number"
+msgstr "Okirat száma"
+
+#: app/templates/professional_exam_form.html:13 app/templates/qualification_form.html:14
+msgid "Enter the exact date obtained as shown on the document."
+msgstr "Az okiraton szereplő pontos megszerzési dátumot add meg."
+
+#: app/templates/professional_exam_form.html:14 app/templates/qualification_form.html:12
+msgid "Use the document number shown by the issuing institution."
+msgstr "A kiállító intézmény által megadott okiratszámot add meg."
+
+#: app/templates/qualification_form.html:22
+msgid "Update your educational qualification details."
+msgstr "Frissítsd a képesítésed adatait."

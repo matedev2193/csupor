@@ -85,6 +85,8 @@ Users can upload their own JPEG, PNG or WebP profile photo (up to 5 MiB). Photos
 
 Birthday reminders keep shared-workplace visibility for employees, show every director's birthday to everyone, and show every active employee's birthday to directors. Names are bold and the reminder uses singular/plural wording. Leave-calendar abbreviations have a visible legend and full accessible labels. Weekly hours remain editable on contracts but are omitted from the summary table.
 
+Qualifications and professional exams record the exact date obtained and use the label **Document number**. New or edited records require a valid date from 1900-01-01 through the current Budapest calendar day. Existing year-only records retain their original year and explicitly show that the exact date is missing; the qualification editor allows the owner to supply it. Startup adds a nullable `date_obtained` column to each of `educational_qualifications` and `professional_exams` when missing, requiring `ALTER` permission on existing MySQL tables. It does not invent a month/day or change old records. The legacy year remains for compatibility and is synchronised when a full date is saved.
+
 ## Manual portal testing
 
 ### Configurable leave approvals
