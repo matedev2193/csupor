@@ -3498,7 +3498,7 @@ msgstr "%(minutes)s perc"
 msgid "A 20-minute break is required when worked time exceeds six hours."
 msgstr "Hat órát meghaladó munkavégzés esetén 20 perc munkaközi szünet szükséges."
 
-#: app/templates/worktime.html:136
+#: app/templates/worktime.html:136 app/templates/worktime.html:137
 msgid ""
 "A working day contains at most eight worked hours. A 20-minute break is added only when worked "
 "time exceeds six hours; at exactly six hours there is no break."
@@ -3618,7 +3618,7 @@ msgstr "Munkavállalók csoportbeosztása"
 msgid "End"
 msgstr "Befejezés"
 
-#: app/templates/worktime.html:139
+#: app/templates/worktime.html:139 app/templates/worktime.html:140
 msgid ""
 "Every group needs a teacher from 08:00 to 12:00. Two present teachers in the same group need two "
 "hours of overlap. If one is absent, the other works mornings and a nanny or teaching assistant "
@@ -3673,7 +3673,7 @@ msgstr "HR / Igazgató"
 msgid "I have checked the recorded hours for this workplace and month against attendance."
 msgstr "Ellenőriztem, hogy e munkavégzési hely havi munkaidő-adatai megfelelnek a tényleges jelenlétnek."
 
-#: app/templates/worktime.html:140
+#: app/templates/worktime.html:140 app/templates/worktime.html:141
 msgid ""
 "If both teachers are absent, HR or the CEO must record a group merger. Unresolved coverage or "
 "incompatible rules are highlighted for review."
@@ -3715,7 +3715,7 @@ msgstr "Havi összesen"
 msgid "Morning in the week of %(date)s"
 msgstr "Délelőttös a(z) %(date)s napjával kezdődő héten"
 
-#: app/templates/worktime.html:137
+#: app/templates/worktime.html:137 app/templates/worktime.html:138
 msgid ""
 "Morning shifts start at 08:00; afternoon shifts end at 17:30. Shifts alternate weekly. Early "
 "starts at 06:00 for one nanny and 07:00 for one teacher rotate fairly within each workplace."
@@ -3748,7 +3748,7 @@ msgstr "Ehhez a munkavégzési helyhez és hónaphoz még nem készült beosztá
 msgid "Not generated"
 msgstr "Még nem készült el"
 
-#: app/templates/worktime.html:138
+#: app/templates/worktime.html:138 app/templates/worktime.html:139
 msgid "Opening duty or an absence may change the usual weekly shift."
 msgstr "Nyitóügyelet vagy távollét miatt az alapértelmezett heti műszak változhat."
 
@@ -3905,7 +3905,7 @@ msgstr "Érvényesség vége (nem kötelező)"
 msgid "Warning"
 msgstr "Figyelmeztetés"
 
-#: app/templates/worktime.html:135
+#: app/templates/worktime.html:135 app/templates/worktime.html:136
 msgid ""
 "Weekly hours follow the number of working days. Absences count as zero worked hours; the missing "
 "hours are not redistributed to other days."
@@ -4154,3 +4154,9 @@ msgstr "A nyilvántartás nem naprakész. Exportálás előtt generáld újra."
 #: app/worktime_service.py:212 app/worktime_service.py:217
 msgid "Approved absence; regenerate the register."
 msgstr "Jóváhagyott távollét; generáld újra a nyilvántartást."
+
+#: app/templates/worktime.html:135
+msgid ""
+"For part-time employees, every working-time allowance is multiplied by the contract’s weekly "
+"hours divided by 40."
+msgstr "Részmunkaidőben minden munkaidőkeret a szerződéses heti óraszám és a 40 óra arányával csökken."

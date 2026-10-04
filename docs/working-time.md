@@ -19,6 +19,8 @@ A heti cél a megfelelő ötnapos keret egyötöde szorozva a héten ténylegese
 
 Pontosan hat óra munkához nincs szünet; hat órát meghaladó munkához 20 perc jár. A napi nettó munka legfeljebb 8 óra, a kezdés és vég közötti idő legfeljebb a munkaidő plusz a szünet. A szünet időpontját is tároljuk, így az nem számít bele sem a pedagógusellátásba, sem az átfedésbe.
 
+Példa heti 30 órás, azaz napi 6 órás részmunkaidős szerződésre: az arány 30 / 40 = 75%. Ötnapos héten a pedagógus kötött és nevelési kerete egyaránt 24:00; a gyakornok kötött kerete 24:00, nevelési kerete 19:30; a NOKS/Mt. dolgozó kerete 30:00. A napi beosztott idő pedagógusnál és gyakornoknál 4:48, a gyakornok nevelési részideje 3:54, NOKS/Mt. dolgozónál 6:00. Ezekhez az időtartamokhoz nincs munkaközi szünet. A rövidebb vagy hosszabb hét és a távollét ezekre a már arányosított keretekre hat.
+
 ## Beosztási eljárás
 
 1. A hónap határán átnyúló hetekkel együtt felépül a munkanaptár. Minden nap a szerződés és a csoporthozzárendelés aznap érvényes állapota számít. Átfedő szerződések vagy hiányzó hozzárendelések nem eredményezhetnek ugyanannak a személynek kettős beosztást.

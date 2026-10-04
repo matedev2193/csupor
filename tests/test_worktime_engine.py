@@ -70,6 +70,37 @@ class WorktimeEngineTests(unittest.TestCase):
         self.assertEqual(sum(row["work_minutes"] for row in rows), 1872)
         self.assertLessEqual(max(row["work_minutes"] for row in rows) - min(row["work_minutes"] for row in rows), 1)
 
+    def test_thirty_hour_contract_scales_every_role_and_trainee_teaching_time(self):
+        # Six-hour contractual days mean 75% of the full-time allowances.
+        for cid, expected_work, expected_teaching in (
+            (1, 1440, 1440), (2, 1440, 1170), (5, 1800, 0),
+            (7, 1800, 0), (8, 1800, 0), (9, 1800, 0),
+        ):
+            with self.subTest(contract_id=cid):
+                payload = fixture()
+                next(person for person in payload["workers"] if person["contract_id"] == cid)["weekly_hours"] = 30
+                result = build_schedule(payload)
+                self.assert_feasible(payload, result)
+                rows = [row for row in result["entries"] if row["contract_id"] == cid]
+                self.assertEqual(sum(row["work_minutes"] for row in rows), expected_work)
+                self.assertEqual(sum(row["teaching_minutes"] for row in rows), expected_teaching)
+                self.assertTrue(all(row["break_minutes"] == 0 for row in rows))
+                self.assertEqual(len({row["work_minutes"] for row in rows}), 1)
+
+    def test_part_time_trainee_short_long_weeks_and_absence_keep_both_scaled_targets(self):
+        for day_count in (4, 6):
+            with self.subTest(working_days=day_count):
+                payload = fixture([f"2026-10-{day:02d}" for day in range(5, 5 + day_count)])
+                payload["workers"][1]["weekly_hours"] = 30
+                payload["absences"] = [{"user_id": 2, "start_date": "2026-10-06", "end_date": "2026-10-06"}]
+                result = build_schedule(payload)
+                self.assert_feasible(payload, result)
+                rows = [row for row in result["entries"] if row["contract_id"] == 2]
+                self.assertEqual(sum(row["work_minutes"] for row in rows), (day_count - 1) * 288)
+                self.assertEqual(sum(row["teaching_minutes"] for row in rows), (day_count - 1) * 234)
+                absent = next(row for row in rows if row["day"] == "2026-10-06")
+                self.assertEqual((absent["work_minutes"], absent["teaching_minutes"], absent["break_minutes"]), (0, 0, 0))
+
     def test_rotating_openers_no_consecutive_repeats_and_weekly_shift_preference(self):
         payload = fixture([f"2026-10-{day:02d}" for day in range(5, 10)] + [f"2026-10-{day:02d}" for day in range(12, 17)])
         result = build_schedule(payload)
