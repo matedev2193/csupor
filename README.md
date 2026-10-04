@@ -112,7 +112,7 @@ Run the regression suite with `python -m unittest discover -s tests -v`.
 
 ### Leave email notifications
 
-Developer accounts have a separate **Settings** menu (`/settings`) for the SMTP host, port, connection security, optional credentials, sender and public application URL. Email is disabled until configured and enabled. Install the updated requirements and use a stable, non-default `SECRET_KEY` or separate `EMAIL_SECRET_KEY`; SMTP passwords are stored encrypted and are never displayed again.
+Developer accounts have a separate **Settings** menu (`/settings`) for the SMTP host, port, connection security, optional credentials, sender and public application URL. Email is disabled until configured and enabled. If no encryption key is configured, use **Create encryption key** on that page: the application securely creates a persistent private key without a terminal or restart. Existing `EMAIL_SECRET_KEY` or non-default `SECRET_KEY` configurations keep working. SMTP passwords are stored encrypted and are never displayed again. Keep the private `instance/email-secret.key` file across deployments and backups when using browser setup.
 
 Eligible reviewers receive approval/cancellation tasks, and applicants receive changes to their own requests. Each recipient gets one daily digest at **20:00 Europe/Budapest**. Changes concerning leave that starts within 24 hours, or has already started, are queued for immediate delivery. Notifications use the current email address on the user's account. Pending tasks are checked again before sending.
 

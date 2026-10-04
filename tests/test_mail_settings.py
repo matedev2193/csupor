@@ -13,6 +13,7 @@ from sqlalchemy import event
 from app import create_app, db
 from app.mail_settings import MailDeliveryError, _cipher, get_mail_settings, is_mail_enabled, send_email
 from app.mail_settings_models import MailServerSettings
+from app.mail_key import MailKeyError
 from app.models import User, UserPrivilege
 
 
@@ -26,6 +27,7 @@ class MailSettingsTests(unittest.TestCase):
         })
         self.environment.start()
         self.app = create_app()
+        self.app.instance_path = os.path.join(self.directory.name, "instance")
         self.app.config.update(TESTING=True)
         self.context = self.app.app_context()
         self.context.push()
@@ -79,6 +81,7 @@ class MailSettingsTests(unittest.TestCase):
             self.login(role)
             self.assertEqual(self.client.get("/settings").status_code, 403)
             self.assertEqual(self.client.post("/settings").status_code, 403)
+            self.assertEqual(self.client.post("/settings/email-key").status_code, 403)
         self.login()
         self.assertEqual(self.client.get("/settings").status_code, 200)
 
@@ -187,6 +190,86 @@ class MailSettingsTests(unittest.TestCase):
         for changes in ({"enabled": "", "password": "new-secret"}, {"password": "", "username": ""}):
             self.assertEqual(self.save(**changes).status_code, 400)
         self.assertEqual(MailServerSettings.query.count(), 0)
+
+    def prepare_key(self, **changes):
+        self.client.get("/settings")
+        with self.client.session_transaction() as session:
+            token = session["mail_settings_csrf_token"]
+        return self.client.post("/settings/email-key", data={"csrf_token": token, **changes}, follow_redirects=True)
+
+    def test_browser_key_setup_enables_password_save_without_restart_or_key_disclosure(self):
+        self.app.config["SECRET_KEY"] = "dev-secret-key-change-me"
+        self.login()
+        page = self.client.get("/settings")
+        self.assertIn(b'id="create-mail-key"', page.data)
+        self.assertFalse(os.path.exists(self.app.instance_path))
+        response = self.prepare_key()
+        self.assertIn(b"Encryption key created", response.data)
+        self.assertNotIn(b'id="create-mail-key"', response.data)
+        key_path = os.path.join(self.app.instance_path, "email-secret.key")
+        with open(key_path, "rb") as source:
+            secret = source.read()
+        self.assertNotIn(secret.strip(), response.data)
+        self.assertEqual(MailServerSettings.query.count(), 0)
+        self.assertEqual(self.save().status_code, 302)
+        encrypted = self.saved().encrypted_password
+        self.assertEqual(_cipher().decrypt(encrypted.encode()).decode(), "test-secret-password")
+        # A separately created application sees the persisted key immediately.
+        second = create_app()
+        second.instance_path = self.app.instance_path
+        second.config["SECRET_KEY"] = "dev-secret-key-change-me"
+        with second.app_context():
+            self.assertEqual(_cipher().decrypt(encrypted.encode()).decode(), "test-secret-password")
+            db.session.remove()
+            db.engine.dispose()
+        self.prepare_key()
+        with open(key_path, "rb") as source:
+            self.assertEqual(source.read(), secret)
+
+    def test_key_setup_requires_csrf_and_post(self):
+        self.app.config["SECRET_KEY"] = "dev-secret-key-change-me"
+        self.login()
+        self.assertEqual(self.client.get("/settings/email-key").status_code, 405)
+        self.client.get("/settings")
+        for token in ("", "wrong", "árvíz"):
+            self.assertEqual(self.client.post("/settings/email-key", data={"csrf_token": token}).status_code, 400)
+        self.assertFalse(os.path.exists(self.app.instance_path))
+
+    def test_existing_configured_key_is_preserved_by_repeated_setup(self):
+        self.login()
+        self.save()
+        encrypted = self.saved().encrypted_password
+        response = self.prepare_key()
+        self.assertIn(b"existing key was kept", response.data)
+        self.assertFalse(os.path.exists(self.app.instance_path))
+        self.assertEqual(self.saved().encrypted_password, encrypted)
+        self.assertEqual(_cipher().decrypt(encrypted.encode()).decode(), "test-secret-password")
+
+    def test_key_setup_failure_is_actionable_without_exposing_server_details(self):
+        self.app.config["SECRET_KEY"] = "dev-secret-key-change-me"
+        self.login()
+        with patch("app.mail_settings.initialise_mail_secret", side_effect=MailKeyError("storage")):
+            response = self.prepare_key()
+        self.assertIn(b"hosting provider", response.data)
+        self.assertNotIn(self.app.instance_path.encode(), response.data)
+        self.assertEqual(MailServerSettings.query.count(), 0)
+
+    def test_missing_key_does_not_replace_existing_password_without_explicit_removal(self):
+        self.login()
+        self.save()
+        encrypted = self.saved().encrypted_password
+        self.app.config["SECRET_KEY"] = "dev-secret-key-change-me"
+        self.login()
+        response = self.prepare_key()
+        self.assertIn(b"remove the saved password", response.data)
+        self.assertEqual(self.saved().encrypted_password, encrypted)
+        self.assertFalse(os.path.exists(self.app.instance_path))
+        failed_save = self.save(password="")
+        self.assertEqual(failed_save.status_code, 400)
+        self.assertIn(b"remove the saved password", failed_save.data)
+        self.assertNotIn(b"First use the Create encryption key button", failed_save.data)
+        self.assertEqual(self.save(enabled="", password="", clear_password="1").status_code, 302)
+        self.assertIn(b"Encryption key created", self.prepare_key().data)
 
     def test_explicit_email_key_survives_flask_key_change(self):
         self.login()

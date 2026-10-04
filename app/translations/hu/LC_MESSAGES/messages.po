@@ -4413,3 +4413,36 @@ msgstr "Ennek a CSUPOR-alkalmazásnak a webcíme. Ide vezetnek majd az értesít
 
 msgid "Save email settings"
 msgstr "E-mail-beállítások mentése"
+
+msgid "A server password is already saved. Restore its encryption key, or disable emails and remove the saved password before creating a new key."
+msgstr "Már van mentett kiszolgálójelszó. Állítsd helyre a hozzá tartozó kulcsot, vagy kapcsold ki az értesítéseket és töröld a mentett jelszót az új kulcs létrehozása előtt."
+
+msgid "The server could not securely save the encryption key. Ask your hosting provider to make the application's private instance folder writable."
+msgstr "A szerver nem tudta biztonságosan elmenteni a kulcsot. Kérd a tárhelyszolgáltatótól az alkalmazás privát instance mappájának írhatóvá tételét."
+
+msgid "Encryption key created. You can now save the email server details; no restart is needed."
+msgstr "A titkosítási kulcs elkészült. Most már elmentheted az e-mail-kiszolgáló adatait, újraindítás nélkül."
+
+msgid "Email encryption is already set up. The existing key was kept."
+msgstr "A jelszóvédelem már be van állítva. A meglévő kulcs megmaradt."
+
+msgid "First use the Create encryption key button on this page, then save the email settings."
+msgstr "Előbb kattints az oldalon a Kulcs létrehozása gombra, majd mentsd el az e-mail-beállításokat."
+
+msgid "The server encryption key is unavailable. Restore the existing key or check access to the private instance folder."
+msgstr "A szerver titkosítási kulcsa nem érhető el. Állítsd helyre a meglévő kulcsot, vagy ellenőrizd a privát instance mappa hozzáférését."
+
+msgid "The saved server password cannot be opened with the current encryption key. Please enter the password again."
+msgstr "A mentett kiszolgálójelszó a jelenlegi kulccsal nem olvasható. Add meg újra a jelszót."
+
+msgid "Email password protection"
+msgstr "E-mail-jelszó védelme"
+
+msgid "Encryption is ready. You can save the email server details below."
+msgstr "A jelszóvédelem be van állítva. Alább elmentheted az e-mail-kiszolgáló adatait."
+
+msgid "Create the encryption key here before saving your server password. The application stores it privately on the server; no terminal or restart is needed."
+msgstr "A kiszolgálójelszó mentése előtt hozd létre itt a titkosítási kulcsot. Az alkalmazás biztonságosan tárolja a szerveren; nem kell terminált használnod vagy újraindítanod az alkalmazást."
+
+msgid "Create encryption key"
+msgstr "Kulcs létrehozása"
