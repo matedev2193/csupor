@@ -4205,3 +4205,36 @@ msgstr "A napi műszak eltér a beállított heti műszaktól."
 
 msgid "The group’s available teachers must include both a morning and an afternoon shift."
 msgstr "A csoport jelen lévő óvodapedagógusai között délelőttösnek és délutánosnak is lennie kell."
+
+#: app/templates/base.html:62 app/templates/worktime.html:15 app/templates/worktime_groups.html:14
+#: app/templates/worktime_management_tabs.html:1
+msgid "Working-time management"
+msgstr "Munkaidő-kezelés"
+
+#: app/templates/worktime.html:11
+msgid "Working-time management · CSUPOR Portal"
+msgstr "Munkaidő-kezelés · CSUPOR Portál"
+
+#: app/templates/worktime_management_tabs.html:2
+msgid "Schedules and records"
+msgstr "Beosztások és nyilvántartások"
+
+#: app/templates/worktime.html:15
+msgid "View and download your monthly working-time records."
+msgstr "Megtekintheted és letöltheted a havi munkaidő-nyilvántartásodat."
+
+#: app/templates/worktime.html:77
+msgid "Your record needs to be updated by HR or the CEO before it can be exported."
+msgstr "A nyilvántartásodat exportálás előtt a HR-nek vagy az igazgatónak frissítenie kell."
+
+#: app/templates/worktime.html:77
+msgid "This record is a draft and has not yet been confirmed."
+msgstr "Ez a nyilvántartás még nem igazolt tervezet."
+
+#: app/templates/worktime.html:110
+msgid "There are no working-time entries for you in the selected month."
+msgstr "A kiválasztott hónapban nincs munkaidő-bejegyzésed."
+
+#: app/templates/worktime.html:112
+msgid "Your working-time record has not been prepared for this month yet."
+msgstr "Erre a hónapra még nem készült el a munkaidő-nyilvántartásod."

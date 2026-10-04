@@ -17,7 +17,6 @@ from io import BytesIO, StringIO
 from pathlib import Path
 import re
 from threading import Lock
-from xml.sax.saxutils import escape
 
 
 MONTHS = (
@@ -127,9 +126,37 @@ def _row_note(row):
     return "; ".join(part for part in (row["absence_label"], row["note"]) if part)
 
 
+def _assignments(data):
+    """Keep contract/site/group changes addressable from the header."""
+    assignments = OrderedDict()
+    for row in data["rows"]:
+        key = (row.get("contract_id"), row["job_title"], row["workplace"], row["group_name"])
+        if key not in assignments:
+            assignments[key] = {
+                "code": f"B{len(assignments) + 1}", "job_title": row["job_title"],
+                "workplace": row["workplace"], "group_name": row["group_name"], "rows": [],
+            }
+        assignments[key]["rows"].append(row)
+        row["assignment_code"] = assignments[key]["code"]
+    return list(assignments.values())
+
+
+def _days_label(rows):
+    days = sorted({row["date"].day for row in rows})
+    runs = []
+    for day in days:
+        if runs and day == runs[-1][-1] + 1:
+            runs[-1].append(day)
+        else:
+            runs.append([day])
+    return ", ".join(f"{run[0]:02d}-{run[-1]:02d}" if len(run) > 1 else f"{run[0]:02d}" for run in runs)
+
+
 def export_worktime_csv(register):
-    """UTF-8 BOM, semicolon-separated CSV suitable for Hungarian Excel."""
+    """Complete UTF-8 CSV; header assignments replace daily metadata columns."""
     data = _prepare(register)
+    assignments = _assignments(data)
+    multiple = len(assignments) > 1
     output = StringIO(newline="")
     writer = csv.writer(output, delimiter=";", lineterminator="\r\n")
 
@@ -140,40 +167,49 @@ def export_worktime_csv(register):
     write(["Munkavállaló", data["employee_name"]])
     write(["Év", data["year"], "Hónap", MONTHS[data["month"]]])
     write(["Munkakör", data["job_title"]])
+    for name, key in (("Munkavégzési hely", "workplace"), ("Csoport", "group_name")):
+        write([name, "; ".join(dict.fromkeys(row[key] for row in data["rows"] if row[key]))])
     write(["Állapot", data["status_label"]])
+    if multiple:
+        write(["Beosztási jelölés", "Munkakör", "Munkavégzési hely", "Csoport", "A hónap napjai", "Nap és idősáv"])
+        for assignment in assignments:
+            periods = "; ".join(
+                f"{row['date']:%Y.%m.%d.} {row['start'] or '-'} - {row['end'] or '-'}"
+                for row in assignment["rows"]
+            )
+            write([assignment["code"], assignment["job_title"], assignment["workplace"],
+                   assignment["group_name"], _days_label(assignment["rows"]), periods])
     write([TIME_NOTE])
     if data["is_teacher"]:
         write([TEACHER_NOTE])
     write([PARTIAL_WEEK_NOTE])
     write([])
     write([
-        "Dátum", "Nap", "Munkakör", "Munkavégzési hely", "Csoport",
-        "Munkaidő kezdete", "Munkaidő vége", "Munkaközi szünet (óra:perc)",
+        "Dátum", "Nap", "Munkaidő kezdete", "Munkaidő vége", "Munkaközi szünet (óra:perc)",
         "Ledolgozott idő (óra:perc)", "Neveléssel-oktatással lekötött idő (óra:perc)",
         "Megjegyzés", "Aláírás",
     ])
     for week in data["weeks"]:
         for row in week["rows"]:
+            note = _row_note(row)
+            if multiple:
+                note = f"[{row['assignment_code']}]" + (" " + note if note else "")
             write([
                 row["date"].strftime("%Y.%m.%d."), WEEKDAYS[row["date"].weekday()],
-                row["job_title"], row["workplace"], row["group_name"], row["start"], row["end"],
-                duration(row["break_minutes"]), duration(row["worked_minutes"]),
-                duration(row["teaching_minutes"]) if data["is_teacher"] else "",
-                _row_note(row), "",
+                row["start"], row["end"], duration(row["break_minutes"]), duration(row["worked_minutes"]),
+                duration(row["teaching_minutes"]) if data["is_teacher"] else "", note, "",
             ])
         write([
-            f"{week['label']} összesen", "", "", "", "", "", "",
+            f"{week['label']} összesen", "", "", "",
             duration(sum(row["break_minutes"] for row in week["rows"])),
             duration(sum(row["worked_minutes"] for row in week["rows"])),
             duration(sum(row["teaching_minutes"] for row in week["rows"])) if data["is_teacher"] else "",
             week["period"], "",
         ])
     write([
-        "Havi összesen", "", "", "", "", "", "",
-        duration(sum(row["break_minutes"] for row in data["rows"])),
+        "Havi összesen", "", "", "", duration(sum(row["break_minutes"] for row in data["rows"])),
         duration(sum(row["worked_minutes"] for row in data["rows"])),
-        duration(sum(row["teaching_minutes"] for row in data["rows"])) if data["is_teacher"] else "",
-        "", "",
+        duration(sum(row["teaching_minutes"] for row in data["rows"])) if data["is_teacher"] else "", "", "",
     ])
     return output.getvalue().encode("utf-8-sig")
 
@@ -193,133 +229,266 @@ def _register_fonts():
 
 
 def export_worktime_pdf(register):
-    """Paginated A4 landscape PDF with embedded fonts and signature spaces."""
+    """One portrait A4 page with bounded text and complete CSV cross-references.
+
+    A date has one signature row even when several contracts apply. In that
+    case the PDF states the first arrival and last departure, adds an explicit
+    multiple-interval marker, and totals only the actual worked minutes. CSV
+    keeps every individual interval and every unabridged note.
+    """
     from reportlab.lib import colors
-    from reportlab.lib.enums import TA_CENTER, TA_LEFT
-    from reportlab.lib.pagesizes import A4, landscape
-    from reportlab.lib.styles import ParagraphStyle
-    from reportlab.platypus import LongTable, Paragraph, SimpleDocTemplate, Spacer, TableStyle
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfbase.pdfmetrics import stringWidth
+    from reportlab.pdfgen import canvas as canvas_module
 
     data = _prepare(register)
+    assignments = _assignments(data)
+    multiple = len(assignments) > 1
     _register_fonts()
     output = BytesIO()
-    page_width, page_height = landscape(A4)
-    margin = 32
-    width = page_width - margin * 2
+    page_width, page_height = A4
+    canvas = canvas_module.Canvas(output, pagesize=A4)
+    canvas.setTitle("Munkaidő-nyilvántartás")
+    canvas.setAuthor("CSUPOR")
+    canvas.setSubject(f"{data['year']}. {MONTHS[data['month']]}")
+    margin = 25
+    width = page_width - 2 * margin
     ink = colors.HexColor("#243a44")
+    line = colors.HexColor("#b9c9c9")
     pale = colors.HexColor("#edf4f3")
-    muted = colors.HexColor("#5f6f74")
-    style = ParagraphStyle("Register", fontName="CSUPOR", fontSize=8, leading=11, textColor=ink, wordWrap="LTR")
-    small = ParagraphStyle("Small", parent=style, fontSize=7, leading=9)
-    bold = ParagraphStyle("Bold", parent=style, fontName="CSUPOR-Bold")
-    center = ParagraphStyle("Center", parent=style, alignment=TA_CENTER)
-    head = ParagraphStyle("Head", parent=small, fontName="CSUPOR-Bold", alignment=TA_CENTER)
-    title = ParagraphStyle("Title", parent=bold, fontSize=17, leading=22, spaceAfter=7)
+    canvas.setFillColor(ink)
+    abbreviated = False
 
-    def p(value, selected=style):
-        # User-supplied text is not ReportLab markup. Newlines remain visible.
-        text = escape(_text(value)).replace("\r\n", "\n").replace("\r", "\n").replace("\n", "<br/>")
-        return Paragraph(text, selected)
+    def compact(text, max_width, size=7.5, font="CSUPOR"):
+        nonlocal abbreviated
+        text = " ".join(_text(text).split())
+        if stringWidth(text, font, size) <= max_width:
+            return text
+        abbreviated = True
+        suffix = "…"
+        low, high = 0, len(text)
+        while low < high:
+            middle = (low + high + 1) // 2
+            if stringWidth(text[:middle] + suffix, font, size) <= max_width:
+                low = middle
+            else:
+                high = middle - 1
+        return text[:low].rstrip() + suffix
 
-    document = SimpleDocTemplate(
-        output, pagesize=(page_width, page_height), rightMargin=margin, leftMargin=margin,
-        topMargin=32, bottomMargin=42, title="Munkaidő-nyilvántartás",
-        author="CSUPOR", subject=f"{data['year']}. {MONTHS[data['month']]}",
-    )
-    story = [p("Munkaidő-nyilvántartás", title)]
-    metadata = [
-        [p("Munkavállaló", bold), p(data["employee_name"]), p("Időszak", bold), p(f"{data['year']}. {MONTHS[data['month']]}")],
-        [p("Munkakör", bold), p(data["job_title"] or "Nincs megadva"), p("Állapot", bold), p(data["status_label"], small)],
-    ]
-    metadata_table = LongTable(metadata, colWidths=[82, width - 367, 48, 237])
-    metadata_table.setStyle(TableStyle([
-        ("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 8), ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
-    ]))
-    story.extend([metadata_table, Spacer(1, 6)])
+    def text_at(text, x, y, max_width, size=7.5, *, bold=False, centered=False):
+        font = "CSUPOR-Bold" if bold else "CSUPOR"
+        canvas.setFont(font, size)
+        canvas.setFillColor(ink)
+        value = compact(text, max_width, size, font)
+        if centered:
+            canvas.drawCentredString(x + max_width / 2, y, value)
+        else:
+            canvas.drawString(x, y, value)
+
+    def header_line(label, value, y):
+        text_at(label, margin, y, 89, 7.8, bold=True)
+        text_at(value or "Nincs megadva", margin + 92, y, width - 92, 7.8)
+        return y - 12
+
+    y = page_height - 34
+    text_at("Munkaidő-nyilvántartás", margin, y, width - 133, 14, bold=True)
+    text_at(f"{data['year']}. {MONTHS[data['month']]}", page_width - margin - 130, y + 1, 130, 10, bold=True)
+    y -= 21
+    y = header_line("Munkavállaló", data["employee_name"], y)
+    y = header_line("Munkakör", data["job_title"], y)
+    for label, key in (("Munkavégzési hely", "workplace"), ("Csoport", "group_name")):
+        value = "; ".join(dict.fromkeys(row[key] for row in data["rows"] if row[key]))
+        y = header_line(label, value, y)
+    text_at(data["status_label"], margin, y, width, 7.6, bold=data.get("status") != "confirmed")
+    y -= 13
+
+    if multiple:
+        # Codes in the daily notes refer to these dated header assignments.
+        # The complete mapping, including clock times, always exists in CSV.
+        max_assignments = 4
+        for assignment in assignments[:max_assignments]:
+            description = " | ".join(part or "-" for part in (
+                assignment["job_title"], assignment["workplace"], assignment["group_name"]))
+            text_at(f"{assignment['code']} ({_days_label(assignment['rows'])}. nap): {description}",
+                    margin, y, width, 6.8)
+            y -= 10
+        if len(assignments) > max_assignments:
+            abbreviated = True
+            text_at(f"További {len(assignments) - max_assignments} beosztás és a teljes hozzárendelés: CSV.",
+                    margin, y, width, 6.8)
+            y -= 10
+        y -= 3
+
     teacher = data["is_teacher"]
-    headers = ["Dátum", "Kezdete", "Vége", "Szünet\nó:pp", "Ledolgozott\nó:pp"]
-    if teacher:
-        headers.append("Nevelés-\noktatás\nó:pp")
-    headers.extend(["Munkakör, munkavégzési hely, csoport / megjegyzés", "Aláírás"])
-    columns = [55, 43, 43, 42, 60] + ([63] if teacher else [])
-    columns.extend([width - sum(columns) - 92, 92])
-    table_rows = [[p(value, head) for value in headers]]
-    summary_indices = []
-    detailed_notes = []
+    # Deduplicated legend codes retain both absence and merge meaning, even if
+    # the source text is much longer than the space on the paper register.
+    legend = OrderedDict()
+
+    def annotation(row):
+        pieces = []
+        if row["absence_label"]:
+            key = ("T", row["absence_label"])
+            if key not in legend:
+                legend[key] = f"T{1 + sum(k[0] == 'T' for k in legend)}"
+            pieces.append(legend[key])
+        if row["note"]:
+            kind = "Ö" if re.search(r"összevon|merged? group", row["note"], re.IGNORECASE) else "M"
+            key = (kind, row["note"])
+            if key not in legend:
+                legend[key] = f"{kind}{1 + sum(k[0] == kind for k in legend)}"
+            pieces.append(legend[key])
+        return pieces
+
+    display_weeks = []
+    multiple_intervals = False
     for week in data["weeks"]:
+        days = OrderedDict()
         for row in week["rows"]:
-            details = " | ".join(part for part in (row["job_title"], row["workplace"], row["group_name"]) if part)
-            note = _row_note(row)
-            if len(note) > 360 or note.count("\n") > 4:
-                # Keep the attendance/signature row usable. The entire note is
-                # printed below the table, where paragraphs paginate naturally.
-                detailed_notes.append((row["date"], note))
-                note = "; ".join(part for part in (
-                    row["absence_label"], f"Részletes megjegyzés: {len(detailed_notes)}."
-                ) if part)
-            if note:
-                details += ("\n" if details else "") + note
-            values = [
-                p(f"{row['date']:%m.%d.}\n{WEEKDAYS[row['date'].weekday()]}", small),
-                p(row["start"] or "-", center), p(row["end"] or "-", center),
-                p(duration(row["break_minutes"]), center), p(duration(row["worked_minutes"]), center),
-            ]
-            if teacher:
-                values.append(p(duration(row["teaching_minutes"]), center))
-            values.extend([p(details, small), ""])
-            table_rows.append(values)
-        totals = [p(f"{week['label']} összesen", bold), "", "", p(duration(sum(row["break_minutes"] for row in week["rows"])), center), p(duration(sum(row["worked_minutes"] for row in week["rows"])), center)]
+            days.setdefault(row["date"], []).append(row)
+        day_rows = []
+        for day, rows in days.items():
+            active = [row for row in rows if row["worked_minutes"] > 0]
+            intervals = [(row["start"], row["end"]) for row in active]
+            separated = len(intervals) > 1
+            multiple_intervals |= separated
+            codes = list(dict.fromkeys(code for row in rows for code in annotation(row)))
+            flags = []
+            if any(row["absence_label"] for row in rows):
+                flags.append("Távollét")
+            if any(code.startswith("Ö") for code in codes):
+                flags.append("Összevonás")
+            if multiple:
+                codes = list(dict.fromkeys(row["assignment_code"] for row in rows)) + codes
+            # Flags come before codes so long lists can never hide a critical
+            # absence or merge. The truncation symbol points to the full CSV.
+            note = "; ".join(flags + ([", ".join(codes)] if codes else []))
+            if separated:
+                note = "Több idősáv; " + note
+            start = min((item[0] for item in intervals if item[0]), default="-")
+            end = max((item[1] for item in intervals if item[1]), default="-")
+            day_rows.append({
+                "date": day, "start": start, "end": end, "note": note,
+                **{field: sum(row[field] for row in rows) for field in ("break_minutes", "worked_minutes", "teaching_minutes")},
+            })
+        display_weeks.append((week, day_rows))
+
+    headers = ["Nap", "Kezdete", "Vége", "Szünet", "Ledolgozott"]
+    columns = [47, 40, 40, 40, 54]
+    if teacher:
+        headers.append("Nevelési idő")
+        columns.append(60)
+    columns.extend([width - sum(columns) - 94, 94])
+    headers.extend(["Jelölés", "Aláírás"])
+    col_x = [margin]
+    for size in columns:
+        col_x.append(col_x[-1] + size)
+    table_top = y
+    header_height, weekly_height, monthly_height = 23, 12.5, 15
+    number_of_days = sum(len(rows) for _, rows in display_weeks)
+    # Reserve the lower block before sizing rows; 31 dates + six weeks fit at
+    # normal print sizes, without shrinking the entire page or adding a page.
+    lower_block = 130 if legend or multiple_intervals else 94
+    row_height = min(20, (table_top - lower_block - header_height - len(display_weeks) * weekly_height - monthly_height) / max(1, number_of_days))
+    row_height = max(14, row_height)
+
+    def background(top, height, shaded=False):
+        if shaded:
+            canvas.setFillColor(pale)
+            canvas.rect(margin, top - height, width, height, fill=1, stroke=0)
+        canvas.setStrokeColor(line)
+        canvas.setLineWidth(0.35)
+        canvas.line(margin, top - height, margin + width, top - height)
+
+    background(y, header_height, True)
+    for i, label in enumerate(headers):
+        text_at(label, col_x[i] + 2, y - 10, columns[i] - 4, 6.5, bold=True, centered=True)
+        if label in ("Szünet", "Ledolgozott", "Nevelési idő"):
+            text_at("óra:perc", col_x[i] + 2, y - 19, columns[i] - 4, 6.2, centered=True)
+    y -= header_height
+    short_days = ("H", "K", "Sze", "Cs", "P", "Szo", "V")
+
+    def values_at(values, top, height, *, summary=False):
+        baseline = top - height / 2 - 2.5
+        for index, value in enumerate(values):
+            if index == 0 and summary:
+                text_at(value, col_x[0] + 4, baseline, sum(columns[:3]) - 8, 7, bold=True)
+            elif summary and index in (1, 2):
+                continue
+            else:
+                text_at(value, col_x[index] + 3, baseline, columns[index] - 6,
+                        6.8 if index == len(columns) - 2 else 7.6,
+                        bold=summary, centered=index < len(columns) - 2 and index != 0)
+
+    def totals(rows, label, note=""):
+        values = [label, "", "", duration(sum(row["break_minutes"] for row in rows)),
+                  duration(sum(row["worked_minutes"] for row in rows))]
         if teacher:
-            totals.append(p(duration(sum(row["teaching_minutes"] for row in week["rows"])), center))
-        totals.extend([p(week["period"], small), ""])
-        summary_indices.append(len(table_rows))
-        table_rows.append(totals)
-    totals = [p("Havi összesen", bold), "", "", p(duration(sum(row["break_minutes"] for row in data["rows"])), center), p(duration(sum(row["worked_minutes"] for row in data["rows"])), center)]
+            values.append(duration(sum(row["teaching_minutes"] for row in rows)))
+        return values + [note, ""]
+
+    for week, rows in display_weeks:
+        for row in rows:
+            background(y, row_height)
+            values = [f"{row['date'].day:02d}. {short_days[row['date'].weekday()]}", row["start"], row["end"],
+                      duration(row["break_minutes"]), duration(row["worked_minutes"])]
+            if teacher:
+                values.append(duration(row["teaching_minutes"]))
+            values.extend([row["note"], ""])
+            values_at(values, y, row_height)
+            y -= row_height
+        background(y, weekly_height, True)
+        label = week["label"] + ("*" if week["partial"] else "") + " össz."
+        values_at(totals(week["rows"], label), y, weekly_height, summary=True)
+        y -= weekly_height
+    background(y, monthly_height, True)
+    values_at(totals(data["rows"], "Havi összesen"), y, monthly_height, summary=True)
+    y -= monthly_height
+    canvas.setStrokeColor(line)
+    canvas.rect(margin, y, width, table_top - y, fill=0, stroke=1)
+    # Vertical borders across summary rows are intentionally limited to the
+    # numeric columns; the first three columns form the summary label.
+    for x in col_x[3:-1]:
+        canvas.line(x, y, x, table_top)
+    for x in col_x[1:3]:
+        cursor = table_top - header_height
+        canvas.line(x, table_top, x, cursor)
+        for _, rows in display_weeks:
+            bottom = cursor - len(rows) * row_height
+            canvas.line(x, cursor, x, bottom)
+            cursor = bottom - weekly_height
+    y -= 11
+
+    notes = ["Az időtartamok óra:percben értendők. A ledolgozott idő nem tartalmazza a munkaközi szünetet."]
     if teacher:
-        totals.append(p(duration(sum(row["teaching_minutes"] for row in data["rows"])), center))
-    totals.extend(["", ""])
-    summary_indices.append(len(table_rows))
-    table_rows.append(totals)
-    table = LongTable(table_rows, colWidths=columns, repeatRows=1, splitByRow=1, splitInRow=1, hAlign=TA_LEFT)
-    commands = [
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("BACKGROUND", (0, 0), (-1, 0), pale),
-        ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#b8c7c7")),
-        ("INNERGRID", (0, 0), (-1, -1), 0.3, colors.HexColor("#cbd6d6")),
-        ("LEFTPADDING", (0, 0), (-1, -1), 5), ("RIGHTPADDING", (0, 0), (-1, -1), 5),
-        ("TOPPADDING", (0, 0), (-1, -1), 5), ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-    ]
-    for index in summary_indices:
-        commands.extend([
-            ("SPAN", (0, index), (2, index)),
-            ("NOSPLIT", (0, index - 1), (-1, index)),
-            ("BACKGROUND", (0, index), (-1, index), pale),
-            ("LINEABOVE", (0, index), (-1, index), 0.6, colors.HexColor("#8aa6a5")),
-        ])
-    table.setStyle(TableStyle(commands))
-    story.extend([table, Spacer(1, 9), p(TIME_NOTE, small)])
-    if teacher:
-        story.append(p(TEACHER_NOTE, small))
-    if any(week["partial"] for week in data["weeks"]):
-        story.append(p(PARTIAL_WEEK_NOTE, small))
+        notes.append("Pedagógus: a ledolgozott idő a kötött munkaidő; a neveléssel-oktatással lekötött idő külön szerepel.")
+    if any(week["partial"] for week, _ in display_weeks):
+        notes.append("* Havi részlet: a hét összesítésében csak a kiválasztott hónap napjai szerepelnek.")
+    if multiple_intervals:
+        notes.append("Több idősáv: az első kezdés és az utolsó végzés szerepel; az egyes időszakok a CSV-ben láthatók.")
+    # At most four legend lines are printed. All individual notes remain
+    # complete in CSV, and omitted codes are explicitly identified below.
+    legend_items = sorted(legend.items(), key=lambda item: {"T": 0, "Ö": 1, "M": 2}[item[0][0]])
+    for (kind, note), code in legend_items[:4]:
+        notes.append(f"{code}: {note}")
+    if len(legend) > 4:
+        abbreviated = True
+        notes.append(f"További {len(legend) - 4} jelölés teljes szövege: CSV. T = távollét; Ö = összevonás; M = megjegyzés.")
     if not data["rows"]:
-        story.append(p("A kiválasztott hónapban nincs nyilvántartott munkanap.", small))
-    for number, (day, note) in enumerate(detailed_notes, 1):
-        story.extend([Spacer(1, 9), p(f"{number}. részletes megjegyzés - {day:%Y.%m.%d.}", bold), p(note, small)])
-    story.extend([Spacer(1, 16), p("Kelt: ________________________       Ellenőrizte: ________________________", small)])
-
-    def footer(canvas, doc):
-        canvas.saveState()
-        canvas.setStrokeColor(colors.HexColor("#cbd6d6"))
-        canvas.line(margin, 29, page_width - margin, 29)
-        canvas.setFont("CSUPOR", 7)
-        canvas.setFillColor(muted)
-        # The draft label is repeated on every page, including long registers.
-        caption = "CSUPOR | " + data["status_label"] + f" | {data['year']}.{data['month']:02d}."
-        canvas.drawString(margin, 17, caption)
-        canvas.drawRightString(page_width - margin, 17, f"{doc.page}. oldal")
-        canvas.restoreState()
-
-    document.build(story, onFirstPage=footer, onLaterPages=footer)
+        notes.append("A kiválasztott hónapban nincs nyilvántartott munkanap.")
+    # Reserve a line for an explicit abridgement notice and the signatures.
+    for note in notes:
+        if y < 49:
+            abbreviated = True
+            break
+        text_at(note, margin, y, width, 6.6)
+        y -= 9
+    if abbreviated:
+        text_at("… = rövidített szöveg. A teljes fejléc, beosztási hozzárendelés és minden megjegyzés a CSV-exportban szerepel.",
+                margin, max(39, y), width, 6.5, bold=True)
+        y -= 10
+    signature_y = max(25, y - 6)
+    text_at("Kelt: ____________________       Ellenőrizte: ____________________", margin, signature_y, width - 35, 7)
+    text_at("1 / 1", margin + width - 30, signature_y, 30, 7)
+    canvas.showPage()
+    canvas.save()
     return output.getvalue()

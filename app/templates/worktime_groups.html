@@ -11,9 +11,9 @@
 {% block content %}
 <div class="worktime-page">
   <section class="section-heading worktime-heading">
-    <div><span class="eyebrow">{{ _('Management') }}</span><h1>{{ _('Groups and assignments') }}</h1><p>{{ _('Set up groups and assign employees before generating a schedule. Date ranges preserve earlier assignments.') }}</p></div>
-    <a class="button button-secondary" href="{{ url_for('worktime.index', place_id=selected_place_id, year=selected_year, month=selected_month) }}">{{ _('Back to working-time records') }}</a>
+    <div><span class="eyebrow">{{ _('Working-time management') }}</span><h1>{{ _('Groups and assignments') }}</h1><p>{{ _('Set up groups and assign employees before generating a schedule. Date ranges preserve earlier assignments.') }}</p></div>
   </section>
+  {% include 'worktime_management_tabs.html' %}
   <section class="card">
     <form method="get" action="{{ url_for('worktime.groups') }}" class="worktime-place-filter">
       <input type="hidden" name="year" value="{{ selected_year }}"><input type="hidden" name="month" value="{{ selected_month }}">
