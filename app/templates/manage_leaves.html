@@ -127,10 +127,10 @@
               <button type="submit" name="action" value="approve" {% if not (can_add_ceo or can_add_leadership) %}disabled{% endif %}>{{ _('Approve') }}</button>
               <button type="submit" name="action" value="reject" class="button-secondary" {% if not (can_approve_ceo_part(current_user, leave_request) or can_approve_leadership_part(current_user, leave_request)) %}disabled{% endif %}>{{ _('Reject') }}</button>
               {% elif leave_request.status.value == 'approved' %}
-              <button type="submit" name="action" value="cancel" class="button-secondary">{{ _("Cancel") }}</button>
+              <button type="submit" name="action" value="cancel" class="button-secondary" {% if not can_review_leave_cancellation(current_user, leave_request) %}disabled{% endif %}>{{ _("Cancel") }}</button>
               {% elif leave_request.status.value == 'pending cancellation' %}
-              <button type="submit" name="action" value="cancel" class="button-secondary">{{ _("Cancel") }}</button>
-              <button type="submit" name="action" value="reject" class="button-secondary">{{ _('Reject') }}</button>
+              <button type="submit" name="action" value="cancel" class="button-secondary" {% if not can_review_leave_cancellation(current_user, leave_request) %}disabled{% endif %}>{{ _("Cancel") }}</button>
+              <button type="submit" name="action" value="reject" class="button-secondary" {% if not can_review_leave_cancellation(current_user, leave_request) %}disabled{% endif %}>{{ _('Reject') }}</button>
               {% else %}
               <span class="muted">{{ _('No actions available') }}</span>
               {% endif %}

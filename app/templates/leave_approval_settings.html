@@ -32,7 +32,7 @@
       <strong>{{ _('What happens when you save?') }}</strong>
       <p>{{ _('The rule applies to new and pending requests. Pending requests are approved immediately if their recorded approvals satisfy the new rule. Completed decisions stay unchanged.') }}</p>
       <p>{{ _('Nursery heads and deputies can review requests only for their own legal entities. Deputies cannot approve their own requests. Existing automatic approvals for Director and nursery head applicants follow the selected rule.') }}</p>
-      <p>{{ _('Rejection by an eligible reviewer closes a pending request. Cancellation permissions stay unchanged.') }}</p>
+      <p>{{ _('Rejection by an eligible reviewer closes a pending request. Cancellation can be decided by either reviewer allowed by the selected rule.') }}</p>
     </div>
     {% if settings.updated_by %}<p class="help-text">{{ _('Last changed by %(name)s', name=user_display_name(settings.updated_by)) }}{% if settings.updated_at %} · {{ settings.updated_at.strftime('%Y-%m-%d %H:%M') }} UTC{% endif %}</p>{% endif %}
     <div class="button-row">

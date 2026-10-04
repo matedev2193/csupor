@@ -3,7 +3,7 @@ from functools import wraps
 from secrets import compare_digest, token_urlsafe
 from urllib.parse import urlsplit
 
-from flask import abort, flash, redirect, render_template, request, session, url_for
+from flask import abort, current_app, flash, redirect, render_template, request, session, url_for
 from flask_babel import _
 from flask_login import current_user, login_required, login_user, logout_user
 from sqlalchemy.orm import joinedload
@@ -22,6 +22,10 @@ from .leave_approval import (
     approvals_satisfy_policy,
     current_leave_approval_policy,
     get_leave_approval_settings,
+)
+from .notification_events import (
+    actionable_recipient_ids, record_leave_change, record_reviewer_changes,
+    snapshot_leave_request, snapshot_pending_leave_tasks,
 )
 
 from .models import (
@@ -1018,7 +1022,7 @@ def _leadership_active_on(leadership: Leadership, day: date) -> bool:
 
 
 def _active_leadership_for_user(user: User, day: date | None = None) -> list[Leadership]:
-    active_day = day or date.today()
+    active_day = day or local_today()
     return [
         leadership
         for contract in user.contracts
@@ -1028,7 +1032,7 @@ def _active_leadership_for_user(user: User, day: date | None = None) -> list[Lea
 
 
 def _active_leadership_for_user_entity(user: User, legal_entity_id: int, day: date | None = None) -> list[Leadership]:
-    active_day = day or date.today()
+    active_day = day or local_today()
     return [
         leadership
         for leadership in _active_leadership_for_user(user, active_day)
@@ -1086,6 +1090,16 @@ def _can_approve_leadership_part(user: User, leave_request: LeaveRequest) -> boo
     return False
 
 
+def _can_review_leave_cancellation(user: User, leave_request: LeaveRequest) -> bool:
+    return _can_approve_ceo_part(user, leave_request) or _can_approve_leadership_part(user, leave_request)
+
+
+def _wake_leave_notifications() -> None:
+    from .notification_delivery import wake_notifications
+
+    wake_notifications(current_app._get_current_object())
+
+
 def _apply_automatic_leave_approvals(leave_request: LeaveRequest) -> None:
     applicant = leave_request.user
     if _can_approve_ceo_part(applicant, leave_request):
@@ -1136,7 +1150,8 @@ def _manager_review_leave_requests(user: User, limit: int | None = None) -> list
     actionable_requests = [
         leave_request
         for leave_request in query.all()
-        if leave_request.status == LeaveRequestStatus.pending_cancellation
+        if (leave_request.status == LeaveRequestStatus.pending_cancellation
+            and _can_review_leave_cancellation(user, leave_request))
         or (
             leave_request.status == LeaveRequestStatus.pending_approval
             and (
@@ -1411,20 +1426,28 @@ def init_routes(app):
                 if leave_request is None:
                     flash(_("Leave request not found."), "error")
                 elif action == "cancel":
+                    before = snapshot_leave_request(leave_request)
                     if leave_request.status == LeaveRequestStatus.pending_approval:
                         leave_request.status = LeaveRequestStatus.cancelled
                         leave_request.decided_by_id = current_user.id
+                        record_leave_change(leave_request, before, current_user, action=action)
                         db.session.commit()
+                        _wake_leave_notifications()
                         flash(_("Pending leave request cancelled."), "success")
                     elif leave_request.status == LeaveRequestStatus.approved:
                         leave_request.status = LeaveRequestStatus.pending_cancellation
+                        record_leave_change(leave_request, before, current_user, action=action)
                         db.session.commit()
+                        _wake_leave_notifications()
                         flash(_("Leave cancellation requested."), "success")
                     else:
                         flash(_("Only approved or pending approval leaves can be cancelled here."), "error")
                 elif leave_request.status == LeaveRequestStatus.pending_cancellation:
+                    before = snapshot_leave_request(leave_request)
                     leave_request.status = LeaveRequestStatus.approved
+                    record_leave_change(leave_request, before, current_user, action=action)
                     db.session.commit()
+                    _wake_leave_notifications()
                     flash(_("Leave cancellation request undone."), "success")
                 else:
                     flash(_("Only pending cancellation leaves can be undone."), "error")
@@ -1524,7 +1547,9 @@ def init_routes(app):
             db.session.add(leave_request)
             db.session.flush()
             _apply_automatic_leave_approvals(leave_request)
+            record_leave_change(leave_request, None, current_user, action="submit")
             db.session.commit()
+            _wake_leave_notifications()
             if leave_request.status == LeaveRequestStatus.approved:
                 flash(_("Leave request submitted and automatically approved."), "success")
             else:
@@ -1610,8 +1635,11 @@ def init_routes(app):
                 flash(_("That privilege cannot be assigned here."), "error")
                 return redirect(url_for("manage_privileges"))
 
+            previous_tasks = snapshot_pending_leave_tasks()
             user.privilege = privilege
+            record_reviewer_changes(previous_tasks, current_user)
             db.session.commit()
+            _wake_leave_notifications()
             flash(_("Updated %(username)s to %(privilege)s privilege.", username=user.username, privilege=enum_label(privilege)), "success")
             return redirect(url_for("manage_privileges"))
 
@@ -2132,20 +2160,30 @@ def init_routes(app):
                 flash(_("The approval rule is unchanged."), "success")
                 return redirect(url_for("leave_approval_settings"))
 
+            previous_policy = settings.policy
             settings.policy = policy
             settings.updated_by_id = current_user.id
             settings.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
             approved_count = 0
             pending_requests = (
-                LeaveRequest.query.filter_by(status=LeaveRequestStatus.pending_approval)
+                LeaveRequest.query.filter(LeaveRequest.status.in_((
+                    LeaveRequestStatus.pending_approval, LeaveRequestStatus.pending_cancellation,
+                )))
                 .with_for_update().populate_existing().all()
             )
             for leave_request in pending_requests:
-                if approvals_satisfy_policy(leave_request, policy):
+                before = snapshot_leave_request(leave_request)
+                previous_recipients = actionable_recipient_ids(leave_request, policy=previous_policy)
+                if leave_request.status == LeaveRequestStatus.pending_approval and approvals_satisfy_policy(leave_request, policy):
                     leave_request.status = LeaveRequestStatus.approved
                     leave_request.decided_by_id = current_user.id
                     approved_count += 1
+                record_leave_change(
+                    leave_request, before, current_user, action="policy_change",
+                    previous_recipients=previous_recipients,
+                )
             db.session.commit()
+            _wake_leave_notifications()
             flash(_("Approval rule saved. Pending requests approved using recorded approvals: %(count)s.", count=approved_count), "success")
             return redirect(url_for("leave_approval_settings"))
 
@@ -2184,6 +2222,7 @@ def init_routes(app):
                 flash(_("Leave request not found or not available to you."), "error")
                 return redirect(url_for("dashboard" if return_to == "dashboard" else "manage_leaves"))
 
+            before = snapshot_leave_request(leave_request)
             if action == "approve":
                 approved_parts = _approve_leave_request(leave_request, current_user)
                 if not approved_parts:
@@ -2200,12 +2239,16 @@ def init_routes(app):
                     leave_request.decided_by_id = current_user.id
                     flash(_("Leave request rejected."), "success")
                 elif leave_request.status == LeaveRequestStatus.pending_cancellation:
+                    if not _can_review_leave_cancellation(current_user, leave_request):
+                        abort(403)
                     leave_request.status = LeaveRequestStatus.approved
                     flash(_("Leave cancellation rejected; request remains approved."), "success")
                 else:
                     flash(_("Only pending approval or pending cancellation leave requests can be rejected."), "error")
             elif action == "cancel":
                 if leave_request.status in {LeaveRequestStatus.approved, LeaveRequestStatus.pending_cancellation}:
+                    if not _can_review_leave_cancellation(current_user, leave_request):
+                        abort(403)
                     leave_request.status = LeaveRequestStatus.cancelled
                     leave_request.decided_by_id = current_user.id
                     flash(_("Leave request cancelled."), "success")
@@ -2215,7 +2258,9 @@ def init_routes(app):
                 flash(_("Invalid leave action."), "error")
                 return redirect(url_for("dashboard" if return_to == "dashboard" else "manage_leaves"))
 
+            record_leave_change(leave_request, before, current_user, action=action)
             db.session.commit()
+            _wake_leave_notifications()
             if return_to == "dashboard":
                 return redirect(url_for("dashboard"))
             return redirect(
@@ -2286,6 +2331,7 @@ def init_routes(app):
             selected_status=selected_status,
             can_approve_ceo_part=_can_approve_ceo_part,
             can_approve_leadership_part=_can_approve_leadership_part,
+            can_review_leave_cancellation=_can_review_leave_cancellation,
             leave_request_end_date=_leave_request_end_date,
             workplace_leave_counts=workplace_leave_counts,
             user_display_name=_user_display_name,
@@ -2671,14 +2717,19 @@ def init_routes(app):
                 flash(_("Leadership record not found."), "error")
                 return redirect(url_for("manage_leadership"))
 
+            previous_tasks = snapshot_pending_leave_tasks()
             errors = _save_leadership_from_form(leadership)
             if errors:
+                db.session.rollback()
                 for err in errors:
                     flash(err, "error")
                 return redirect(url_for("manage_leadership", edit=leadership_id) if leadership_id else url_for("manage_leadership"))
 
             db.session.add(leadership)
+            db.session.flush()
+            record_reviewer_changes(previous_tasks, current_user)
             db.session.commit()
+            _wake_leave_notifications()
             flash(_("Leadership record updated.") if leadership_id else _("Leadership record saved."), "success")
             return redirect(url_for("manage_leadership"))
 

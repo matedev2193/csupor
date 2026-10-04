@@ -61,6 +61,12 @@ def create_app() -> Flask:
     app.request_class = UploadRequest
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret-key-change-me")
     app.config["SQLALCHEMY_DATABASE_URI"] = _build_database_uri()
+    app.config["EMAIL_SECRET_KEY"] = os.getenv("EMAIL_SECRET_KEY")
+    # SQLite is also used by isolated tests; those run the dispatcher explicitly.
+    worker_default = not app.config["SQLALCHEMY_DATABASE_URI"].startswith("sqlite")
+    app.config["EMAIL_WORKER_ENABLED"] = os.getenv(
+        "EMAIL_WORKER_ENABLED", "true" if worker_default else "false",
+    ).lower() in {"1", "true", "yes", "on"}
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["BABEL_DEFAULT_LOCALE"] = DEFAULT_LOCALE
     app.config["BABEL_TRANSLATION_DIRECTORIES"] = "translations"
@@ -88,6 +94,11 @@ def create_app() -> Flask:
 
     app.register_blueprint(worktime)
 
+    from .mail_settings import mail_settings
+    from . import notification_models  # noqa: F401 — register durable queue tables.
+
+    app.register_blueprint(mail_settings)
+
     from .account_display import account_template_context
 
     app.context_processor(account_template_context)
@@ -105,5 +116,9 @@ def create_app() -> Flask:
         from .leave_approval import initialise_leave_approval_settings
 
         initialise_leave_approval_settings()
+
+    from .notification_delivery import init_notifications
+
+    init_notifications(app)
 
     return app

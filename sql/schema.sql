@@ -401,6 +401,83 @@ CREATE TABLE IF NOT EXISTS leave_requests (
     CHECK (end_date IS NULL OR end_date >= start_date)
 ) ENGINE=InnoDB;
 
+-- SMTP configuration contains an encrypted password, never a plaintext secret.
+CREATE TABLE IF NOT EXISTS mail_server_settings (
+  id INT NOT NULL,
+  enabled BOOLEAN NOT NULL DEFAULT FALSE,
+  host VARCHAR(255) NOT NULL DEFAULT '',
+  port INT NOT NULL DEFAULT 587,
+  security VARCHAR(10) NOT NULL DEFAULT 'starttls',
+  username VARCHAR(255) NOT NULL DEFAULT '',
+  encrypted_password TEXT NOT NULL,
+  sender_email VARCHAR(254) NOT NULL DEFAULT '',
+  sender_name VARCHAR(120) NOT NULL DEFAULT 'CSUPOR',
+  base_url VARCHAR(500) NOT NULL DEFAULT '',
+  revision VARCHAR(32) NOT NULL,
+  updated_at DATETIME NULL,
+  updated_by_id INT UNSIGNED NULL,
+  PRIMARY KEY (id),
+  CONSTRAINT single_mail_server_settings CHECK (id = 1),
+  CONSTRAINT mail_server_port CHECK (port BETWEEN 1 AND 65535),
+  CONSTRAINT mail_server_security CHECK (security IN ('starttls', 'ssl', 'none')),
+  CONSTRAINT fk_mail_server_settings_updated_by_id
+    FOREIGN KEY (updated_by_id) REFERENCES users(id)
+    ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Queue timestamps are UTC. Delivery converts the daily 20:00 Budapest deadline
+-- to UTC before saving it, so changing the database timezone has no effect.
+CREATE TABLE IF NOT EXISTS mail_batches (
+  id VARCHAR(32) NOT NULL,
+  batch_key VARCHAR(120) NOT NULL,
+  recipient_id INT UNSIGNED NOT NULL,
+  kind VARCHAR(12) NOT NULL,
+  created_at DATETIME NOT NULL,
+  due_at DATETIME NOT NULL,
+  sent_at DATETIME NULL,
+  claimed_at DATETIME NULL,
+  next_attempt_at DATETIME NULL,
+  claim_token VARCHAR(32) NULL,
+  status VARCHAR(12) NOT NULL DEFAULT 'pending',
+  attempts INT NOT NULL DEFAULT 0,
+  last_error VARCHAR(80) NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_mail_batches_batch_key (batch_key),
+  KEY ix_mail_batches_dispatch (status, due_at, next_attempt_at),
+  CONSTRAINT fk_mail_batches_recipient_id
+    FOREIGN KEY (recipient_id) REFERENCES users(id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS leave_notifications (
+  id INT NOT NULL AUTO_INCREMENT,
+  event_key VARCHAR(32) NOT NULL,
+  recipient_id INT UNSIGNED NOT NULL,
+  leave_request_id INT NOT NULL,
+  event_type VARCHAR(40) NOT NULL,
+  payload JSON NOT NULL,
+  is_task BOOLEAN NOT NULL DEFAULT FALSE,
+  is_owner BOOLEAN NOT NULL DEFAULT FALSE,
+  urgent BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at DATETIME NOT NULL,
+  due_at DATETIME NOT NULL,
+  status VARCHAR(12) NOT NULL DEFAULT 'pending',
+  batch_id VARCHAR(32) NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_leave_notification_event_recipient (event_key, recipient_id),
+  KEY ix_leave_notifications_dispatch (status, batch_id, due_at),
+  KEY ix_leave_notifications_batch_id (batch_id),
+  CONSTRAINT fk_leave_notifications_recipient_id
+    FOREIGN KEY (recipient_id) REFERENCES users(id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_leave_notifications_leave_request_id
+    FOREIGN KEY (leave_request_id) REFERENCES leave_requests(id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_leave_notifications_batch_id
+    FOREIGN KEY (batch_id) REFERENCES mail_batches(id)
+    ON DELETE SET NULL
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS working_day_overrides (
   id INT NOT NULL AUTO_INCREMENT,
   day DATE NOT NULL,

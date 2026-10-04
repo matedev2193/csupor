@@ -253,7 +253,7 @@ class LeaveApprovalTests(unittest.TestCase):
             self.assertTrue(all(item.decided_by_id is None for item in completed))
             self.assertEqual(leader.leadership_approved_by_id, self.users["principal"].id)
 
-    def test_only_eligible_reviewer_can_reject_pending_but_cancellation_unchanged(self):
+    def test_only_eligible_reviewer_can_reject_pending_and_review_cancellation(self):
         for policy, excluded, allowed in [
             (LeaveApprovalPolicy.ceo_only, "principal", "ceo"),
             (LeaveApprovalPolicy.leadership_only, "ceo", "principal"),
@@ -265,9 +265,13 @@ class LeaveApprovalTests(unittest.TestCase):
             self.act(leave_request, allowed, "reject")
             self.assertEqual(leave_request.status, LeaveRequestStatus.rejected)
             cancel = self.leave(status=LeaveRequestStatus.pending_cancellation)
-            self.act(cancel, excluded, "reject")
+            self.assertEqual(self.act(cancel, excluded, "reject").status_code, 403)
+            self.assertEqual(cancel.status, LeaveRequestStatus.pending_cancellation)
+            self.act(cancel, allowed, "reject")
             self.assertEqual(cancel.status, LeaveRequestStatus.approved)
-            self.act(cancel, excluded, "cancel")
+            self.assertEqual(self.act(cancel, excluded, "cancel").status_code, 403)
+            self.assertEqual(cancel.status, LeaveRequestStatus.approved)
+            self.act(cancel, allowed, "cancel")
             self.assertEqual(cancel.status, LeaveRequestStatus.cancelled)
 
     def test_localised_settings_and_required_approval_badges(self):

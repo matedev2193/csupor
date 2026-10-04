@@ -104,11 +104,19 @@ Users with Director privilege (stored as `ceo`) can open **Management → Approv
 
 Saving applies the rule to new and pending requests. Pending requests whose recorded approvals satisfy the new rule become approved in the same transaction; the director who changed the rule is recorded as the decision-maker, while the original approval records are preserved. Approved, rejected, cancelled and pending-cancellation requests are unchanged. Selecting a stricter rule does not reopen completed decisions.
 
-Nursery head/deputy approvals remain scoped to their legal entities. Deputies cannot approve their own requests. Existing director/nursery head self-approvals follow the selected rule. An eligible reviewer may reject a pending request in any mode; a rejection closes it. Existing cancellation permissions remain unchanged. Review lists and approval buttons follow the current rule. The calendar names eligible people for the selected contract and combines overlapping roles.
+Nursery head/deputy approvals remain scoped to their legal entities. Deputies cannot approve their own requests. Existing director/nursery head self-approvals follow the selected rule. An eligible reviewer may reject a pending request in any mode; a rejection closes it. Cancellation decisions use the same eligible roles and entity scope: either eligible reviewer can resolve a cancellation, including under the **Both** rule. Review lists and action buttons follow the current rule. The calendar names eligible people for the selected contract and combines overlapping roles.
 
 The new `leave_approval_settings` table and its default **Both** row are created automatically on startup; this feature needs no changes to existing tables or manual migration. Its user foreign key uses the same signed/unsigned compatibility handling as the other newly created tables. The setting persists in the database, records its latest editor/time, and is shared by all workers. On MySQL, a settings row lock serialises rule changes with leave submissions and manager decisions. Stale settings forms cannot silently overwrite another director's change.
 
 Run the regression suite with `python -m unittest discover -s tests -v`.
+
+### Leave email notifications
+
+Developer accounts have a separate **Settings** menu (`/settings`) for the SMTP host, port, connection security, optional credentials, sender and public application URL. Email is disabled until configured and enabled. Install the updated requirements and use a stable, non-default `SECRET_KEY` or separate `EMAIL_SECRET_KEY`; SMTP passwords are stored encrypted and are never displayed again.
+
+Eligible reviewers receive approval/cancellation tasks, and applicants receive changes to their own requests. Each recipient gets one daily digest at **20:00 Europe/Budapest**. Changes concerning leave that starts within 24 hours, or has already started, are queued for immediate delivery. Notifications use the current email address on the user's account. Pending tasks are checked again before sending.
+
+The persistent queue survives restarts and retries failed deliveries. The built-in worker runs by default for MySQL deployments while the application process remains running; a separately supervised worker is also available. Three new tables are created at startup, or can be created beforehand using the explicit repeatable SQL migration. See [email setup, scheduling and operations](docs/email-notifications.md) for commands and deployment requirements.
 
 ### Full portal checklist
 
