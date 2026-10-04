@@ -21,7 +21,7 @@
       <div class="field"><label for="worktime-year">{{ _('Year') }}</label><input id="worktime-year" name="year" type="number" min="1970" max="2100" value="{{ selected_year }}" required></div>
       <div class="field"><label for="worktime-month">{{ _('Month') }}</label><select id="worktime-month" name="month">{% for month_number in range(1, 13) %}<option value="{{ month_number }}"{% if month_number == selected_month %} selected{% endif %}>{{ '%02d'|format(month_number) }}</option>{% endfor %}</select></div>
       <div class="field worktime-filter-place"><label for="worktime-place">{{ _('Workplace') }}</label><select id="worktime-place" name="place_id"><option value="">{{ _('Select a workplace') }}</option>{% for place in places %}<option value="{{ place.id }}"{% if place.id == selected_place_id %} selected{% endif %}>{{ place.address }}</option>{% endfor %}</select></div>
-      {% if can_manage_worktime %}<div class="field worktime-filter-person"><div class="worktime-person-copy"><label for="worktime-user">{{ _('Employee schedule') }}</label><small id="worktime-user-help" class="help-text">{{ _('Choose from employees with a contract at the selected workplace in this month.') }}</small></div><select id="worktime-user" name="user_id" aria-describedby="worktime-user-help"><option value="">{{ _('Select an employee') }}</option>{% for user in users %}<option value="{{ user.id }}"{% if user.id == selected_user_id %} selected{% endif %}>{{ user_display_name(user) }}</option>{% endfor %}</select></div>{% endif %}
+      {% if can_manage_worktime %}<input type="hidden" name="user_id" value="{{ selected_user_id }}">{% endif %}
       <button type="submit">{{ _('View schedule') }}</button>
     </form>
   </section>
@@ -68,48 +68,6 @@
   </section>
   {% endif %}
 
-  {% if selected_user and schedule %}
-  <section class="table-card worktime-register" aria-labelledby="worktime-register-title">
-    <div class="section-heading">
-      <div><h2 id="worktime-register-title">{{ user_display_name(selected_user) }}</h2><p>{{ _('Working-time record') }} · {{ selected_year }}. {{ '%02d'|format(selected_month) }}.</p>{% if not can_manage_worktime %}<span class="status-pill {{ 'status-rejected' if is_stale else 'status-approved' if schedule.status == 'confirmed' else 'status-pending-approval' }}">{{ _('Needs updating') if is_stale else _('Confirmed') if schedule.status == 'confirmed' else _('Draft') }}</span>{% endif %}</div>
-      {% if rows and not is_stale %}<div class="button-row"><a class="button button-secondary" href="{{ url_for('worktime.export', user_id=selected_user.id, year=selected_year, month=selected_month, place_id=selected_place_id, format='pdf') }}">{{ _('Download PDF') }}</a><a class="button button-secondary" href="{{ url_for('worktime.export', user_id=selected_user.id, year=selected_year, month=selected_month, place_id=selected_place_id, format='csv') }}">{{ _('Download CSV') }}</a></div>{% endif %}
-    </div>
-    {% if not can_manage_worktime and is_stale %}<p class="worktime-notice worktime-notice-warning" role="alert">{{ _('Your record needs to be updated by HR or the CEO before it can be exported.') }}</p>{% elif not can_manage_worktime and schedule.status != 'confirmed' %}<p class="help-text">{{ _('This record is a draft and has not yet been confirmed.') }}</p>{% endif %}
-    {% if rows %}
-    <p class="help-text worktime-hours-hint">{{ _('Durations are shown as hours:minutes. Breaks are excluded from worked hours.') }}</p>
-    <div class="table-wrap" tabindex="0" role="region" aria-label="{{ _('Daily working-time records') }}">
-      <table class="worktime-table">
-        <thead><tr><th scope="col">{{ _('Date') }}</th><th scope="col">{{ _('Start / end') }}</th><th scope="col">{{ _('Break') }}</th><th scope="col">{{ _('Worked hours') }}</th><th scope="col">{{ _('Teaching time') }}</th><th scope="col">{{ _('Group / note') }}</th>{% if can_manage_worktime %}<th scope="col">{{ _('Actions') }}</th>{% endif %}</tr></thead>
-        <tbody>{% for row in rows %}<tr class="{{ 'worktime-absent' if row.work_minutes == 0 else '' }}" data-entry-id="{{ row.id }}">
-          <th scope="row"><time datetime="{{ row.date }}">{{ row.date|dateformat('MM. dd., EEE' if current_locale == 'hu' else 'dd MMM, EEE') }}</time></th>
-          <td class="worktime-time">{{ row.start or '—' }}<span class="muted">{{ row.end or '—' }}</span></td>
-          <td class="worktime-time">{% if row.break_minutes %}{{ row.break_start or '—' }}<span class="muted">{{ _('%(minutes)s min', minutes=row.break_minutes) }}</span>{% else %}—{% endif %}</td>
-          <td class="worktime-time"><strong>{{ duration(row.work_minutes) }}</strong></td>
-          <td class="worktime-time">{{ duration(row.teaching_minutes) }}</td>
-          <td class="worktime-note">{% if row.group_name %}<strong>{{ row.group_name }}</strong>{% endif %}{% if row.job_title %}<small class="muted">{{ row.job_title }}</small>{% endif %}{% if row.absence_label %}<p>{{ row.absence_label }}</p>{% endif %}{% if row.note %}<p>{{ row.note }}</p>{% endif %}{% if row.is_manual %}<span class="badge">{{ _('Manually edited') }}</span>{% endif %}</td>
-          {% if can_manage_worktime %}<td class="worktime-edit-cell">
-            <details class="worktime-entry-editor"><summary>{{ _('Edit') }}</summary>
-              <form method="post" action="{{ url_for('worktime.edit_entry', entry_id=row.id) }}" class="worktime-entry-form">
-                {{ period_fields() }}
-                <strong>{{ row.date }}</strong>
-                <div class="worktime-time-pair"><div class="field"><label for="start-{{ row.id }}">{{ _('Start') }}</label><input id="start-{{ row.id }}" name="start" type="time" value="{{ row.start or '' }}"></div><div class="field"><label for="end-{{ row.id }}">{{ _('End') }}</label><input id="end-{{ row.id }}" name="end" type="time" value="{{ row.end or '' }}"></div></div>
-                <div class="field"><label for="break-{{ row.id }}">{{ _('Break starts at') }}</label><input id="break-{{ row.id }}" name="break_start" type="time" value="{{ row.break_start or '' }}"><small class="help-text">{{ _('A 20-minute break is required when worked time exceeds six hours.') }}</small></div>
-                <div class="field"><label for="teaching-{{ row.id }}">{{ _('Teaching time (minutes)') }}</label><input id="teaching-{{ row.id }}" name="teaching_minutes" type="number" min="0" max="480" step="1" value="{{ row.teaching_minutes or 0 }}" required></div>
-                <div class="field"><label for="note-{{ row.id }}">{{ _('Note') }}</label><textarea id="note-{{ row.id }}" name="note" rows="2" maxlength="2000">{{ row.manual_note or '' }}</textarea></div>
-                <button type="submit"{% if is_stale %} disabled{% endif %}>{{ _('Save changes') }}</button>
-              </form>
-            </details>
-          </td>{% endif %}
-        </tr>{% endfor %}</tbody>
-        <tfoot><tr><th scope="row" colspan="3">{{ _('Monthly total') }}</th><td>{{ duration(monthly_total_minutes) }}</td><td>{{ duration(monthly_teaching_minutes) }}</td><td{% if can_manage_worktime %} colspan="2"{% endif %}></td></tr></tfoot>
-      </table>
-    </div>
-    {% if weekly_totals %}
-    <section class="worktime-week-section" aria-labelledby="worktime-weeks-title"><h3 id="worktime-weeks-title">{{ _('Weekly totals') }}</h3><div class="worktime-week-grid">{% for week in weekly_totals %}<div class="worktime-week-card"><span>{{ week.week_start }}{% if week.week_end %} – {{ week.week_end }}{% endif %}</span><strong>{{ duration(week.minutes) }}</strong><small>{{ _('Within this month') if week.partial else _('Worked hours') }}</small>{% if week.teaching_minutes %}<small>{{ _('Teaching time') }}: {{ duration(week.teaching_minutes) }}</small>{% endif %}</div>{% endfor %}</div></section>
-    {% endif %}
-    {% else %}<div class="empty-state">{{ _('There are no working-time entries for this employee in the selected month.') if can_manage_worktime else _('There are no working-time entries for you in the selected month.') }}</div>{% endif %}
-  </section>
-  {% elif schedule and can_manage_worktime %}<div class="empty-state">{{ _('Select an employee to view and export their monthly record.') }}</div>{% elif not can_manage_worktime %}<div class="empty-state">{{ _('Your working-time record has not been prepared for this month yet.') }}</div>{% endif %}
 
   {% if can_manage_worktime and selected_place %}
   <section class="card" id="worktime-merges">
@@ -145,5 +103,61 @@
       </ul>
     </details>
   </section>{% endif %}
+  {% if (can_manage_worktime and selected_place) or (selected_user and schedule) %}
+  <section class="table-card worktime-register" id="worktime-register" aria-labelledby="worktime-register-title">
+    {% if can_manage_worktime %}
+    <h2 id="worktime-register-title">{{ _('Work schedule') }}</h2>
+    <form method="get" action="{{ url_for(worktime_index_endpoint, _anchor='worktime-register') }}" class="worktime-employee-form">
+      <input type="hidden" name="year" value="{{ selected_year }}">
+      <input type="hidden" name="month" value="{{ selected_month }}">
+      <input type="hidden" name="place_id" value="{{ selected_place_id }}">
+      <div class="field worktime-filter-person"><div class="worktime-person-copy"><label for="worktime-user">{{ _('Employee schedule') }}</label><small id="worktime-user-help" class="help-text">{{ _('Choose from employees with a contract at the selected workplace in this month.') }}</small></div><select id="worktime-user" name="user_id" aria-describedby="worktime-user-help"><option value="">{{ _('Select an employee') }}</option>{% for user in users %}<option value="{{ user.id }}"{% if user.id == selected_user_id %} selected{% endif %}>{{ user_display_name(user) }}</option>{% endfor %}</select></div>
+      <button type="submit">{{ _('View schedule') }}</button>
+    </form>
+    {% endif %}
+    {% if selected_user and schedule %}
+    <div class="section-heading">
+      <div>{% if can_manage_worktime %}<h3>{{ user_display_name(selected_user) }}</h3>{% else %}<h2 id="worktime-register-title">{{ user_display_name(selected_user) }}</h2>{% endif %}<p>{{ _('Working-time record') }} · {{ selected_year }}. {{ '%02d'|format(selected_month) }}.</p>{% if not can_manage_worktime %}<span class="status-pill {{ 'status-rejected' if is_stale else 'status-approved' if schedule.status == 'confirmed' else 'status-pending-approval' }}">{{ _('Needs updating') if is_stale else _('Confirmed') if schedule.status == 'confirmed' else _('Draft') }}</span>{% endif %}</div>
+      {% if rows and not is_stale %}<div class="button-row"><a class="button button-secondary" href="{{ url_for('worktime.export', user_id=selected_user.id, year=selected_year, month=selected_month, place_id=selected_place_id, format='pdf') }}">{{ _('Download PDF') }}</a><a class="button button-secondary" href="{{ url_for('worktime.export', user_id=selected_user.id, year=selected_year, month=selected_month, place_id=selected_place_id, format='csv') }}">{{ _('Download CSV') }}</a></div>{% endif %}
+    </div>
+    {% if not can_manage_worktime and is_stale %}<p class="worktime-notice worktime-notice-warning" role="alert">{{ _('Your record needs to be updated by HR or the CEO before it can be exported.') }}</p>{% elif not can_manage_worktime and schedule.status != 'confirmed' %}<p class="help-text">{{ _('This record is a draft and has not yet been confirmed.') }}</p>{% endif %}
+    {% if rows %}
+    <p class="help-text worktime-hours-hint">{{ _('Durations are shown as hours:minutes. Breaks are excluded from bound working time.') }}</p>
+    <div class="table-wrap" tabindex="0" role="region" aria-label="{{ _('Daily working-time records') }}">
+      <table class="worktime-table">
+        <thead><tr><th scope="col">{{ _('Date') }}</th><th scope="col">{{ _('Start / end') }}</th><th scope="col">{{ _('Break') }}</th><th scope="col">{{ _('Bound working time') }}</th><th scope="col">{{ _('Teaching time') }}</th><th scope="col">{{ _('Group / note') }}</th>{% if can_manage_worktime %}<th scope="col">{{ _('Actions') }}</th>{% endif %}</tr></thead>
+        <tbody>{% for row in rows %}<tr class="{{ 'worktime-absent' if row.work_minutes == 0 else '' }}" data-entry-id="{{ row.id }}">
+          <th scope="row"><time datetime="{{ row.date }}">{{ row.date|dateformat('MM. dd., EEE' if current_locale == 'hu' else 'dd MMM, EEE') }}</time></th>
+          <td class="worktime-time">{{ row.start or '—' }}<span class="muted">{{ row.end or '—' }}</span></td>
+          <td class="worktime-time">{% if row.break_minutes %}{{ row.break_start or '—' }}<span class="muted">{{ _('%(minutes)s min', minutes=row.break_minutes) }}</span>{% else %}—{% endif %}</td>
+          <td class="worktime-time"><strong>{{ duration(row.work_minutes) }}</strong></td>
+          <td class="worktime-time">{{ duration(row.teaching_minutes) }}</td>
+          <td class="worktime-note">{% if row.group_name %}<strong>{{ row.group_name }}</strong>{% endif %}{% if row.job_title %}<small class="muted">{{ row.job_title }}</small>{% endif %}{% if row.absence_label %}<p>{{ row.absence_label }}</p>{% endif %}{% if row.note %}<p>{{ row.note }}</p>{% endif %}{% if row.is_manual %}<span class="badge">{{ _('Manually edited') }}</span>{% endif %}</td>
+          {% if can_manage_worktime %}<td class="worktime-edit-cell">
+            <details class="worktime-entry-editor"><summary>{{ _('Edit') }}</summary>
+              <form method="post" action="{{ url_for('worktime.edit_entry', entry_id=row.id) }}" class="worktime-entry-form">
+                {{ period_fields() }}
+                <strong>{{ row.date }}</strong>
+                <div class="worktime-time-pair"><div class="field"><label for="start-{{ row.id }}">{{ _('Start') }}</label><input id="start-{{ row.id }}" name="start" type="time" value="{{ row.start or '' }}"></div><div class="field"><label for="end-{{ row.id }}">{{ _('End') }}</label><input id="end-{{ row.id }}" name="end" type="time" value="{{ row.end or '' }}"></div></div>
+                <div class="field"><label for="break-{{ row.id }}">{{ _('Break starts at') }}</label><input id="break-{{ row.id }}" name="break_start" type="time" value="{{ row.break_start or '' }}"><small class="help-text">{{ _('A 20-minute break is required when worked time exceeds six hours.') }}</small></div>
+                <div class="field"><label for="teaching-{{ row.id }}">{{ _('Teaching time (minutes)') }}</label><input id="teaching-{{ row.id }}" name="teaching_minutes" type="number" min="0" max="480" step="1" value="{{ row.teaching_minutes or 0 }}" required></div>
+                <div class="field"><label for="note-{{ row.id }}">{{ _('Note') }}</label><textarea id="note-{{ row.id }}" name="note" rows="2" maxlength="2000">{{ row.manual_note or '' }}</textarea></div>
+                <button type="submit"{% if is_stale %} disabled{% endif %}>{{ _('Save changes') }}</button>
+              </form>
+            </details>
+          </td>{% endif %}
+        </tr>{% endfor %}</tbody>
+        <tfoot><tr><th scope="row" colspan="3">{{ _('Monthly total') }}</th><td>{{ duration(monthly_total_minutes) }}</td><td>{{ duration(monthly_teaching_minutes) }}</td><td{% if can_manage_worktime %} colspan="2"{% endif %}></td></tr></tfoot>
+      </table>
+    </div>
+    {% if weekly_totals %}
+    <section class="worktime-week-section" aria-labelledby="worktime-weeks-title"><h3 id="worktime-weeks-title">{{ _('Weekly totals') }}</h3><div class="worktime-week-grid">{% for week in weekly_totals %}<div class="worktime-week-card"><span>{{ week.week_start }}{% if week.week_end %} – {{ week.week_end }}{% endif %}</span><strong>{{ duration(week.minutes) }}</strong><small>{{ _('Within this month') if week.partial else _('Bound working time') }}</small>{% if week.teaching_minutes %}<small>{{ _('Teaching time') }}: {{ duration(week.teaching_minutes) }}</small>{% endif %}</div>{% endfor %}</div></section>
+    {% endif %}
+    {% else %}<div class="empty-state">{{ _('There are no working-time entries for this employee in the selected month.') if can_manage_worktime else _('There are no working-time entries for you in the selected month.') }}</div>{% endif %}
+    {% elif schedule %}<div class="empty-state">{{ _('Select an employee to view and export their monthly record.') }}</div>
+    {% else %}<div class="empty-state">{{ _('No schedule has been generated for this workplace and month yet.') }}</div>{% endif %}
+  </section>
+  {% elif not can_manage_worktime %}<div class="empty-state">{{ _('Your working-time record has not been prepared for this month yet.') }}</div>{% endif %}
+
 </div>
 {% endblock %}

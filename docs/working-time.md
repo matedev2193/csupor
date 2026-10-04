@@ -4,7 +4,7 @@ A modul a megadott intézményi beosztási szabályokat hajtja végre. A szerző
 
 ## Keretek és időszámítás
 
-Minden számítás egész percekkel történik. A szünet nem része a ledolgozott időnek.
+Minden számítás egész percekkel történik. A szünet nem része a kötött időnek.
 
 | Munkakör | Beosztandó heti idő | Ebből nevelési idő | Alap napi munka | Szünet |
 | --- | ---: | ---: | ---: | ---: |
@@ -56,3 +56,5 @@ A hónaphatáron átnyúló hétnél a havi nyilvántartás csak az adott hónap
 ## Üzemeltetés
 
 Az öt új tábla (`work_groups`, `work_assignments`, `work_group_merges`, `work_schedules`, `work_time_entries`) induláskor létrejön. Meglévő táblákhoz nem adunk új kötelező mezőt; a már létező MySQL azonosítók méretéhez és előjelességéhez az új idegen kulcsok alkalmazkodnak. A PDF-export a rögzített ReportLab-verziót és a csomagolt, magyar karaktereket támogató betűkészletet használja.
+
+A munkavállaló a Munkaidő-kezelés oldal alján, a Munkaidő-beosztás doboz tetején választható ki. A választás megtartja az évet, a hónapot és a munkavégzési helyet; a felső időszakszűrő a kiválasztott dolgozót is megőrzi, amennyiben az új időszakban és helyszínen rendelkezik szerződéssel. A táblázatokban, valamint a PDF- és CSV-exportban az óraszám megnevezése **Kötött idő**.

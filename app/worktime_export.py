@@ -32,7 +32,7 @@ DRAFT_LABEL = "TERVEZET - még nem jóváhagyott beosztás"
 PARTIAL_WEEK_NOTE = (
     "A hónaphatáron átnyúló hetek összesítése csak az ebben a hónapban szereplő napokat tartalmazza."
 )
-TIME_NOTE = "Az időtartamok óra:perc formátumúak; a ledolgozott idő a munkaközi szünetet nem tartalmazza."
+TIME_NOTE = "Az időtartamok óra:perc formátumúak; a kötött idő a munkaközi szünetet nem tartalmazza."
 _FONT_LOCK = Lock()
 
 
@@ -186,7 +186,7 @@ def export_worktime_csv(register):
     write([])
     write([
         "Dátum", "Nap", "Munkaidő kezdete", "Munkaidő vége", "Munkaközi szünet (óra:perc)",
-        "Ledolgozott idő (óra:perc)", "Neveléssel-oktatással lekötött idő (óra:perc)",
+        "Kötött idő (óra:perc)", "Neveléssel-oktatással lekötött idő (óra:perc)",
         "Megjegyzés", "Aláírás",
     ])
     for week in data["weeks"]:
@@ -372,7 +372,7 @@ def export_worktime_pdf(register):
             })
         display_weeks.append((week, day_rows))
 
-    headers = ["Nap", "Kezdete", "Vége", "Szünet", "Ledolgozott"]
+    headers = ["Nap", "Kezdete", "Vége", "Szünet", "Kötött idő"]
     columns = [47, 40, 40, 40, 54]
     if teacher:
         headers.append("Nevelési idő")
@@ -402,7 +402,7 @@ def export_worktime_pdf(register):
     background(y, header_height, True)
     for i, label in enumerate(headers):
         text_at(label, col_x[i] + 2, y - 10, columns[i] - 4, 6.5, bold=True, centered=True)
-        if label in ("Szünet", "Ledolgozott", "Nevelési idő"):
+        if label in ("Szünet", "Kötött idő", "Nevelési idő"):
             text_at("óra:perc", col_x[i] + 2, y - 19, columns[i] - 4, 6.2, centered=True)
     y -= header_height
     short_days = ("H", "K", "Sze", "Cs", "P", "Szo", "V")
@@ -458,9 +458,9 @@ def export_worktime_pdf(register):
             cursor = bottom - weekly_height
     y -= 11
 
-    notes = ["Az időtartamok óra:percben értendők. A ledolgozott idő nem tartalmazza a munkaközi szünetet."]
+    notes = ["Az időtartamok óra:percben értendők. A kötött idő nem tartalmazza a munkaközi szünetet."]
     if teacher:
-        notes.append("Pedagógus: a ledolgozott idő a kötött munkaidő; a neveléssel-oktatással lekötött idő külön szerepel.")
+        notes.append(TEACHER_NOTE)
     if any(week["partial"] for week, _ in display_weeks):
         notes.append("* Havi részlet: a hét összesítésében csak a kiválasztott hónap napjai szerepelnek.")
     if multiple_intervals:

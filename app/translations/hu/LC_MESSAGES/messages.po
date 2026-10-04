@@ -3388,7 +3388,7 @@ msgid "A zero-hours entry cannot contain start, end or break times."
 msgstr "Nulla munkaidőnél kezdő- és végidő, szünet nem szerepelhet."
 
 msgid "Start, end, break and working times do not agree."
-msgstr "A kezdés, befejezés, szünet és ledolgozott idő nem egyezik."
+msgstr "A kezdés, befejezés, szünet és kötött idő nem egyezik."
 
 msgid "Working time over six hours requires a 20-minute break; otherwise there is no break."
 msgstr "Hat órát meghaladó munkaidőhöz 20 perc munkaközi szünet szükséges; egyébként nincs szünet."
@@ -3598,10 +3598,9 @@ msgid "Draft"
 msgstr "Tervezet"
 
 #: app/templates/worktime.html:76
-msgid "Durations are shown as hours:minutes. Breaks are excluded from worked hours."
+msgid "Durations are shown as hours:minutes. Breaks are excluded from bound working time."
 msgstr ""
-"Az időtartamok óra:perc formátumban láthatók. A munkaközi szünet nem számít bele a ledolgozott "
-"munkaidőbe."
+"Az időtartamok óra:perc formátumban láthatók. A munkaközi szünet nem számít bele a kötött időbe."
 
 #: app/templates/worktime_groups.html:53
 msgid "Edit group"
@@ -3911,7 +3910,7 @@ msgid ""
 "Weekly hours follow the number of working days. Absences count as zero worked hours; the missing "
 "hours are not redistributed to other days."
 msgstr ""
-"A heti munkaidő a munkanapok számával arányos. Távollét esetén a ledolgozott idő nulla; a kieső "
+"A heti munkaidő a munkanapok számával arányos. Távollét esetén a kötött idő nulla; a kieső "
 "órákat nem osztjuk szét a többi napra."
 
 #: app/templates/worktime_groups.html:43 app/templates/worktime_groups.html:66
@@ -3928,8 +3927,8 @@ msgid "Within this month"
 msgstr "E hónapra eső rész"
 
 #: app/templates/worktime.html:79 app/templates/worktime.html:105
-msgid "Worked hours"
-msgstr "Ledolgozott idő"
+msgid "Bound working time"
+msgstr "Kötött idő"
 
 #: app/templates/worktime.html:72
 msgid "Working-time record"
@@ -4238,3 +4237,7 @@ msgstr "A kiválasztott hónapban nincs munkaidő-bejegyzésed."
 #: app/templates/worktime.html:112
 msgid "Your working-time record has not been prepared for this month yet."
 msgstr "Erre a hónapra még nem készült el a munkaidő-nyilvántartásod."
+
+#: app/templates/worktime.html
+msgid "Work schedule"
+msgstr "Munkaidő-beosztás"
