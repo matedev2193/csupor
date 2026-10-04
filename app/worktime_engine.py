@@ -232,28 +232,35 @@ def _merges(payload, day):
     return {source: target for source, target in mapping.items() if source not in invalid}, issues
 
 
+def _morning_eligible(worker, day, present, merges):
+    """Resolve the day's shift before opening duties are considered.
+
+    A group's sole available teacher must cover the morning. All other teachers
+    and nursery assistants retain their configured weekly shift. An afternoon
+    substitute is excluded separately by the opening/cover matching.
+    """
+    if _preferred(worker, day) == "morning":
+        return True
+    if worker["role"] != TEACHER:
+        return False
+    gid = (_assignment(worker, day) or {}).get("group_id")
+    if gid is None or gid in merges:
+        return False
+    colleagues = [person for person in present if person["role"] == TEACHER
+                  and _site(person) == _site(worker)
+                  and (_assignment(person, day) or {}).get("group_id") == gid]
+    return len(colleagues) == 1
+
+
 def _teacher_rows(workers, day, early_id):
-    """Choose the best feasible AM/PM orientation separately for each group."""
-    if not workers:
-        return [], 0
-    if len(workers) == 1:
-        worker = workers[0]
-        shift = "early_teacher" if worker["contract_id"] == early_id else "morning"
-        return [_entry(worker, day, shift)], int(_preferred(worker, day) != "morning")
-    candidates = []
-    forced = [worker for worker in workers if worker["contract_id"] == early_id]
-    for lead in forced or workers:
-        rows, deviations = [], 0
-        for worker in workers:
-            shift = "morning" if worker == lead else "afternoon"
-            deviations += int(_preferred(worker, day) != shift)
-            rows.append(_entry(worker, day, "early_teacher" if worker["contract_id"] == early_id else shift))
-        teacher_intervals = [interval for row in rows for interval in _intervals(row)]
-        violations = int(not _coverage(teacher_intervals, 480, 720))
-        violations += int(max(_overlap(a, b) for index, a in enumerate(rows) for b in rows[index + 1:]) < 120)
-        candidates.append((violations, deviations, _key(lead["contract_id"]), rows))
-    violations, deviations, _, rows = min(candidates, key=lambda item: item[:3])
-    return rows, deviations + violations * 1000
+    """Apply opening time only after fixing the independent daily AM/PM shifts."""
+    rows = []
+    for worker in workers:
+        shift = "morning" if len(workers) == 1 else _preferred(worker, day)
+        if shift == "morning" and worker["contract_id"] == early_id:
+            shift = "early_teacher"
+        rows.append(_entry(worker, day, shift))
+    return rows
 
 
 def _matching(needs, candidates, excluded, budget):
@@ -281,10 +288,41 @@ def _matching(needs, candidates, excluded, budget):
     return matches
 
 
-def _rotation_key(worker, role, counts, last, day):
-    cid = worker["contract_id"]
-    # Count is primary; consecutive days are avoided whenever equally fair.
-    return counts[(role, cid)], int(last.get(role) == cid), _key(cid)
+def _rotation_key(worker, role, counts, last):
+    person_key = (_site(worker), role, worker["user_id"])
+    # Actual assignments per person are primary, including earlier contracts.
+    return counts[person_key], int(last.get(role) == worker["user_id"]), _key(worker["user_id"]), _key(worker["contract_id"])
+
+
+def _rotation_events(payload, rows):
+    """Normalise actual opening duties across expired/replaced contracts."""
+    worker_map = {worker["contract_id"]: worker for worker in payload.get("workers", [])}
+    events = set()
+    for row in rows:
+        worker = worker_map.get(row.get("contract_id"), {})
+        role = row.get("role") or worker.get("role")
+        if role is None:
+            role = next((candidate for candidate, shift in EARLY_SHIFTS.items() if row.get("shift") == shift), None)
+        if role not in EARLY_SHIFTS:
+            continue
+        expected_start = 420 if role == TEACHER else 360
+        if "start_minute" in row:
+            is_early = row["start_minute"] == expected_start
+        else:
+            is_early = row.get("shift") == EARLY_SHIFTS[role]
+        user_id = row.get("user_id", worker.get("user_id"))
+        if not is_early or user_id is None:
+            continue
+        site = row.get("site_id", worker.get("site_id", payload.get("site_id", 0))) or 0
+        events.add((str(row["day"]), site, role, user_id))
+    return sorted(events, key=lambda item: (item[0], _key(item[1]), item[2], _key(item[3])))
+
+
+def _saved_month_day(payload, day):
+    """Boundary-week simulations are not actual historical allocations."""
+    if payload.get("year") is None or payload.get("month") is None:
+        return True
+    return day.startswith(f"{int(payload['year']):04d}-{int(payload['month']):02d}-")
 
 
 def build_schedule(payload):
@@ -294,16 +332,14 @@ def build_schedule(payload):
     groups = {group["id"]: group for group in payload.get("groups", [])}
     all_entries, issues = [], []
     counts, last = Counter(), {}
-    for historic in sorted(payload.get("history", []), key=lambda row: str(row["day"])):
-        if days and str(historic["day"]) >= days[0]:
-            continue
-        worker = next((w for w in payload.get("workers", []) if w["contract_id"] == historic["contract_id"]), None)
-        for role, shift in EARLY_SHIFTS.items():
-            start = 420 if role == TEACHER else 360
-            if historic.get("shift") == shift or (worker and worker["role"] == role and historic.get("start_minute") == start):
-                counts[(role, historic["contract_id"])] += 1
-                last[(_site(worker or {}), role)] = historic["contract_id"]
+    historical_events = _rotation_events(payload, payload.get("history", []))
+    history_index = 0
     for day in days:
+        while history_index < len(historical_events) and historical_events[history_index][0] < day:
+            _, site, role, user_id = historical_events[history_index]
+            counts[(site, role, user_id)] += 1
+            last[(site, role)] = user_id
+            history_index += 1
         active_groups = {gid: group for gid, group in groups.items() if _during(group, day)}
         workers, usable, day_issues = _day_context(payload, day)
         issues.extend(day_issues)
@@ -329,17 +365,17 @@ def build_schedule(payload):
                 worker["role"] == NURSERY and (_assignment(worker, day) or {}).get("group_id") == gid)],
                 key=lambda worker: (worker["role"] != NURSERY, _key(worker["contract_id"]))) for gid in needs}
             local_last = {role: last.get((site, role)) for role in EARLY_SHIFTS}
-            early_teachers = sorted(teachers, key=lambda w: _rotation_key(w, TEACHER, counts, local_last, day)) or [None]
-            early_nurses = sorted(nurses, key=lambda w: _rotation_key(w, NURSERY, counts, local_last, day)) or [None]
+            early_teachers = sorted([worker for worker in teachers if _morning_eligible(worker, day, local, mapping)],
+                                    key=lambda w: _rotation_key(w, TEACHER, counts, local_last)) or [None]
+            early_nurses = sorted([worker for worker in nurses if _morning_eligible(worker, day, local, mapping)],
+                                  key=lambda w: _rotation_key(w, NURSERY, counts, local_last)) or [None]
             best_solution, budget = None, [0]
             for early_teacher in early_teachers:
                 if budget[0] >= SEARCH_LIMIT:
                     break
-                teacher_rows, deviation = [], 0
+                teacher_rows = []
                 for gid, members in group_teachers.items():
-                    result, score = _teacher_rows(members, day, early_teacher["contract_id"] if early_teacher else None)
-                    teacher_rows.extend(result)
-                    deviation += score
+                    teacher_rows.extend(_teacher_rows(members, day, early_teacher["contract_id"] if early_teacher else None))
                 # Staff of a manually merged source join the named destination.
                 for worker in teachers:
                     gid = (_assignment(worker, day) or {}).get("group_id")
@@ -366,9 +402,9 @@ def build_schedule(payload):
                         trial_errors = _validate_day(payload, day, list(trial.values()) + list(rows.values()), restrict_site=site,
                                                     include_missing=False)
                         error_count = sum(issue["severity"] == "error" for issue in trial_errors)
-                        teacher_fair = _rotation_key(early_teacher, TEACHER, counts, local_last, day)[:2] if early_teacher else (0, 0)
-                        nurse_fair = _rotation_key(early_nurse, NURSERY, counts, local_last, day)[:2] if early_nurse else (0, 0)
-                        score = (error_count, sum((teacher_fair[1], nurse_fair[1])), deviation, sum((teacher_fair[0], nurse_fair[0])),
+                        teacher_fair = _rotation_key(early_teacher, TEACHER, counts, local_last)[:2] if early_teacher else (0, 0)
+                        nurse_fair = _rotation_key(early_nurse, NURSERY, counts, local_last)[:2] if early_nurse else (0, 0)
+                        score = (error_count, sum((teacher_fair[0], nurse_fair[0])), sum((teacher_fair[1], nurse_fair[1])),
                                  _key(early_teacher["contract_id"] if early_teacher else ""), _key(early_nurse["contract_id"] if early_nurse else ""))
                         if best_solution is None or score < best_solution[0]:
                             best_solution = (score, trial, early_teacher, early_nurse)
@@ -378,15 +414,15 @@ def build_schedule(payload):
                 _, trial, chosen_teacher, chosen_nurse = best_solution
                 rows.update(trial)
                 for role, chosen in ((TEACHER, chosen_teacher), (NURSERY, chosen_nurse)):
-                    if chosen:
-                        if last.get((site, role)) == chosen["contract_id"]:
-                            issues.append(_issue("early_rotation_repeated", "The early start could not be assigned to a different eligible employee on this day.", day=day, contract_id=chosen["contract_id"], severity="warning"))
-                        counts[(role, chosen["contract_id"])] += 1
-                        last[(site, role)] = chosen["contract_id"]
+                    if chosen and _saved_month_day(payload, day):
+                        if last.get((site, role)) == chosen["user_id"]:
+                            issues.append(_issue("early_rotation_repeated", "The early start is assigned to the same employee as on the preceding scheduled day.", day=day, contract_id=chosen["contract_id"], severity="warning"))
+                        counts[(site, role, chosen["user_id"])] += 1
+                        last[(site, role)] = chosen["user_id"]
             else:
                 # Preserve normal hours while explicitly reporting the unresolved opening/closing conflict.
                 for gid, members in group_teachers.items():
-                    result, _ = _teacher_rows(members, day, None)
+                    result = _teacher_rows(members, day, None)
                     rows.update((row["contract_id"], row) for row in result)
                 for worker in local:
                     rows.setdefault(worker["contract_id"], _entry(worker, day, _preferred(worker, day)))
@@ -403,7 +439,7 @@ def build_schedule(payload):
             if row["shift"] in ("morning", "afternoon", "early_teacher") and worker["role"] == TEACHER:
                 actual = "morning" if row["shift"] == "early_teacher" else row["shift"]
                 if actual != _preferred(worker, day):
-                    issues.append(_issue("shift_preference_changed", "Coverage or the rotation of early starts requires a different shift on this day.", day=day, contract_id=worker["contract_id"], severity="warning"))
+                    issues.append(_issue("shift_preference_changed", "The daily shift differs from the configured weekly shift.", day=day, contract_id=worker["contract_id"], severity="warning"))
         all_entries.extend(sorted(rows.values(), key=lambda row: _key(row["contract_id"])))
     issues.extend(validate_schedule(payload, all_entries))
     return {"entries": all_entries, "issues": _deduplicate(issues)}
@@ -420,6 +456,8 @@ def _validate_day(payload, day, entries, *, restrict_site=None, include_missing=
     entries = [entry for entry in entries if entry["day"] == day and entry["contract_id"] in worker_map]
     by_contract = defaultdict(list)
     valid_rows = []
+    present = [worker for worker in usable if not _absent(payload, worker, day)]
+    mapping, merge_issues = _merges(payload, day)
     for row in entries:
         by_contract[row["contract_id"]].append(row)
         worker = worker_map[row["contract_id"]]
@@ -452,6 +490,9 @@ def _validate_day(payload, day, entries, *, restrict_site=None, include_missing=
         anchored = start == 480 or end == 1050 or (worker["role"] == TEACHER and start == 420) or (worker["role"] == NURSERY and start == 360)
         if not anchored:
             issues.append(_issue("invalid_shift_anchor", "Work must start at 08:00 or end at 17:30, except for the designated 07:00 teacher and 06:00 nursery assistant.", day=day, contract_id=cid))
+        early_start = (worker["role"] == TEACHER and start == 420) or (worker["role"] == NURSERY and start == 360)
+        if early_start and not _morning_eligible(worker, day, present, mapping):
+            issues.append(_issue("early_requires_morning", "An early start can only be assigned to an employee who is on the morning shift that day.", day=day, contract_id=cid))
         assigned_group = next((g for g in payload.get("groups", []) if g["id"] == row.get("group_id") and _during(g, day)), None)
         if row.get("group_id") is not None and (assigned_group is None or _site(assigned_group) != _site(worker)):
             issues.append(_issue("invalid_entry_group", "The schedule entry’s group is not active at the employee’s workplace.", day=day, contract_id=cid))
@@ -465,7 +506,7 @@ def _validate_day(payload, day, entries, *, restrict_site=None, include_missing=
         if worker["role"] == TEACHER:
             actual_shift = "morning" if start <= 480 else "afternoon"
             if actual_shift != _preferred(worker, day):
-                issues.append(_issue("shift_preference_changed", "Coverage or the rotation of early starts requires a different shift on this day.", day=day, contract_id=cid, severity="warning"))
+                issues.append(_issue("shift_preference_changed", "The daily shift differs from the configured weekly shift.", day=day, contract_id=cid, severity="warning"))
         valid_rows.append(row)
     for worker in workers:
         cid = worker["contract_id"]
@@ -473,7 +514,6 @@ def _validate_day(payload, day, entries, *, restrict_site=None, include_missing=
             issues.append(_issue("missing_entry", "The employee’s daily schedule entry is missing.", day=day, contract_id=cid))
         if len(by_contract[cid]) > 1:
             issues.append(_issue("duplicate_entry", "An employee can have only one schedule entry per day.", day=day, contract_id=cid))
-    mapping, merge_issues = _merges(payload, day)
     issues.extend(merge_issues)
     groups = [group for group in payload.get("groups", []) if _during(group, day) and (restrict_site is None or _site(group) == restrict_site)]
     for group in groups:
@@ -492,6 +532,11 @@ def _validate_day(payload, day, entries, *, restrict_site=None, include_missing=
             issues.append(_issue("morning_teacher_coverage", "A teacher must be continuously present in the group between 08:00 and 12:00.", day=day, group_id=gid))
         present_ids = {worker["contract_id"] for worker in present}
         own_teacher_rows = [row for row in teacher_rows if row["contract_id"] in present_ids]
+        if len(present) >= 2:
+            configured_shifts = {_preferred(worker, day) for worker in present}
+            actual_shifts = {"morning" if row["start_minute"] <= 480 else "afternoon" for row in own_teacher_rows}
+            if not {"morning", "afternoon"}.issubset(configured_shifts) or not {"morning", "afternoon"}.issubset(actual_shifts):
+                issues.append(_issue("teacher_shift_conflict", "The group’s available teachers must include both a morning and an afternoon shift.", day=day, group_id=gid))
         if len(present) >= 2 and (len(own_teacher_rows) < 2 or max((_overlap(a, b) for index, a in enumerate(own_teacher_rows) for b in own_teacher_rows[index + 1:]), default=0) < 120):
             issues.append(_issue("teacher_overlap", "Teachers in the group require at least two hours of overlapping working time, excluding breaks.", day=day, group_id=gid))
         closing_rows = [row for row in group_rows if row.get("end_minute") == 1050 and worker_map[row["contract_id"]]["role"] in (TEACHER, NURSERY, ASSISTANT)]
@@ -504,6 +549,17 @@ def _validate_day(payload, day, entries, *, restrict_site=None, include_missing=
             issues.append(_issue("single_teacher_morning", "The group’s only available teacher must work in the morning.", day=day, group_id=gid))
     for site in {_site(group) for group in groups} | {_site(worker) for worker in workers}:
         local_rows = [row for row in valid_rows if _site(worker_map[row["contract_id"]]) == site]
+        local_present = [worker for worker in usable if _site(worker) == site and not _absent(payload, worker, day)]
+        for role, code, message in (
+            (TEACHER, "no_morning_teacher", "No morning-shift teacher is available for the 07:00 opening duty."),
+            (NURSERY, "no_morning_nursery", "No morning-shift nursery assistant is available for the 06:00 opening duty."),
+        ):
+            eligible = [worker for worker in local_present if worker["role"] == role and _morning_eligible(worker, day, local_present, mapping)]
+            if role == NURSERY:
+                afternoon_ids = {row["contract_id"] for row in local_rows if row["end_minute"] == 1050}
+                eligible = [worker for worker in eligible if worker["contract_id"] not in afternoon_ids]
+            if not eligible:
+                issues.append(_issue(code, message, day=day))
         for role, start, code, message in ((TEACHER, 420, "missing_early_teacher", "Exactly one teacher at the workplace must start at 07:00."),
                                           (NURSERY, 360, "missing_early_nursery", "Exactly one nursery assistant at the workplace must start at 06:00.")):
             count = sum(worker_map[row["contract_id"]]["role"] == role and row["start_minute"] == start for row in local_rows)
@@ -557,21 +613,17 @@ def validate_schedule(payload, entries, *, restrict_to_entry_days=False, validat
             if isinstance(row.get(field), int):
                 actual[key][index] += row[field]
     previous = {}
-    rotation_rows = [row for row in payload.get("history", []) if not days or str(row["day"]) < days[0]] + list(entries)
-    for row in sorted(rotation_rows, key=lambda item: (str(item["day"]), _key(item["contract_id"]))):
-        worker = worker_map.get(row.get("contract_id"))
-        if not worker:
-            continue
-        role = worker.get("role")
-        is_early = (role in EARLY_SHIFTS and row.get("shift") == EARLY_SHIFTS[role]) or (
-            role == TEACHER and row.get("start_minute") == 420) or (
-            role == NURSERY and row.get("start_minute") == 360)
-        if not is_early:
-            continue
-        key = (_site(worker), role)
-        if row["day"] in allowed_days and previous.get(key) == row["contract_id"]:
-            issues.append(_issue("early_rotation_repeated", "The early start could not be assigned to a different eligible employee on this day.", day=row["day"], contract_id=row["contract_id"], severity="warning"))
-        previous[key] = row["contract_id"]
+    # Persisted history supplies warm-up dates; simulated out-of-month rows do
+    # not overwrite who actually opened before the selected month's first day.
+    rotation_rows = list(payload.get("history", [])) + [
+        row for row in entries if _saved_month_day(payload, row["day"])
+    ]
+    for day, site, role, user_id in _rotation_events(payload, rotation_rows):
+        key = (site, role)
+        if day in allowed_days and _saved_month_day(payload, day) and previous.get(key) == user_id:
+            cid = next((row["contract_id"] for row in entries if row["day"] == day and row.get("user_id") == user_id), None)
+            issues.append(_issue("early_rotation_repeated", "The early start is assigned to the same employee as on the preceding scheduled day.", day=day, contract_id=cid, severity="warning"))
+        previous[key] = user_id
     for key in sorted(expected.keys() | actual.keys(), key=lambda item: (item[1], _key(item[0]))):
         cid, monday = key
         if expected[key][0] != actual[key][0]:

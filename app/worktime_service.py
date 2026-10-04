@@ -15,6 +15,10 @@ from .working_calendar import HungaryCalendar
 from .worktime_models import WorkAssignment, WorkGroup, WorkGroupMerge, WorkSchedule, WorkTimeEntry
 
 
+# Increment when allocation rules change, so older registers require regeneration.
+SCHEDULING_RULE_VERSION = 2
+
+
 class WorktimeError(ValueError):
     def __init__(self, message, status=400):
         super().__init__(message)
@@ -134,16 +138,20 @@ def build_payload(place_id, year, month):
     }
     # Bump when configured scheduling semantics change. Include off-days too,
     # but not history: a new adjacent register must not stale this month.
-    hash_inputs = {**payload, "rule_version": 1, "calendar": day_statuses}
+    hash_inputs = {**payload, "rule_version": SCHEDULING_RULE_VERSION, "calendar": day_statuses}
     fingerprint = hashlib.sha256(json.dumps(hash_inputs, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
     history = WorkTimeEntry.query.join(WorkSchedule).join(Contract, WorkTimeEntry.contract_id == Contract.id).filter(
         WorkSchedule.place_of_work_id == place_id,
-        WorkTimeEntry.day >= first - timedelta(days=60), WorkTimeEntry.day < first,
+        WorkTimeEntry.day < start,
         db.or_(db.and_(Contract.contract_type == ContractType.teacher, WorkTimeEntry.start_minute == 420),
                db.and_(Contract.contract_type == ContractType.nursery_assistant, WorkTimeEntry.start_minute == 360)),
         WorkTimeEntry.work_minutes > 0,
     ).order_by(WorkTimeEntry.day, WorkTimeEntry.contract_id).all()
-    payload["history"] = [{"day": _iso(row.day), "contract_id": row.contract_id, "start_minute": row.start_minute, "shift": "early_teacher" if row.start_minute == 420 else "early_nursery"} for row in history]
+    payload["history"] = [{
+        "day": _iso(row.day), "contract_id": row.contract_id, "user_id": row.user_id,
+        "site_id": place_id, "start_minute": row.start_minute,
+        "shift": "early_teacher" if row.start_minute == 420 else "early_nursery",
+    } for row in history]
 
     return payload, fingerprint
 
