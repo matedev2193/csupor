@@ -1,5 +1,6 @@
 /* Native disclosures remain usable if JavaScript is unavailable. */
 .sidebar-nav { min-height: 0; }
+.sidebar-nav > .nav-link { min-height: 49px; margin: 6px 0; padding: 12px; gap: 11px; font-weight: 600; }
 .nav-group { margin: 6px 0; }
 .nav-group > .nav-group-trigger {
   display: flex;

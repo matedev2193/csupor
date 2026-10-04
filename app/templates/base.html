@@ -22,6 +22,8 @@
     <script defer src="{{ url_for('static', filename='js/portal.js') }}"></script>
   </head>
   <body class="{{ 'portal-page' if current_user.is_authenticated else 'public-page' }}">
+    {% set workspace_pages = ['dashboard', 'edit_profile', 'manage_dependents', 'add_dependent', 'edit_dependent', 'add_qualification', 'edit_qualification', 'professional_exam'] %}
+    {% set management_pages = ['manage_user_profiles', 'edit_user_profile', 'manage_privileges', 'manage_contracts', 'create_contract', 'edit_contract', 'manage_legal_entities', 'create_legal_entity', 'edit_legal_entity', 'manage_places_of_work', 'create_place_of_work', 'edit_place_of_work', 'select_contract_employee', 'manage_leadership', 'manage_leave_limits', 'manage_working_days', 'manage_leaves', 'leave_approval_settings', 'gyap.manage_forms', 'worktime.management', 'worktime.groups'] %}
     <a class="skip-link" href="#main-content">{{ _('Skip to content') }}</a>
     {% if current_user.is_authenticated %}
     <aside class="sidebar" id="main-navigation" aria-label="{{ _('Main navigation') }}">
@@ -33,31 +35,22 @@
         <button type="button" class="icon-button sidebar-close" data-menu-close aria-label="{{ _('Close menu') }}">{{ icon('close') }}</button>
       </div>
       <nav class="sidebar-nav" aria-label="{{ _('Main navigation') }}">
-        {% set workspace_active = request.endpoint in ['dashboard', 'leaves', 'edit_profile'] %}
+        {% set workspace_active = request.endpoint in workspace_pages %}
         <details class="nav-group{% if workspace_active %} has-current{% endif %}"{% if workspace_active %} open{% endif %}>
           <summary class="nav-group-trigger" id="workspace-trigger" aria-controls="workspace-menu">
             {{ icon('home', 'nav-group-icon') }}<span>{{ _('My workspace') }}</span>{{ icon('chevron', 'nav-group-chevron') }}
           </summary>
           <div class="nav-group-menu" id="workspace-menu" aria-labelledby="workspace-trigger">
             {{ nav_item('dashboard', _('Dashboard'), 'home') }}
-            {{ nav_item('leaves', _('Leave calendar'), 'calendar') }}
             {{ nav_item('edit_profile', _('My profile'), 'user') }}
-          </div>
-        </details>
-        {% set records_active = request.endpoint in ['manage_dependents', 'add_dependent', 'edit_dependent', 'add_qualification', 'edit_qualification', 'professional_exam', 'worktime.index'] %}
-        <details class="nav-group{% if records_active %} has-current{% endif %}"{% if records_active %} open{% endif %}>
-          <summary class="nav-group-trigger" id="records-trigger" aria-controls="records-menu">
-            {{ icon('graduate', 'nav-group-icon') }}<span>{{ _('My records') }}</span>{{ icon('chevron', 'nav-group-chevron') }}
-          </summary>
-          <div class="nav-group-menu" id="records-menu" aria-labelledby="records-trigger">
             {{ nav_item('manage_dependents', _('Dependents'), 'users', ['add_dependent', 'edit_dependent']) }}
             {{ nav_item('add_qualification', _('Qualifications'), 'graduate', ['edit_qualification']) }}
             {{ nav_item('professional_exam', _('Professional exam'), 'award') }}
-            {{ nav_item('worktime.index', _('Working-time register'), 'calendar') }}
           </div>
         </details>
+        {{ nav_item('leaves', _('Leave calendar'), 'calendar') }}
+        {% if can_view_own_worktime %}{{ nav_item('worktime.index', _('Working-time register'), 'calendar') }}{% endif %}
         {% if current_user.privilege.value in ['hr', 'ceo', 'developer'] or can_manage_leaves_global %}
-        {% set management_pages = ['manage_user_profiles', 'edit_user_profile', 'manage_privileges', 'manage_contracts', 'create_contract', 'edit_contract', 'manage_legal_entities', 'create_legal_entity', 'edit_legal_entity', 'manage_places_of_work', 'create_place_of_work', 'edit_place_of_work', 'select_contract_employee', 'manage_leadership', 'manage_leave_limits', 'manage_working_days', 'manage_leaves', 'leave_approval_settings', 'gyap.manage_forms', 'worktime.groups'] %}
         <details class="nav-group{% if request.endpoint in management_pages %} has-current{% endif %}"{% if request.endpoint in management_pages %} open{% endif %}>
           <summary class="nav-group-trigger" id="management-trigger" aria-controls="management-menu">
             {{ icon('briefcase', 'nav-group-icon') }}<span>{{ _('Management') }}</span>{{ icon('chevron', 'nav-group-chevron') }}
@@ -66,12 +59,12 @@
             {% if current_user.privilege.value in ['hr', 'ceo'] %}
             {{ nav_item('manage_user_profiles', _('User profiles'), 'users', ['edit_user_profile']) }}
             {{ nav_item('manage_contracts', _('Contracts'), 'briefcase', ['create_contract', 'edit_contract', 'select_contract_employee']) }}
-            {{ nav_item('worktime.groups', _('Groups'), 'users') }}
-            {{ nav_item('manage_leave_limits', _('Leave limits'), 'calendar') }}
+            {{ nav_item('worktime.management', _('Working-time management'), 'calendar', ['worktime.groups']) }}
             {{ nav_item('manage_working_days', _('Working days'), 'calendar') }}
-            {{ nav_item('gyap.manage_forms', _('GYÁP forms'), 'briefcase') }}
+            {{ nav_item('manage_leave_limits', _('Leave limits'), 'calendar') }}
             {% endif %}
             {% if can_manage_leaves_global %}{{ nav_item('manage_leaves', _('Leave approvals'), 'check') }}{% endif %}
+            {% if current_user.privilege.value in ['hr', 'ceo'] %}{{ nav_item('gyap.manage_forms', _('GYÁP forms'), 'briefcase') }}{% endif %}
             {% if current_user.privilege.value == 'ceo' %}{{ nav_item('leave_approval_settings', _('Approval settings'), 'lock') }}{% endif %}
             {% if current_user.privilege.value in ['hr', 'ceo'] %}
             {{ nav_item('manage_leadership', _('Leadership'), 'award') }}
@@ -104,7 +97,7 @@
         {% if current_user.is_authenticated %}
         <div class="topbar-location">
           <button class="icon-button menu-toggle" type="button" aria-controls="main-navigation" aria-expanded="false" aria-label="{{ _('Open menu') }}">{{ icon('menu') }}</button>
-          <span class="breadcrumb-root">{{ _('My workspace') }}</span>{{ icon('chevron', 'breadcrumb-chevron') }}
+          <span class="breadcrumb-root">{{ _('Management') if request.endpoint in management_pages else _('My workspace') if request.endpoint in workspace_pages or request.endpoint == 'change_password' else 'CSUPOR' }}</span>{{ icon('chevron', 'breadcrumb-chevron') }}
           <span class="breadcrumb-current">{{ self.title().split(' · ')[0] }}</span>
         </div>
         {% else %}

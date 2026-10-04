@@ -92,7 +92,7 @@ class WorktimeRoutesTests(unittest.TestCase):
         return leave
 
     def test_get_is_read_only_and_staff_only_see_own_register(self):
-        self.assertEqual(self.client.get("/worktime?year=2026&month=2").status_code, 200)
+        self.assertEqual(self.client.get("/worktime/manage?year=2026&month=2").status_code, 200)
         self.assertEqual(WorkSchedule.query.count(), 0)
         schedule = self.generate()
         self.assertTrue(schedule.entries)
@@ -116,7 +116,7 @@ class WorktimeRoutesTests(unittest.TestCase):
             with self.subTest(values=values):
                 self.assertEqual(self.post("/worktime/generate", **values).status_code, 400)
         self.assertEqual(WorkSchedule.query.count(), 0)
-        self.assertEqual(self.client.get("/worktime?year=bad&month=2").status_code, 400)
+        self.assertEqual(self.client.get("/worktime/manage?year=bad&month=2").status_code, 400)
 
     def test_full_boundary_weeks_and_working_day_override_drive_generation(self):
         db.session.add(WorkingDayOverride(day=date(2026, 2, 14), is_working_day=True))
@@ -182,7 +182,7 @@ class WorktimeRoutesTests(unittest.TestCase):
         export = self.client.get(f"/worktime/export/{self.users['teacher1'].id}?year=2026&month=2", headers={"Accept": "application/json"})
         self.assertEqual(export.status_code, 409)
         with patch("app.worktime.render_template", return_value="rendered") as render:
-            self.client.get(f"/worktime?year=2026&month=2&place_id={self.site.id}&user_id={self.users['teacher1'].id}")
+            self.client.get(f"/worktime/manage?year=2026&month=2&place_id={self.site.id}&user_id={self.users['teacher1'].id}")
             context = render.call_args.kwargs
             self.assertTrue(context["is_stale"])
             row = next(row for row in context["rows"] if row["date"].day == 3)
@@ -330,7 +330,7 @@ class WorktimeRoutesTests(unittest.TestCase):
                     employee_id = self.users[employee].id
                     query = f"year=2026&month=2&place_id={self.site.id}&user_id={employee_id}"
                     with patch("app.worktime.render_template", return_value="rendered") as render:
-                        self.assertEqual(self.client.get("/worktime?" + query).status_code, 200)
+                        self.assertEqual(self.client.get("/worktime/manage?" + query).status_code, 200)
                         context = render.call_args.kwargs
                     self.assertEqual(context["selected_user_id"], employee_id)
                     self.assertEqual(context["selected_user"].id, employee_id)
@@ -339,7 +339,7 @@ class WorktimeRoutesTests(unittest.TestCase):
                     self.assertEqual({row["user_id"] for row in context["rows"]}, {employee_id})
                     self.assertEqual({row["teaching_minutes"] for row in context["rows"]}, {312 if employee == "teacher4" else 384})
                     self.assertEqual(context["monthly_total_minutes"], sum(row["work_minutes"] for row in context["rows"]))
-                    html = self.client.get("/worktime?" + query).get_data(as_text=True)
+                    html = self.client.get("/worktime/manage?" + query).get_data(as_text=True)
                     self.assertIn(f'/worktime/export/{employee_id}?', html)
                     exported = self.client.get(f"/worktime/export/{employee_id}?year=2026&month=2&format=csv")
                     self.assertEqual(exported.status_code, 200)
@@ -357,7 +357,7 @@ class WorktimeRoutesTests(unittest.TestCase):
             self.login(manager)
             # A normal filter submission can still contain the old site's user.
             with patch("app.worktime.render_template", return_value="rendered") as render:
-                response = self.client.get(f"/worktime?year=2026&month=2&place_id={self.other_site.id}&user_id={self.users['teacher1'].id}")
+                response = self.client.get(f"/worktime/manage?year=2026&month=2&place_id={self.other_site.id}&user_id={self.users['teacher1'].id}")
                 self.assertEqual(response.status_code, 200)
                 context = render.call_args.kwargs
             self.assertEqual(context["selected_place_id"], self.other_site.id)
@@ -372,10 +372,62 @@ class WorktimeRoutesTests(unittest.TestCase):
         with patch("app.worktime_service.SCHEDULING_RULE_VERSION", 1):
             self.generate()
         with patch("app.worktime.render_template", return_value="rendered") as render:
-            self.client.get(f"/worktime?year=2026&month=2&place_id={self.site.id}&user_id={self.users['teacher1'].id}")
+            self.client.get(f"/worktime/manage?year=2026&month=2&place_id={self.site.id}&user_id={self.users['teacher1'].id}")
             self.assertTrue(render.call_args.kwargs["is_stale"])
         self.assertEqual(self.post("/worktime/confirm", acknowledge="1").status_code, 409)
         url = f"/worktime/export/{self.users['teacher1'].id}?year=2026&month=2&format=csv"
         self.assertEqual(self.client.get(url, headers={"Accept": "application/json"}).status_code, 409)
         self.generate()
         self.assertEqual(self.client.get(url).status_code, 200)
+
+    def test_personal_route_never_inherits_manager_scope(self):
+        for role in ("hr", "ceo"):
+            db.session.add(Contract(user=self.users[role], contract_type=ContractType.secretary,
+                                   start_date=date(2025, 1, 1), job_title="Own secretary", working_hours_per_week=40,
+                                   legal_entity_id=self.site.legal_entity_id, place_of_work=self.site))
+        db.session.commit()
+        self.generate()
+        for role in ("hr", "ceo"):
+            self.login(role)
+            with patch("app.worktime.render_template", return_value="rendered") as render:
+                own = self.client.get(f"/worktime?year=2026&month=2&user_id={self.users[role].id}")
+                self.assertEqual(own.status_code, 200)
+                context = render.call_args.kwargs
+            self.assertFalse(context["can_manage_worktime"])
+            self.assertTrue(context["can_manage_worktime_access"])
+            self.assertEqual(context["worktime_index_endpoint"], "worktime.index")
+            self.assertEqual({row["user_id"] for row in context["rows"]}, {self.users[role].id})
+            self.assertEqual(context["issues"], [])
+            self.assertEqual(context["groups"], [])
+            self.assertEqual(context["merges"], [])
+            self.assertEqual(self.client.get(f"/worktime?year=2026&month=2&user_id={self.users['teacher1'].id}").status_code, 403)
+            self.assertEqual(self.client.get(f"/worktime?year=2026&month=2&place_id={self.other_site.id}").status_code, 403)
+            with patch("app.worktime.render_template", return_value="rendered") as render:
+                managed = self.client.get(f"/worktime/manage?year=2026&month=2&user_id={self.users['teacher1'].id}")
+                self.assertEqual(managed.status_code, 200)
+                context = render.call_args.kwargs
+            self.assertTrue(context["can_manage_worktime"])
+            self.assertEqual(context["worktime_index_endpoint"], "worktime.management")
+            self.assertEqual({row["user_id"] for row in context["rows"]}, {self.users["teacher1"].id})
+        for role in ("teacher1", "developer"):
+            self.login(role)
+            self.assertEqual(self.client.get("/worktime/manage?year=2026&month=2").status_code, 403)
+
+    def test_archived_own_contract_allows_empty_month_and_defaults_to_current_month_workplace(self):
+        self.contracts["teacher1"].end_date = date(2026, 1, 31)
+        db.session.add(Contract(user=self.users["teacher1"], contract_type=ContractType.secretary,
+                               start_date=date(2026, 2, 1), end_date=date(2026, 2, 28), job_title="Later secretary",
+                               working_hours_per_week=40, legal_entity_id=self.site.legal_entity_id, place_of_work=self.other_site))
+        db.session.commit()
+        self.login("teacher1")
+        with patch("app.worktime.render_template", return_value="rendered") as render:
+            self.assertEqual(self.client.get("/worktime?year=2026&month=2").status_code, 200)
+            self.assertEqual(render.call_args.kwargs["selected_place_id"], self.other_site.id)
+        with patch("app.worktime.render_template", return_value="rendered") as render:
+            self.assertEqual(self.client.get(f"/worktime?year=2026&month=3&place_id={self.other_site.id}").status_code, 200)
+            self.assertEqual(render.call_args.kwargs["rows"], [])
+            self.assertEqual(render.call_args.kwargs["selected_user_id"], self.users["teacher1"].id)
+        for manager in ("hr", "ceo"):
+            self.login(manager)
+            self.assertEqual(self.client.get("/worktime?year=2026&month=2").status_code, 403)
+            self.assertEqual(self.client.get("/worktime/manage?year=2026&month=2").status_code, 200)

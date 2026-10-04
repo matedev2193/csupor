@@ -8,24 +8,25 @@
 <input type="hidden" name="user_id" value="{{ selected_user_id }}">
 <input type="hidden" name="revision" value="{{ schedule.revision if schedule else '' }}">
 {%- endmacro %}
-{% block title %}{{ _('Working-time register · CSUPOR Portal') }}{% endblock %}
+{% block title %}{{ _('Working-time management · CSUPOR Portal') if can_manage_worktime else _('Working-time register · CSUPOR Portal') }}{% endblock %}
 {% block content %}
-<div class="worktime-page">
+<div class="worktime-page {{ 'worktime-management' if can_manage_worktime else 'worktime-own' }}">
   <section class="section-heading worktime-heading">
-    <div><span class="eyebrow">{{ _('My records') }}</span><h1>{{ _('Working-time register') }}</h1><p>{{ _('Monthly schedules, working hours and employee records in one place.') }}</p></div>
-    {% if can_manage_worktime %}<a class="button button-secondary" href="{{ url_for('worktime.groups', place_id=selected_place_id, year=selected_year, month=selected_month) }}">{{ icon('users') }} {{ _('Groups and assignments') }}</a>{% endif %}
+    <div>{% if can_manage_worktime %}<span class="eyebrow">{{ _('Management') }}</span>{% endif %}<h1>{{ _('Working-time management') if can_manage_worktime else _('Working-time register') }}</h1><p>{{ _('Monthly schedules, working hours and employee records in one place.') if can_manage_worktime else _('View and download your monthly working-time records.') }}</p></div>
   </section>
+  {% if can_manage_worktime %}{% include 'worktime_management_tabs.html' %}{% endif %}
 
   <section class="card worktime-filter-card" aria-label="{{ _('Filter working-time records') }}">
-    <form method="get" action="{{ url_for('worktime.index') }}" class="worktime-filters">
+    <form method="get" action="{{ url_for(worktime_index_endpoint) }}" class="worktime-filters">
       <div class="field"><label for="worktime-year">{{ _('Year') }}</label><input id="worktime-year" name="year" type="number" min="1970" max="2100" value="{{ selected_year }}" required></div>
       <div class="field"><label for="worktime-month">{{ _('Month') }}</label><select id="worktime-month" name="month">{% for month_number in range(1, 13) %}<option value="{{ month_number }}"{% if month_number == selected_month %} selected{% endif %}>{{ '%02d'|format(month_number) }}</option>{% endfor %}</select></div>
       <div class="field worktime-filter-place"><label for="worktime-place">{{ _('Workplace') }}</label><select id="worktime-place" name="place_id"><option value="">{{ _('Select a workplace') }}</option>{% for place in places %}<option value="{{ place.id }}"{% if place.id == selected_place_id %} selected{% endif %}>{{ place.address }}</option>{% endfor %}</select></div>
-      {% if can_manage_worktime %}<div class="field worktime-filter-person"><div class="worktime-person-copy"><label for="worktime-user">{{ _('Employee schedule') }}</label><small id="worktime-user-help" class="help-text">{{ _('Choose from employees with a contract at the selected workplace in this month.') }}</small></div><select id="worktime-user" name="user_id" aria-describedby="worktime-user-help"><option value="">{{ _('Select an employee') }}</option>{% for user in users %}<option value="{{ user.id }}"{% if user.id == selected_user_id %} selected{% endif %}>{{ user_display_name(user) }}</option>{% endfor %}</select></div>{% endif %}
+      {% if can_manage_worktime %}<input type="hidden" name="user_id" value="{{ selected_user_id }}">{% endif %}
       <button type="submit">{{ _('View schedule') }}</button>
     </form>
   </section>
 
+  {% if can_manage_worktime %}
   {% if selected_place %}
   <section class="card worktime-process">
     <div class="section-heading">
@@ -54,8 +55,9 @@
     {% endif %}
   </section>
   {% else %}<div class="empty-state">{{ _('Select a workplace to view its working-time records.') }}</div>{% endif %}
+  {% endif %}
 
-  {% if issues %}
+  {% if can_manage_worktime and issues %}
   <section class="card worktime-issues" aria-labelledby="worktime-issues-title">
     <div class="section-heading"><div><h2 id="worktime-issues-title">{{ _('Items needing attention') }}</h2><p>{{ _('Resolve these items before confirming the schedule. Missing coverage is never silently filled with invalid hours.') }}</p></div><span class="status-pill status-pending-approval">{{ issues|length }}</span></div>
     <ul class="worktime-issue-list">{% for issue in issues %}<li class="worktime-issue worktime-issue-{{ 'error' if issue.severity == 'error' else 'warning' }}">
@@ -66,17 +68,64 @@
   </section>
   {% endif %}
 
-  {% if selected_user and schedule %}
-  <section class="table-card worktime-register" aria-labelledby="worktime-register-title">
+
+  {% if can_manage_worktime and selected_place %}
+  <section class="card" id="worktime-merges">
+    <details class="worktime-disclosure"{% if merges %} open{% endif %}>
+      <summary><span>{{ _('Group mergers') }}</span><small>{{ _('HR / CEO') }}</small></summary>
+      <p class="help-text">{{ _('If both teachers of a group are absent, choose another group at the same workplace for that day. The merger appears on the working-time records.') }}</p>
+      {% if groups|length > 1 %}
+      <form method="post" action="{{ url_for('worktime.merge') }}" class="worktime-merge-form">
+        {{ period_fields() }}<input type="hidden" name="action" value="create">
+        <div class="field"><label for="merge-day">{{ _('Date') }}</label><input id="merge-day" name="day" type="date" required></div>
+        <div class="field"><label for="source-group">{{ _('Group without teachers') }}</label><select id="source-group" name="source_group_id" required><option value="">{{ _('Select a group') }}</option>{% for group in groups %}<option value="{{ group.id }}">{{ group.name }}</option>{% endfor %}</select></div>
+        <div class="field"><label for="target-group">{{ _('Receiving group') }}</label><select id="target-group" name="target_group_id" required><option value="">{{ _('Select a group') }}</option>{% for group in groups %}<option value="{{ group.id }}">{{ group.name }}</option>{% endfor %}</select></div>
+        <div class="field field-full"><label for="merge-note">{{ _('Note') }}</label><input id="merge-note" name="note" maxlength="255"></div>
+        <div class="button-row field-full"><button type="submit">{{ _('Record merger') }}</button></div>
+      </form>
+      {% else %}<div class="empty-state">{{ _('At least two groups at this workplace are needed to record a merger.') }}</div>{% endif %}
+      {% if merges %}<ul class="worktime-record-list">{% for merger in merges %}<li><div><strong>{{ merger.day }} · {{ merger.source_group.name }} → {{ merger.target_group.name }}</strong>{% if merger.note %}<p>{{ merger.note }}</p>{% endif %}</div><form method="post" action="{{ url_for('worktime.merge') }}">{{ period_fields() }}<input type="hidden" name="action" value="delete"><input type="hidden" name="merge_id" value="{{ merger.id }}"><button type="submit" class="button-secondary">{{ _('Remove merger') }}</button></form></li>{% endfor %}</ul>{% endif %}
+    </details>
+  </section>
+  {% endif %}
+
+  {% if can_manage_worktime %}<section class="card worktime-rules">
+    <details class="worktime-disclosure"><summary>{{ _('Scheduling rules') }}</summary>
+      <ul>
+        <li>{{ _('Teachers: 32 hours of bound working time and 32 teaching hours per five-day week. Trainees: 32 hours of bound working time, including 26 teaching hours. NOKS and Labour Code employees: 40 hours.') }}</li>
+        <li>{{ _('For part-time employees, every working-time allowance is multiplied by the contract’s weekly hours divided by 40.') }}</li>
+        <li>{{ _('Weekly hours follow the number of working days. Absences count as zero worked hours; the missing hours are not redistributed to other days.') }}</li>
+        <li>{{ _('A working day contains at most eight worked hours. A 20-minute break is added only when worked time exceeds six hours; at exactly six hours there is no break.') }}</li>
+        <li>{{ _('Morning shifts start at 08:00; afternoon shifts end at 17:30. Shifts alternate weekly. Early starts at 06:00 for one nanny and 07:00 for one teacher rotate fairly within each workplace.') }}</li>
+        <li>{{ _('Opening duty is assigned only to morning-shift employees. An absence may change the usual weekly shift.') }}</li>
+        <li>{{ _('Every group needs a teacher from 08:00 to 12:00. Two present teachers in the same group need two hours of overlap. If one is absent, the other works mornings and a nanny or teaching assistant covers the afternoon.') }}</li>
+        <li>{{ _('If both teachers are absent, HR or the CEO must record a group merger. Unresolved coverage or incompatible rules are highlighted for review.') }}</li>
+      </ul>
+    </details>
+  </section>{% endif %}
+  {% if (can_manage_worktime and selected_place) or (selected_user and schedule) %}
+  <section class="table-card worktime-register" id="worktime-register" aria-labelledby="worktime-register-title">
+    {% if can_manage_worktime %}
+    <h2 id="worktime-register-title">{{ _('Work schedule') }}</h2>
+    <form method="get" action="{{ url_for(worktime_index_endpoint, _anchor='worktime-register') }}" class="worktime-employee-form">
+      <input type="hidden" name="year" value="{{ selected_year }}">
+      <input type="hidden" name="month" value="{{ selected_month }}">
+      <input type="hidden" name="place_id" value="{{ selected_place_id }}">
+      <div class="field worktime-filter-person"><div class="worktime-person-copy"><label for="worktime-user">{{ _('Employee schedule') }}</label><small id="worktime-user-help" class="help-text">{{ _('Choose from employees with a contract at the selected workplace in this month.') }}</small></div><select id="worktime-user" name="user_id" aria-describedby="worktime-user-help"><option value="">{{ _('Select an employee') }}</option>{% for user in users %}<option value="{{ user.id }}"{% if user.id == selected_user_id %} selected{% endif %}>{{ user_display_name(user) }}</option>{% endfor %}</select></div>
+      <button type="submit">{{ _('View schedule') }}</button>
+    </form>
+    {% endif %}
+    {% if selected_user and schedule %}
     <div class="section-heading">
-      <div><h2 id="worktime-register-title">{{ user_display_name(selected_user) }}</h2><p>{{ _('Working-time record') }} · {{ selected_year }}. {{ '%02d'|format(selected_month) }}.</p></div>
+      <div>{% if can_manage_worktime %}<h3>{{ user_display_name(selected_user) }}</h3>{% else %}<h2 id="worktime-register-title">{{ user_display_name(selected_user) }}</h2>{% endif %}<p>{{ _('Working-time record') }} · {{ selected_year }}. {{ '%02d'|format(selected_month) }}.</p>{% if not can_manage_worktime %}<span class="status-pill {{ 'status-rejected' if is_stale else 'status-approved' if schedule.status == 'confirmed' else 'status-pending-approval' }}">{{ _('Needs updating') if is_stale else _('Confirmed') if schedule.status == 'confirmed' else _('Draft') }}</span>{% endif %}</div>
       {% if rows and not is_stale %}<div class="button-row"><a class="button button-secondary" href="{{ url_for('worktime.export', user_id=selected_user.id, year=selected_year, month=selected_month, place_id=selected_place_id, format='pdf') }}">{{ _('Download PDF') }}</a><a class="button button-secondary" href="{{ url_for('worktime.export', user_id=selected_user.id, year=selected_year, month=selected_month, place_id=selected_place_id, format='csv') }}">{{ _('Download CSV') }}</a></div>{% endif %}
     </div>
+    {% if not can_manage_worktime and is_stale %}<p class="worktime-notice worktime-notice-warning" role="alert">{{ _('Your record needs to be updated by HR or the CEO before it can be exported.') }}</p>{% elif not can_manage_worktime and schedule.status != 'confirmed' %}<p class="help-text">{{ _('This record is a draft and has not yet been confirmed.') }}</p>{% endif %}
     {% if rows %}
-    <p class="help-text worktime-hours-hint">{{ _('Durations are shown as hours:minutes. Breaks are excluded from worked hours.') }}</p>
+    <p class="help-text worktime-hours-hint">{{ _('Durations are shown as hours:minutes. Breaks are excluded from bound working time.') }}</p>
     <div class="table-wrap" tabindex="0" role="region" aria-label="{{ _('Daily working-time records') }}">
       <table class="worktime-table">
-        <thead><tr><th scope="col">{{ _('Date') }}</th><th scope="col">{{ _('Start / end') }}</th><th scope="col">{{ _('Break') }}</th><th scope="col">{{ _('Worked hours') }}</th><th scope="col">{{ _('Teaching time') }}</th><th scope="col">{{ _('Group / note') }}</th>{% if can_manage_worktime %}<th scope="col">{{ _('Actions') }}</th>{% endif %}</tr></thead>
+        <thead><tr><th scope="col">{{ _('Date') }}</th><th scope="col">{{ _('Start / end') }}</th><th scope="col">{{ _('Break') }}</th><th scope="col">{{ _('Bound working time') }}</th><th scope="col">{{ _('Teaching time') }}</th><th scope="col">{{ _('Group / note') }}</th>{% if can_manage_worktime %}<th scope="col">{{ _('Actions') }}</th>{% endif %}</tr></thead>
         <tbody>{% for row in rows %}<tr class="{{ 'worktime-absent' if row.work_minutes == 0 else '' }}" data-entry-id="{{ row.id }}">
           <th scope="row"><time datetime="{{ row.date }}">{{ row.date|dateformat('MM. dd., EEE' if current_locale == 'hu' else 'dd MMM, EEE') }}</time></th>
           <td class="worktime-time">{{ row.start or '—' }}<span class="muted">{{ row.end or '—' }}</span></td>
@@ -102,45 +151,13 @@
       </table>
     </div>
     {% if weekly_totals %}
-    <section class="worktime-week-section" aria-labelledby="worktime-weeks-title"><h3 id="worktime-weeks-title">{{ _('Weekly totals') }}</h3><div class="worktime-week-grid">{% for week in weekly_totals %}<div class="worktime-week-card"><span>{{ week.week_start }}{% if week.week_end %} – {{ week.week_end }}{% endif %}</span><strong>{{ duration(week.minutes) }}</strong><small>{{ _('Within this month') if week.partial else _('Worked hours') }}</small>{% if week.teaching_minutes %}<small>{{ _('Teaching time') }}: {{ duration(week.teaching_minutes) }}</small>{% endif %}</div>{% endfor %}</div></section>
+    <section class="worktime-week-section" aria-labelledby="worktime-weeks-title"><h3 id="worktime-weeks-title">{{ _('Weekly totals') }}</h3><div class="worktime-week-grid">{% for week in weekly_totals %}<div class="worktime-week-card"><span>{{ week.week_start }}{% if week.week_end %} – {{ week.week_end }}{% endif %}</span><strong>{{ duration(week.minutes) }}</strong><small>{{ _('Within this month') if week.partial else _('Bound working time') }}</small>{% if week.teaching_minutes %}<small>{{ _('Teaching time') }}: {{ duration(week.teaching_minutes) }}</small>{% endif %}</div>{% endfor %}</div></section>
     {% endif %}
-    {% else %}<div class="empty-state">{{ _('There are no working-time entries for this employee in the selected month.') }}</div>{% endif %}
+    {% else %}<div class="empty-state">{{ _('There are no working-time entries for this employee in the selected month.') if can_manage_worktime else _('There are no working-time entries for you in the selected month.') }}</div>{% endif %}
+    {% elif schedule %}<div class="empty-state">{{ _('Select an employee to view and export their monthly record.') }}</div>
+    {% else %}<div class="empty-state">{{ _('No schedule has been generated for this workplace and month yet.') }}</div>{% endif %}
   </section>
-  {% elif schedule %}<div class="empty-state">{{ _('Select an employee to view and export their monthly record.') }}</div>{% endif %}
+  {% elif not can_manage_worktime %}<div class="empty-state">{{ _('Your working-time record has not been prepared for this month yet.') }}</div>{% endif %}
 
-  {% if can_manage_worktime and selected_place %}
-  <section class="card" id="worktime-merges">
-    <details class="worktime-disclosure"{% if merges %} open{% endif %}>
-      <summary><span>{{ _('Group mergers') }}</span><small>{{ _('HR / CEO') }}</small></summary>
-      <p class="help-text">{{ _('If both teachers of a group are absent, choose another group at the same workplace for that day. The merger appears on the working-time records.') }}</p>
-      {% if groups|length > 1 %}
-      <form method="post" action="{{ url_for('worktime.merge') }}" class="worktime-merge-form">
-        {{ period_fields() }}<input type="hidden" name="action" value="create">
-        <div class="field"><label for="merge-day">{{ _('Date') }}</label><input id="merge-day" name="day" type="date" required></div>
-        <div class="field"><label for="source-group">{{ _('Group without teachers') }}</label><select id="source-group" name="source_group_id" required><option value="">{{ _('Select a group') }}</option>{% for group in groups %}<option value="{{ group.id }}">{{ group.name }}</option>{% endfor %}</select></div>
-        <div class="field"><label for="target-group">{{ _('Receiving group') }}</label><select id="target-group" name="target_group_id" required><option value="">{{ _('Select a group') }}</option>{% for group in groups %}<option value="{{ group.id }}">{{ group.name }}</option>{% endfor %}</select></div>
-        <div class="field field-full"><label for="merge-note">{{ _('Note') }}</label><input id="merge-note" name="note" maxlength="255"></div>
-        <div class="button-row field-full"><button type="submit">{{ _('Record merger') }}</button></div>
-      </form>
-      {% else %}<div class="empty-state">{{ _('At least two groups at this workplace are needed to record a merger.') }}</div>{% endif %}
-      {% if merges %}<ul class="worktime-record-list">{% for merger in merges %}<li><div><strong>{{ merger.day }} · {{ merger.source_group.name }} → {{ merger.target_group.name }}</strong>{% if merger.note %}<p>{{ merger.note }}</p>{% endif %}</div><form method="post" action="{{ url_for('worktime.merge') }}">{{ period_fields() }}<input type="hidden" name="action" value="delete"><input type="hidden" name="merge_id" value="{{ merger.id }}"><button type="submit" class="button-secondary">{{ _('Remove merger') }}</button></form></li>{% endfor %}</ul>{% endif %}
-    </details>
-  </section>
-  {% endif %}
-
-  <section class="card worktime-rules">
-    <details class="worktime-disclosure"><summary>{{ _('Scheduling rules') }}</summary>
-      <ul>
-        <li>{{ _('Teachers: 32 hours of bound working time and 32 teaching hours per five-day week. Trainees: 32 hours of bound working time, including 26 teaching hours. NOKS and Labour Code employees: 40 hours.') }}</li>
-        <li>{{ _('For part-time employees, every working-time allowance is multiplied by the contract’s weekly hours divided by 40.') }}</li>
-        <li>{{ _('Weekly hours follow the number of working days. Absences count as zero worked hours; the missing hours are not redistributed to other days.') }}</li>
-        <li>{{ _('A working day contains at most eight worked hours. A 20-minute break is added only when worked time exceeds six hours; at exactly six hours there is no break.') }}</li>
-        <li>{{ _('Morning shifts start at 08:00; afternoon shifts end at 17:30. Shifts alternate weekly. Early starts at 06:00 for one nanny and 07:00 for one teacher rotate fairly within each workplace.') }}</li>
-        <li>{{ _('Opening duty is assigned only to morning-shift employees. An absence may change the usual weekly shift.') }}</li>
-        <li>{{ _('Every group needs a teacher from 08:00 to 12:00. Two present teachers in the same group need two hours of overlap. If one is absent, the other works mornings and a nanny or teaching assistant covers the afternoon.') }}</li>
-        <li>{{ _('If both teachers are absent, HR or the CEO must record a group merger. Unresolved coverage or incompatible rules are highlighted for review.') }}</li>
-      </ul>
-    </details>
-  </section>
 </div>
 {% endblock %}

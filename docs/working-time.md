@@ -4,7 +4,7 @@ A modul a megadott intézményi beosztási szabályokat hajtja végre. A szerző
 
 ## Keretek és időszámítás
 
-Minden számítás egész percekkel történik. A szünet nem része a ledolgozott időnek.
+Minden számítás egész percekkel történik. A szünet nem része a kötött időnek.
 
 | Munkakör | Beosztandó heti idő | Ebből nevelési idő | Alap napi munka | Szünet |
 | --- | ---: | ---: | ---: | ---: |
@@ -37,20 +37,24 @@ Egyetlen jelenlévő, alkalmas nyitó esetén a másnapi váltás nem teljesíth
 
 ## HR/CEO munkafolyamat
 
-A Kezelés alatti önálló Csoportok menüben először létre kell hozni a telephely csoportjait, és dátumozottan hozzájuk kell rendelni a pedagógusokat, dajkákat. A pedagóguspár két tagja ellentétes alapműszakot kapjon. A dajkák váltási sorrendjét is úgy kell megadni, hogy mindkét héten legyen délelőttös nyitó. Az asszisztens telephelyi helyettesként csoporthozzárendelés nélkül is használható.
+A Kezelés → Munkaidő-kezelés oldal Csoportok és beosztások lapján először létre kell hozni a telephely csoportjait, és dátumozottan hozzájuk kell rendelni a pedagógusokat, dajkákat. A pedagóguspár két tagja ellentétes alapműszakot kapjon. A dajkák váltási sorrendjét is úgy kell megadni, hogy mindkét héten legyen délelőttös nyitó. Az asszisztens telephelyi helyettesként csoporthozzárendelés nélkül is használható.
 
-A HR/CEO a Munkaidő-nyilvántartás menüben kiválasztja a telephelyet és a hónapot, majd a Munkavállaló beosztása mezőben megadhatja, kinek a nyilvántartását szeretné látni. A lista a kiválasztott helyszínen az adott hónapban szerződéssel rendelkező dolgozókat tartalmazza. A HR/CEO elkészíti a tervezetet, feloldja a hiányjelzéseket, és szükség esetén javítja a napi adatokat. A csoportösszevonás manuális döntés. A véglegesítés külön ellenőrző művelet, és hibás vagy elavult adatokkal nem engedélyezett. A kézi adatok felülírását az újragenerálásnál külön jelezni kell.
+A HR/CEO a Munkaidő-kezelés menüben kiválasztja a telephelyet és a hónapot, majd a Munkavállaló beosztása mezőben megadhatja, kinek a nyilvántartását szeretné látni. A lista a kiválasztott helyszínen az adott hónapban szerződéssel rendelkező dolgozókat tartalmazza. A HR/CEO elkészíti a tervezetet, feloldja a hiányjelzéseket, és szükség esetén javítja a napi adatokat. A csoportösszevonás manuális döntés. A véglegesítés külön ellenőrző művelet, és hibás vagy elavult adatokkal nem engedélyezett. A kézi adatok felülírását az újragenerálásnál külön jelezni kell.
 
 A szerződés, csoporthozzárendelés, összevonás, munkanaptár vagy távollét későbbi változása elavulttá teszi a kapcsolódó tervezetet. Ilyenkor frissítés szükséges, mielőtt újra véglegesíthető vagy exportálható. Egy korábbi böngészőablakból érkező mentés nem írhatja felül észrevétlenül az újabb változatot.
 
-A munkavállaló a saját nyilvántartását láthatja és töltheti le; másokét és a beosztás kezelési műveleteit HR/CEO érheti el.
+A felső szintű Munkaidő-nyilvántartás menüpont minden szerződéssel rendelkező munkavállalónak a saját beosztását és letöltéseit mutatja, HR/CEO szerepkörben is. A korábban lezárt szerződések nyilvántartása továbbra is megtekinthető a megfelelő hónap kiválasztásával. A saját oldalon nincs dolgozóválasztó, generálás, igazolás vagy csoportkezelés; mások adatai és a kezelési műveletek kizárólag a HR/CEO Munkaidő-kezelés oldalán érhetők el.
 
 ## Havi export
 
-A PDF nyomtatható nyilvántartás, a CSV táblázatkezelőben feldolgozható. Mindkettő tartalmazza a dolgozó nevét, év/hónapját, munkakörét, a napi kezdést és befejezést, a nettó munkaidőt, a szünetet, az aláíráshelyet és a heti/havi összesítéseket. A távollét nulla órával, az összevonás megjegyzéssel szerepel. A tervezet állapota látható marad az exporton is.
+A PDF álló, egyoldalas A4-es nyilvántartás, a CSV táblázatkezelőben feldolgozható. A dolgozó neve, az év/hónap, a munkakör, a munkavégzési hely és a csoport a fejlécben szerepel. Több munkakör, helyszín vagy csoport esetén a hozzárendelés napjai is azonosíthatók. A napi táblázat a kezdést és befejezést, a nettó munkaidőt, a szünetet és az aláíráshelyet tartalmazza; a heti és havi összesítések is megmaradnak. A távollét nulla órával, az összevonás jelöléssel szerepel. A tervezet állapota látható marad az exporton is.
+
+A PDF jelmagyarázata feloldja a távollétek és megjegyzések rövid kódjait. A helyigényes szövegek rövidítését külön jelöli; a teljes fejléc, minden hozzárendelés és megjegyzés a CSV-ben megmarad. Ha egy nap több idősávot tartalmaz, a PDF ezt külön jelzi, és csak a tényleges perceket összesíti; a CSV minden idősávot külön sorban tart meg.
 
 A hónaphatáron átnyúló hétnél a havi nyilvántartás csak az adott hónapba eső napokat összegzi, és ezt külön jelöli. Nem számítja másodszor a szomszédos havi nyilvántartás napjait.
 
 ## Üzemeltetés
 
 Az öt új tábla (`work_groups`, `work_assignments`, `work_group_merges`, `work_schedules`, `work_time_entries`) induláskor létrejön. Meglévő táblákhoz nem adunk új kötelező mezőt; a már létező MySQL azonosítók méretéhez és előjelességéhez az új idegen kulcsok alkalmazkodnak. A PDF-export a rögzített ReportLab-verziót és a csomagolt, magyar karaktereket támogató betűkészletet használja.
+
+A munkavállaló a Munkaidő-kezelés oldal alján, a Munkaidő-beosztás doboz tetején választható ki. A választás megtartja az évet, a hónapot és a munkavégzési helyet; a felső időszakszűrő a kiválasztott dolgozót is megőrzi, amennyiben az új időszakban és helyszínen rendelkezik szerződéssel. A táblázatokban, valamint a PDF- és CSV-exportban az óraszám megnevezése **Kötött idő**.

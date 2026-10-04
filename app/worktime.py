@@ -96,7 +96,7 @@ def _response_error(error):
     flash(str(error), "error")
     if request.method == "POST":
         values = request.form
-        target = "worktime.groups" if request.endpoint == "worktime.groups" else "worktime.index"
+        target = "worktime.groups" if request.endpoint == "worktime.groups" else "worktime.management"
         return redirect(url_for(target, year=values.get("year"), month=values.get("month"), place_id=values.get("place_id"), user_id=values.get("user_id")))
     return default_exceptions[error.status](description=str(error)).get_response()
 
@@ -113,7 +113,7 @@ def private_response(response):
     return response
 
 
-def _success(message, *, target="worktime.index", **values):
+def _success(message, *, target="worktime.management", **values):
     if _wants_json():
         return jsonify(message=message, **values)
     flash(message, "success")
@@ -201,40 +201,64 @@ def _mutation_context():
 @worktime.get("/worktime")
 @login_required
 def index():
+    # Access to a past contract also grants access to archived own registers.
+    # A manager's role does not expand the scope of this personal page.
+    if not current_user.contracts:
+        abort(403)
+    return _render_register(management=False)
+
+
+@worktime.get("/worktime/manage")
+@manager_required
+def management():
+    return _render_register(management=True)
+
+
+def _render_register(*, management):
     year, month = _period(request.args)
     start, end = month_bounds(year, month)
-    contracts = Contract.query.filter(Contract.start_date <= end, db.or_(Contract.end_date.is_(None), Contract.end_date >= start)).order_by(Contract.id).all()
-    if can_manage():
+    contracts_query = Contract.query.filter(Contract.start_date <= end, db.or_(Contract.end_date.is_(None), Contract.end_date >= start))
+    if management:
+        contracts = contracts_query.order_by(Contract.id).all()
         places = PlaceOfWork.query.order_by(PlaceOfWork.id).all()
     else:
-        contracts = [row for row in contracts if row.user_id == current_user.id]
-        places = sorted({row.place_of_work for row in contracts}, key=lambda row: row.id)
+        contracts = contracts_query.filter(Contract.user_id == current_user.id).order_by(Contract.id).all()
+        # Keep legitimate workplace filters when selecting an empty month;
+        # the workplace can belong to any of this employee's past contracts.
+        places = sorted({row.place_of_work for row in current_user.contracts}, key=lambda row: row.id)
     selected_place_id = _integer(request.args.get("place_id"), _("workplace"), optional=True)
     if selected_place_id is not None and selected_place_id not in {row.id for row in places}:
-        abort(403 if not can_manage() else 404)
-    selected_place = next((row for row in places if row.id == selected_place_id), None) or (places[0] if places else None)
+        abort(404 if management else 403)
+    month_places = {contract.place_of_work_id for contract in contracts}
+    default_place = next((row for row in places if row.id in month_places), None) if not management else None
+    selected_place = next((row for row in places if row.id == selected_place_id), None) or default_place or (places[0] if places else None)
     selected_place_id = selected_place.id if selected_place else None
     site_contracts = [row for row in contracts if row.place_of_work_id == selected_place_id]
-    users = sorted({row.user for row in site_contracts}, key=lambda user: (user_display_name(user).casefold(), user.id))
+    users = sorted({row.user for row in site_contracts}, key=lambda user: (user_display_name(user).casefold(), user.id)) if management else [current_user]
     selected_user_id = _integer(request.args.get("user_id"), _("employee"), optional=True)
-    if not can_manage() and selected_user_id not in {None, current_user.id}:
+    if not management and selected_user_id not in {None, current_user.id}:
         abort(403)
-    selected_user = next((user for user in users if user.id == selected_user_id), None)
-    if selected_user is None:
-        selected_user = next((user for user in users if user.id == current_user.id), None) or (users[0] if users else (current_user if not can_manage() else None))
+    if management:
+        selected_user = next((user for user in users if user.id == selected_user_id), None)
+        if selected_user is None:
+            selected_user = next((user for user in users if user.id == current_user.id), None) or (users[0] if users else None)
+    else:
+        selected_user = current_user
     selected_user_id = selected_user.id if selected_user else None
     schedule = _schedule(selected_place_id, year, month) if selected_place else None
     payload, fingerprint = build_payload(selected_place_id, year, month) if selected_place else (None, None)
     stale = schedule is not None and schedule.source_hash != fingerprint
     rows = display_rows(schedule, selected_user_id, payload, stale=stale) if selected_user else []
-    groups = WorkGroup.query.filter_by(place_of_work_id=selected_place_id).order_by(WorkGroup.name).all() if selected_place else []
+    groups = WorkGroup.query.filter_by(place_of_work_id=selected_place_id).order_by(WorkGroup.name).all() if management and selected_place else []
     merges = WorkGroupMerge.query.filter(WorkGroupMerge.day.between(start, end), WorkGroupMerge.source_group_id.in_([group.id for group in groups])).order_by(WorkGroupMerge.day).all() if groups else []
     context = dict(
         selected_year=year, selected_month=month, places=places, selected_place=selected_place,
         selected_place_id=selected_place_id or "", users=users, selected_user=selected_user,
-        selected_user_id=selected_user_id or "", can_manage_worktime=can_manage(),
-        csrf_token=_csrf_token(), schedule=schedule, is_stale=stale,
-        issues=_issue_display(schedule.issues, own_contract_ids=None if can_manage() else {row.id for row in site_contracts}) if schedule else [], rows=rows, groups=groups, merges=merges,
+        selected_user_id=selected_user_id or "", can_manage_worktime=management,
+        can_manage_worktime_access=can_manage(),
+        worktime_index_endpoint="worktime.management" if management else "worktime.index",
+        csrf_token=_csrf_token() if management else None, schedule=schedule, is_stale=stale,
+        issues=_issue_display(schedule.issues) if management and schedule else [], rows=rows, groups=groups, merges=merges,
         weekly_totals=weekly_totals(rows, year, month), monthly_total_minutes=sum(row["work_minutes"] for row in rows),
         monthly_teaching_minutes=sum(row["teaching_minutes"] for row in rows), user_display_name=user_display_name,
     )
