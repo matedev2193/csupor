@@ -96,10 +96,12 @@ class GyapFormTests(unittest.TestCase):
             return session["gyap_forms_csrf_token"]
 
     def upload(self, year=2026, filename="gyap.pdf", data=PDF, csrf=None):
-        return self.client.post("/gyap-forms", data={
+        response = self.client.post("/gyap-forms", data={
             "calendar_year": str(year), "csrf_token": self.token() if csrf is None else csrf,
             "document": (BytesIO(data), filename, "text/html"),
         })
+        self.addCleanup(response.request.environ["wsgi.input"].close)
+        return response
 
     def test_upload_management_is_hr_and_ceo_only(self):
         for name in self.users:

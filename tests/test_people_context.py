@@ -218,18 +218,105 @@ class PeopleContextTests(unittest.TestCase):
         self.contracts["employee"].end_date = self.today - timedelta(days=1);db.session.commit()
         self.assertEqual(birthday_context(self.users["employee"], self.today)["birthday_colleagues"], [])
 
-    def test_own_birthday_replaces_colleagues_and_handles_leap_days(self):
+    def test_director_birthdays_are_visible_without_a_shared_or_active_contract(self):
+        self.users["director"].profile.date_of_birth = date(1985, 9, 28)
+        self.users["outsider"].privilege = UserPrivilege.ceo
+        self.users["outsider"].profile.date_of_birth = date(1980, 9, 28)
+        self.contracts["director"].end_date = self.today - timedelta(days=1)
+        db.session.delete(self.contracts["outsider"])
+        self.contracts["employee"].end_date = self.today - timedelta(days=1)
+        db.session.commit()
+        for viewer in ("employee", "hr", "head"):
+            with self.subTest(viewer=viewer):
+                context = birthday_context(self.users[viewer], self.today)
+                self.assertEqual([person.username for person in context["birthday_colleagues"]], ["director", "outsider"])
+
+    def test_director_sees_active_users_across_workplaces_and_other_directors(self):
+        other_entity = LegalEntity(name="Other nursery", address="Other", om_id="999999", tax_number="99999999999")
+        other_place = PlaceOfWork(legal_entity=other_entity, address="Different organisation")
+        self.contracts["outsider"].employer = other_entity
+        self.contracts["outsider"].place_of_work = other_place
+        for key in ("employee", "head", "deputy", "outsider", "hr", "director"):
+            self.users[key].profile.date_of_birth = date(1985, 9, 28)
+        self.contracts["employee"].start_date = self.today
+        self.contracts["outsider"].end_date = self.today
+        self.contracts["head"].start_date = self.today + timedelta(days=1)
+        self.contracts["hr"].end_date = self.today - timedelta(days=1)
+        self.users["deputy"].privilege = UserPrivilege.ceo
+        self.contracts["deputy"].end_date = self.today - timedelta(days=1)
+        self.contract(self.users["employee"], self.place)
+        db.session.delete(self.contracts["director"])
+        db.session.commit()
+        context = birthday_context(self.users["director"], self.today)
+        self.assertTrue(context["is_own_birthday"])
+        self.assertEqual([person.username for person in context["birthday_colleagues"]], ["deputy", "employee", "outsider"])
+
+    def test_birthday_visibility_still_requires_a_valid_birthday_today(self):
+        self.users["director"].profile.date_of_birth = date(2030, 9, 28)
+        self.users["head"].profile.date_of_birth = None
+        self.users["deputy"].profile.date_of_birth = date(1985, 9, 27)
+        db.session.commit()
+        for viewer in ("employee", "director"):
+            with self.subTest(viewer=viewer):
+                context = birthday_context(self.users[viewer], self.today)
+                self.assertFalse(context["is_own_birthday"])
+                self.assertEqual(context["birthday_colleagues"], [])
+
+    def test_own_birthday_keeps_colleague_announcements_and_handles_leap_days(self):
         for key in ("employee", "head"):
             self.users[key].profile.date_of_birth = date(2000, 2, 29)
         db.session.commit()
         self.assertFalse(birthday_context(self.users["employee"], date(2026, 2, 28))["is_own_birthday"])
         context = birthday_context(self.users["employee"], date(2028, 2, 29))
-        self.assertTrue(context["is_own_birthday"]);self.assertEqual(context["birthday_colleagues"], [])
+        self.assertTrue(context["is_own_birthday"])
+        self.assertEqual([person.username for person in context["birthday_colleagues"]], ["head"])
         with patch("app.people.local_today", return_value=date(2028, 2, 29)):
             self.login("employee", "hu")
             text = self.client.get("/dashboard").text
             self.assertIn("Boldog születésnapot, Employee Test!", text)
-            self.assertNotIn("Mai születésnapok", text)
+            self.assertIn("Mai születésnapok", text)
+            self.assertIn("<strong>Head Test</strong>", text)
+
+    def test_single_birthday_announcement_has_requested_wording_and_bold_name(self):
+        self.users["head"].profile.date_of_birth = date(1985, 9, 28)
+        self.users["head"].profile.full_name = "Kiss Anna"
+        db.session.commit()
+        expected_by_locale = {
+            "hu": "Ma ünnepli születésnapját <strong>Kiss Anna</strong> munkatársad. Ne felejtsd el felköszönteni őt!",
+            "en": "Your colleague <strong>Kiss Anna</strong> is celebrating their birthday today. Don't forget to wish them a happy birthday!",
+        }
+        with patch("app.people.local_today", return_value=self.today):
+            for locale, expected in expected_by_locale.items():
+                with self.subTest(locale=locale):
+                    self.login("employee", locale)
+                    response = self.client.get("/dashboard")
+                    self.assertEqual(response.status_code, 200)
+                    birthday_card = response.text.split('aria-labelledby="colleague-birthday-heading"', 1)[1].split("</section>", 1)[0]
+                    self.assertIn(expected, birthday_card)
+                    self.assertNotIn("1985", birthday_card)
+                    self.assertNotIn("1985-09-28", response.text)
+
+    def test_multiple_birthday_names_are_joined_bold_and_html_escaped(self):
+        self.users["head"].profile.full_name = "Anna <script>alert(1)</script>"
+        self.users["deputy"].profile.full_name = "Béla & Társa"
+        self.users["director"].profile.full_name = None
+        for key in ("head", "deputy"):
+            self.users[key].profile.date_of_birth = date(1985, 9, 28)
+        db.session.commit()
+        anna = "<strong>Anna &lt;script&gt;alert(1)&lt;/script&gt;</strong>"
+        bela = "<strong>Béla &amp; Társa</strong>"
+        with patch("app.people.local_today", return_value=self.today):
+            self.login("employee", "hu")
+            for count, names in ((2, f"{anna} és {bela}"), (3, f"{anna}, {bela} és <strong>director</strong>")):
+                with self.subTest(count=count):
+                    if count == 3:
+                        self.users["director"].profile.date_of_birth = date(1985, 9, 28)
+                        db.session.commit()
+                    response = self.client.get("/dashboard")
+                    self.assertEqual(response.status_code, 200)
+                    birthday_card = response.text.split('aria-labelledby="colleague-birthday-heading"', 1)[1].split("</section>", 1)[0]
+                    self.assertIn(f"Ma ünneplik születésnapjukat {names} munkatársaid. Ne felejtsd el felköszönteni őket!", birthday_card)
+                    self.assertNotIn("<script>alert(1)</script>", response.text)
 
     def test_birthday_date_is_budapest_local_time(self):
         with patch("app.people.datetime") as clock:

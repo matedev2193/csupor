@@ -42,6 +42,25 @@
       </div>
     </div>
 
+    {% if not manager_mode %}
+    <section class="profile-photo-section" aria-labelledby="profile-photo-heading">
+      {% set own_photo_url = profile_photo_url(current_user) %}
+      <span class="avatar profile-photo-preview" aria-hidden="true">
+        {% if own_photo_url %}<img src="{{ own_photo_url }}" alt="" width="80" height="80">{% else %}{{ current_account.initial }}{% endif %}
+      </span>
+      <form class="profile-photo-form" action="{{ url_for('profile_photos.upload_photo') }}" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ profile_photo_csrf_token }}">
+        <h3 id="profile-photo-heading">{{ _('Profile photo') }}</h3>
+        <div class="field">
+          <label for="profile-photo-file">{{ _('Choose a photo') }}</label>
+          <input id="profile-photo-file" type="file" name="photo" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" aria-describedby="profile-photo-help" required>
+          <small class="help-text" id="profile-photo-help">{{ _('JPEG, PNG or WebP, up to %(size)s MB.', size=profile_photo_max_mb) }}</small>
+        </div>
+        <button type="submit" class="button button-secondary">{{ _('Upload photo') }}</button>
+      </form>
+    </section>
+    {% endif %}
+
     <form method="post">
       <div class="form-grid">
         <h3 class="form-divider">{{ _('Personal details') }}</h3>

@@ -1,54 +1,65 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% block title %}{{ _('Manage User Profiles · CSUPOR Portal') }}{% endblock %}
 {% block content %}
-<section class="hero management-hero">
-  <div class="hero-copy">
-    <span class="eyebrow">{{ _('Restricted profile access') }}</span>
-    <h1>{{ _('User profiles') }}</h1>
-    <p>
-      {{ _('Find an employee and open their profile to update personal details.') }}
-    </p>
-  </div>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile_management.css') }}">
+<section class="table-card">
+  <div class="section-heading"><div><h1>{{ _('User profiles') }}</h1><p>{{ _('Search employee profiles and filter them by active contract or recorded details.') }}</p></div></div>
+  <nav class="contract-tabs" aria-label="{{ _('Filter profiles by contract status') }}">
+    {% for value, label in [('active', _('Active')), ('inactive', _('Inactive')), ('all', _('All users'))] %}
+    <a class="contract-tab{% if selected_status == value %} active{% endif %}" href="{{ url_for('manage_user_profiles', status=value, q=search, profile_state=selected_profile_state) }}"{% if selected_status == value %} aria-current="page"{% endif %}>{{ label }} <span>{{ counts[value] }}</span></a>
+    {% endfor %}
+  </nav>
+  <form method="get" class="contract-filters">
+    <input type="hidden" name="status" value="{{ selected_status }}">
+    <div class="field"><label for="profile-search">{{ _('Search profiles') }}</label><input type="search" id="profile-search" name="q" value="{{ search }}" placeholder="{{ _('Name, username or e-mail') }}"></div>
+    <div class="field"><label for="profile-state">{{ _('Profile status') }}</label><select id="profile-state" name="profile_state">
+      {% for value, label in [('all', _('All profile statuses')), ('empty', _('No details recorded')), ('partial', _('Details partially recorded')), ('complete', _('Details complete'))] %}
+      <option value="{{ value }}"{% if selected_profile_state == value %} selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select></div>
+    <div class="button-row"><button type="submit">{{ _('Apply filters') }}</button><a class="button button-secondary" href="{{ url_for('manage_user_profiles') }}">{{ _('Reset') }}</a></div>
+  </form>
+  <p class="muted profile-count" role="status">{{ _('%(count)s users match the selected filters.', count=users|length) }}</p>
+  {% if users %}
+  <div class="table-wrap"><table class="profile-management-table">
+    <thead><tr><th>{{ _('Name') }}</th><th>{{ _('E-mail') }}</th><th>{{ _('Contract status') }}</th><th>{{ _('Profile status') }}</th><th>{{ _('Actions') }}</th></tr></thead>
+    <tbody>{% for user in users %}
+    {% set full_name = user.profile.full_name|trim if user.profile and user.profile.full_name else user.username %}
+    {% set state = profile_states[user.id] %}
+    <tr data-user-id="{{ user.id }}">
+      <td><strong>{{ full_name or user.username }}</strong><div class="muted">{{ user.username }}</div></td>
+      <td>{{ user.email }}</td>
+      <td><span class="status-pill {{ 'status-approved' if user.id in active_user_ids else 'status-cancelled' }}">{{ _('Active') if user.id in active_user_ids else _('Inactive') }}</span></td>
+      <td><span class="status-pill {{ 'status-approved' if state == 'complete' else 'profile-status-partial' if state == 'partial' else 'status-cancelled' }}" data-profile-state="{{ state }}">{{ _('Details complete') if state == 'complete' else _('Details partially recorded') if state == 'partial' else _('No details recorded') }}</span></td>
+      <td><div class="profile-row-actions">
+        <a class="button button-secondary" href="{{ url_for('edit_user_profile', user_id=user.id) }}">{{ _('Edit profile') }}</a>
+        {% if user.id == current_user.id %}
+        <button type="button" class="button profile-delete-button" disabled title="{{ _('You cannot delete your own account.') }}">{{ _('Delete user') }}</button>
+        {% elif user.privilege.value == 'ceo' and ceo_count <= 1 %}
+        <button type="button" class="button profile-delete-button" disabled title="{{ _('The last CEO account cannot be deleted.') }}">{{ _('Delete user') }}</button>
+        {% else %}
+        <button type="button" class="button profile-delete-button" data-delete-user data-delete-url="{{ url_for('delete_user_profile', user_id=user.id) }}" data-user-name="{{ full_name or user.username }}" aria-haspopup="dialog" aria-controls="delete-user-dialog">{{ _('Delete user') }}</button>
+        {% endif %}
+      </div></td>
+    </tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}
+  <div class="empty-state"><strong>{{ _('No users match the selected filters.') }}</strong><p>{{ _('Try another search, change the profile status, or show all users.') }}</p><a class="button button-secondary" href="{{ url_for('manage_user_profiles', status='all') }}">{{ _('Show all users') }}</a></div>
+  {% endif %}
 </section>
 
-<section class="layout-stack">
-  <section class="table-card">
-    <div class="section-heading">
-      <div>
-        <h2>{{ _('User profile administration') }}</h2>
-        <p>{{ _("Choose a user below to edit that employee's profile details.") }}</p>
-      </div>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>{{ _('Name') }}</th>
-            <th>{{ _('E-mail') }}</th>
-            <th>{{ _('Profile status') }}</th>
-            <th>{{ _('Action') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for user in users %}
-          <tr>
-            <td><strong>{{ user.profile.full_name if user.profile and user.profile.full_name else user.username }}</strong></td>
-            <td>{{ user.email }}</td>
-            <td>
-              {% if user.profile and user.profile.full_name %}
-              <span class="pill">{{ _('Profile started') }}</span>
-              {% else %}
-              <span class="badge">{{ _('Needs details') }}</span>
-              {% endif %}
-            </td>
-            <td>
-              <a class="button button-secondary" href="{{ url_for('edit_user_profile', user_id=user.id) }}">{{ _('Edit profile') }}</a>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </section>
-</section>
+<dialog id="delete-user-dialog" class="profile-delete-dialog" aria-labelledby="delete-user-title" aria-describedby="delete-user-description">
+  <form method="post" id="delete-user-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <h2 id="delete-user-title">{{ _('Delete this user?') }}</h2>
+    <p class="profile-delete-person" data-delete-user-name></p>
+    <p id="delete-user-description">{{ _('This permanently deletes the account, profile and photo, dependents, qualifications, professional exam, contracts, leadership assignments and leave requests belonging to this user. The user will no longer be able to sign in. This cannot be undone.') }}</p>
+    <p>{{ _("Other users' records and shared GYÁP forms will be kept. References to this user as approver or uploader will be cleared.") }}</p>
+    <div class="field"><label for="delete-manager-password">{{ _('Your own password') }}</label><input id="delete-manager-password" name="manager_password" type="password" autocomplete="current-password" required><small>{{ _('Confirm with the password of your currently signed-in HR or CEO account.') }}</small></div>
+    <div class="button-row"><button type="button" class="button button-secondary" data-close-delete-dialog>{{ _('Cancel') }}</button><button type="submit" class="button profile-delete-confirm">{{ _('Permanently delete user') }}</button></div>
+  </form>
+</dialog>
+<noscript><p class="muted">{{ _('Enable JavaScript to open the user deletion confirmation.') }}</p></noscript>
+<script defer src="{{ url_for('static', filename='js/profile_management.js') }}"></script>
 {% endblock %}

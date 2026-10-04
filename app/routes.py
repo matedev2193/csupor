@@ -7,6 +7,7 @@ from flask import abort, flash, redirect, render_template, request, session, url
 from flask_babel import _
 from flask_login import current_user, login_required, login_user, logout_user
 from sqlalchemy.orm import joinedload
+from sqlalchemy.exc import SQLAlchemyError
 
 from . import SUPPORTED_LOCALES, db, get_locale
 
@@ -109,8 +110,22 @@ def _profile_completion_percentage(profile: UserProfile | None) -> int:
     if profile is None:
         return 0
 
-    completed = sum(1 for field in PROFILE_COMPLETION_FIELDS if getattr(profile, field))
+    completed = sum(1 for field in PROFILE_COMPLETION_FIELDS if _profile_value_present(getattr(profile, field)))
     return round((completed / len(PROFILE_COMPLETION_FIELDS)) * 100)
+
+
+def _profile_value_present(value) -> bool:
+    return bool(value.strip()) if isinstance(value, str) else value is not None
+
+
+def _profile_completion_state(profile: UserProfile | None) -> str:
+    if profile is None:
+        return "empty"
+    if all(_profile_value_present(getattr(profile, field)) for field in PROFILE_COMPLETION_FIELDS):
+        return "complete"
+    if any(_profile_value_present(getattr(profile, field)) for field in (*PROFILE_COMPLETION_FIELDS, "temporary_address", "disability")):
+        return "partial"
+    return "empty"
 
 
 def _profile_status_label(profile: UserProfile | None) -> str:
@@ -125,6 +140,23 @@ def _normalize_optional_text(value: str | None) -> str | None:
         return None
     normalized = value.strip()
     return normalized or None
+
+
+def _validate_date_obtained(value: str, today: date) -> tuple[date | None, str | None]:
+    raw_value = value.strip()
+    try:
+        obtained = date.fromisoformat(raw_value)
+        # fromisoformat also accepts compact and ISO week dates. The forms and
+        # stored qualification history require an exact calendar date.
+        if obtained.isoformat() != raw_value:
+            raise ValueError
+    except ValueError:
+        return None, _("Enter the full date obtained in YYYY-MM-DD format.")
+    if obtained < date(1900, 1, 1):
+        return None, _("Date obtained must be on or after 1900-01-01.")
+    if obtained > today:
+        return None, _("Date obtained cannot be in the future.")
+    return obtained, None
 
 
 def _validate_digit_field(label: str, value: str | None, length: int) -> str | None:
@@ -1639,8 +1671,79 @@ def init_routes(app):
     @app.route("/users/profiles")
     @privilege_manager_required
     def manage_user_profiles():
-        users = User.query.order_by(User.username.asc()).all()
-        return render_template("manage_user_profiles.html", users=users)
+        today = local_today()
+        selected_status = request.args.get("status", "active")
+        if selected_status not in {"active", "inactive", "all"}:
+            selected_status = "active"
+        selected_profile_state = request.args.get("profile_state", "all")
+        if selected_profile_state not in {"empty", "partial", "complete", "all"}:
+            selected_profile_state = "all"
+        search = request.args.get("q", "").strip()
+        users = User.query.options(joinedload(User.profile), joinedload(User.contracts)).all()
+        active_user_ids = {
+            user.id for user in users
+            if any(_is_contract_active_on(contract, today) for contract in user.contracts)
+        }
+        profile_states = {user.id: _profile_completion_state(user.profile) for user in users}
+        ceo_count = sum(user.privilege == UserPrivilege.ceo for user in users)
+        if search:
+            search_key = search.casefold()
+            users = [user for user in users if any(search_key in value.casefold() for value in (
+                user.username, user.email, user.profile.full_name or "" if user.profile else "",
+            ))]
+        if selected_profile_state != "all":
+            users = [user for user in users if profile_states[user.id] == selected_profile_state]
+        counts = {
+            "all": len(users),
+            "active": sum(user.id in active_user_ids for user in users),
+            "inactive": sum(user.id not in active_user_ids for user in users),
+        }
+        if selected_status != "all":
+            users = [user for user in users if (user.id in active_user_ids) == (selected_status == "active")]
+        users.sort(key=lambda user: (_user_display_name(user).casefold(), user.id))
+        session.setdefault("profile_delete_csrf_token", token_urlsafe(32))
+        return render_template(
+            "manage_user_profiles.html", users=users, active_user_ids=active_user_ids,
+            profile_states=profile_states, selected_status=selected_status,
+            selected_profile_state=selected_profile_state, search=search, counts=counts,
+            ceo_count=ceo_count, csrf_token=session["profile_delete_csrf_token"],
+        )
+
+    @app.route("/users/<int:user_id>/delete", methods=["POST"])
+    @privilege_manager_required
+    def delete_user_profile(user_id: int):
+        csrf_token = session.get("profile_delete_csrf_token")
+        if not csrf_token or not compare_digest(csrf_token.encode(), request.form.get("csrf_token", "").encode()):
+            abort(400)
+        if not current_user.check_password(request.form.get("manager_password", "")):
+            flash(_("Your password is incorrect. The user was not deleted."), "error")
+            return redirect(url_for("manage_user_profiles"))
+        if user_id == current_user.id:
+            flash(_("You cannot delete your own account."), "error")
+            return redirect(url_for("manage_user_profiles"))
+
+        from .account_deletion import AccountDeletionConflict, delete_user_account
+
+        try:
+            # Lock the CEO set in a consistent order so concurrent deletions
+            # cannot both remove the last remaining account with this role.
+            ceos = User.query.filter_by(privilege=UserPrivilege.ceo).order_by(User.id).with_for_update().all()
+            target_user = User.query.filter_by(id=user_id).with_for_update().populate_existing().first()
+            if target_user is None:
+                flash(_("User not found."), "error")
+            elif target_user.privilege == UserPrivilege.ceo and len(ceos) <= 1:
+                flash(_("The last CEO account cannot be deleted."), "error")
+            else:
+                username = target_user.username
+                delete_user_account(target_user)
+                db.session.commit()
+                flash(_("Deleted the account and personal records for %(username)s.", username=username), "success")
+                return redirect(url_for("manage_user_profiles"))
+            db.session.rollback()
+        except (SQLAlchemyError, AccountDeletionConflict):
+            db.session.rollback()
+            flash(_("The user could not be deleted. No changes were saved. Please try again."), "error")
+        return redirect(url_for("manage_user_profiles"))
 
     @app.route("/users/<int:user_id>/profile", methods=["GET", "POST"])
     @privilege_manager_required
@@ -1731,35 +1834,65 @@ def init_routes(app):
         dependent = Dependent.query.filter_by(id=dependent_id, user_id=current_user.id).first_or_404()
         return dependent_editor(dependent)
 
+    def qualification_editor(qualification=None):
+        session.setdefault("qualification_records_csrf_token", token_urlsafe(32))
+        today = local_today()
+        text_fields = ("level_or_type", "qualification_name", "institution_name", "degree_number")
+        form_values = {
+            field: getattr(qualification, field) or "" if qualification else ""
+            for field in text_fields
+        }
+        form_values["date_obtained"] = (
+            qualification.date_obtained.isoformat() if qualification and qualification.date_obtained else ""
+        )
+        form_values["highest"] = bool(qualification and qualification.highest)
+        if request.method == "POST":
+            if not compare_digest(session["qualification_records_csrf_token"].encode(), request.form.get("csrf_token", "").encode()):
+                abort(400)
+            form_values = {field: request.form.get(field, "") for field in (*text_fields, "date_obtained")}
+            form_values["highest"] = request.form.get("highest") == "on"
+            values = {field: form_values[field].strip() for field in text_fields}
+            obtained, date_error = _validate_date_obtained(form_values["date_obtained"], today)
+            errors = []
+            if not all(values.values()):
+                errors.append(_("Complete all qualification fields."))
+            if date_error:
+                errors.append(date_error)
+            if errors:
+                for error in errors:
+                    flash(error, "error")
+            else:
+                editing = qualification is not None
+                qualification = qualification or EducationalQualification(user_id=current_user.id)
+                if form_values["highest"]:
+                    EducationalQualification.query.filter_by(user_id=current_user.id, highest=True).update(
+                        {EducationalQualification.highest: False}, synchronize_session="fetch",
+                    )
+                for field, value in values.items():
+                    setattr(qualification, field, value)
+                qualification.date_obtained = obtained
+                qualification.year_obtained = obtained.year
+                qualification.highest = form_values["highest"]
+                db.session.add(qualification)
+                db.session.commit()
+                flash(_("Educational qualification updated.") if editing else _("Educational qualification added."), "success")
+                return redirect(url_for("dashboard"))
+
+        return render_template(
+            "qualification_form.html", qualification=qualification, form_values=form_values,
+            csrf_token=session["qualification_records_csrf_token"], latest_obtained_date=today.isoformat(),
+        )
+
     @app.route("/qualifications/add", methods=["GET", "POST"])
     @login_required
     def add_qualification():
-        if request.method == "POST":
-            try:
-                year_obtained = int(request.form.get("year_obtained", "0"))
-            except ValueError:
-                flash(_("Year obtained must be a number."), "error")
-                return render_template("qualification_form.html")
+        return qualification_editor()
 
-            qualification = EducationalQualification(
-                user_id=current_user.id,
-                level_or_type=request.form.get("level_or_type"),
-                qualification_name=request.form.get("qualification_name"),
-                institution_name=request.form.get("institution_name"),
-                degree_number=request.form.get("degree_number"),
-                year_obtained=year_obtained,
-                highest=request.form.get("highest") == "on",
-            )
-            if qualification.highest:
-                EducationalQualification.query.filter_by(user_id=current_user.id, highest=True).update(
-                    {EducationalQualification.highest: False}
-                )
-            db.session.add(qualification)
-            db.session.commit()
-            flash(_("Educational qualification added."), "success")
-            return redirect(url_for("dashboard"))
-
-        return render_template("qualification_form.html")
+    @app.route("/qualifications/<int:qualification_id>/edit", methods=["GET", "POST"])
+    @login_required
+    def edit_qualification(qualification_id):
+        qualification = EducationalQualification.query.filter_by(id=qualification_id, user_id=current_user.id).first_or_404()
+        return qualification_editor(qualification)
 
 
 
@@ -2581,32 +2714,47 @@ def init_routes(app):
     @login_required
     def professional_exam():
         exam = current_user.professional_exam or ProfessionalExam(user_id=current_user.id)
+        session.setdefault("qualification_records_csrf_token", token_urlsafe(32))
+        today = local_today()
+        visible_fields = ("qualification_name", "degree_number", "date_obtained")
+        form_values = {
+            "qualification_name": exam.qualification_name or "",
+            "degree_number": exam.degree_number or "",
+            "date_obtained": exam.date_obtained.isoformat() if exam.date_obtained else "",
+        }
         if request.method == "POST":
-            qualification_name = request.form.get("qualification_name", "").strip()
-            degree_number = request.form.get("degree_number", "").strip()
-            year_raw = request.form.get("year_obtained", "").strip()
-
-            if not qualification_name and not degree_number and not year_raw:
+            if not compare_digest(session["qualification_records_csrf_token"].encode(), request.form.get("csrf_token", "").encode()):
+                abort(400)
+            form_values = {field: request.form.get(field, "") for field in visible_fields}
+            values = {field: value.strip() for field, value in form_values.items()}
+            # Only an explicitly cleared current form removes the record. A
+            # stale year-only form or an incomplete POST must never delete it.
+            removing = (
+                all(field in request.form for field in visible_fields)
+                and not any(values.values())
+                and not request.form.get("year_obtained", "").strip()
+            )
+            if removing:
                 if exam.id:
                     db.session.delete(exam)
                     db.session.commit()
                 flash(_("Professional exam removed."), "success")
                 return redirect(url_for("dashboard"))
 
-            try:
-                year_obtained = int(year_raw)
-                if year_obtained < 1900 or year_obtained > datetime.now().year + 1:
-                    raise ValueError
-            except ValueError:
-                flash(_("Year obtained is invalid."), "error")
-                return render_template("professional_exam_form.html", exam=exam)
+            obtained, date_error = _validate_date_obtained(values["date_obtained"], today)
+            if date_error:
+                flash(date_error, "error")
+            else:
+                exam.qualification_name = values["qualification_name"]
+                exam.degree_number = values["degree_number"]
+                exam.date_obtained = obtained
+                exam.year_obtained = obtained.year
+                db.session.add(exam)
+                db.session.commit()
+                flash(_("Professional exam saved."), "success")
+                return redirect(url_for("dashboard"))
 
-            exam.qualification_name = qualification_name
-            exam.degree_number = degree_number
-            exam.year_obtained = year_obtained
-            db.session.add(exam)
-            db.session.commit()
-            flash(_("Professional exam saved."), "success")
-            return redirect(url_for("dashboard"))
-
-        return render_template("professional_exam_form.html", exam=exam)
+        return render_template(
+            "professional_exam_form.html", exam=exam, form_values=form_values,
+            csrf_token=session["qualification_records_csrf_token"], latest_obtained_date=today.isoformat(),
+        )

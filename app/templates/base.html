@@ -15,6 +15,7 @@
     <link rel="icon" type="image/png" sizes="96x96" href="{{ url_for('static', filename='images/csupor-favicon.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/portal.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/navigation.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/gyap.css') }}">
     <script>document.documentElement.classList.add('js');</script>
     <script defer src="{{ url_for('static', filename='js/portal.js') }}"></script>
@@ -42,14 +43,14 @@
             {{ nav_item('edit_profile', _('My profile'), 'user') }}
           </div>
         </details>
-        {% set records_active = request.endpoint in ['manage_dependents', 'add_dependent', 'edit_dependent', 'add_qualification', 'professional_exam'] %}
+        {% set records_active = request.endpoint in ['manage_dependents', 'add_dependent', 'edit_dependent', 'add_qualification', 'edit_qualification', 'professional_exam'] %}
         <details class="nav-group{% if records_active %} has-current{% endif %}"{% if records_active %} open{% endif %}>
           <summary class="nav-group-trigger" id="records-trigger" aria-controls="records-menu">
             {{ icon('graduate', 'nav-group-icon') }}<span>{{ _('My records') }}</span>{{ icon('chevron', 'nav-group-chevron') }}
           </summary>
           <div class="nav-group-menu" id="records-menu" aria-labelledby="records-trigger">
             {{ nav_item('manage_dependents', _('Dependents'), 'users', ['add_dependent', 'edit_dependent']) }}
-            {{ nav_item('add_qualification', _('Qualifications'), 'graduate') }}
+            {{ nav_item('add_qualification', _('Qualifications'), 'graduate', ['edit_qualification']) }}
             {{ nav_item('professional_exam', _('Professional exam'), 'award') }}
           </div>
         </details>
@@ -82,10 +83,14 @@
       <div class="sidebar-footer">
         {{ nav_item('change_password', _('Change password'), 'lock') }}
         {{ nav_item('logout', _('Logout'), 'logout') }}
-        <div class="sidebar-account">
-          <span class="avatar">{{ (current_user.profile.full_name if current_user.profile and current_user.profile.full_name else current_user.username)[:1]|upper }}</span>
-          <div><strong>{{ current_user.username }}</strong><small>{{ enum_label(current_user.privilege) }}</small></div>
-        </div>
+        {% set account_photo_url = profile_photo_url(current_user) %}
+        <a class="sidebar-account" href="{{ url_for('edit_profile') }}" title="{{ _('My profile') }}"{% if request.endpoint == 'edit_profile' %} aria-current="page"{% endif %}>
+          <span class="avatar account-avatar" aria-hidden="true">
+            {% if account_photo_url %}<img src="{{ account_photo_url }}" alt="" width="42" height="42">{% else %}{{ current_account.initial }}{% endif %}
+          </span>
+          <span class="sidebar-account-copy"><strong>{{ current_account.name }}</strong><small>{{ current_account.job_title }}</small></span>
+          {{ icon('chevron', 'sidebar-account-chevron') }}
+        </a>
       </div>
     </aside>
     <button type="button" class="menu-backdrop" data-menu-close tabindex="-1" aria-label="{{ _('Close menu') }}" hidden></button>
@@ -117,9 +122,7 @@
             </select>
             <noscript><button type="submit">{{ _('Save') }}</button></noscript>
           </form>
-          {% if current_user.is_authenticated %}
-          <a class="avatar topbar-avatar" href="{{ url_for('edit_profile') }}" aria-label="{{ _('My profile') }}">{{ (current_user.profile.full_name if current_user.profile and current_user.profile.full_name else current_user.username)[:1]|upper }}</a>
-          {% else %}
+          {% if not current_user.is_authenticated %}
           <a class="button button-secondary public-account-link" href="{{ url_for('register' if request.endpoint == 'login' else 'login') }}">{{ _('Create an account') if request.endpoint == 'login' else _('Login') }} {{ icon('arrow') }}</a>
           {% endif %}
         </div>

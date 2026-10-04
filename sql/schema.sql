@@ -45,6 +45,24 @@ CREATE TABLE IF NOT EXISTS gyap_forms (
   CONSTRAINT chk_gyap_form_size CHECK (size_bytes > 0 AND size_bytes <= 10485760)
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS profile_photos (
+  user_id INT UNSIGNED NOT NULL,
+  version VARCHAR(32) NOT NULL,
+  mime_type VARCHAR(30) NOT NULL DEFAULT 'image/jpeg',
+  width INT NOT NULL,
+  height INT NOT NULL,
+  size_bytes INT NOT NULL,
+  updated_at DATETIME NOT NULL,
+  data MEDIUMBLOB NOT NULL,
+  PRIMARY KEY (user_id),
+  CONSTRAINT fk_profile_photos_user_id
+    FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE CASCADE,
+  CONSTRAINT chk_profile_photo_dimensions
+    CHECK (width BETWEEN 1 AND 384 AND height BETWEEN 1 AND 384),
+  CONSTRAINT chk_profile_photo_size CHECK (size_bytes > 0 AND size_bytes <= 1048576)
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS user_profiles (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id INT UNSIGNED NOT NULL,
@@ -110,6 +128,7 @@ CREATE TABLE IF NOT EXISTS educational_qualifications (
   institution_name VARCHAR(120) NOT NULL,
   degree_number VARCHAR(80) NOT NULL,
   year_obtained SMALLINT UNSIGNED NOT NULL,
+  date_obtained DATE NULL,
   highest TINYINT(1) NOT NULL DEFAULT 0,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -129,6 +148,7 @@ CREATE TABLE IF NOT EXISTS professional_exams (
   user_id INT UNSIGNED NOT NULL,
   qualification_name VARCHAR(120) NOT NULL,
   year_obtained SMALLINT UNSIGNED NOT NULL,
+  date_obtained DATE NULL,
   degree_number VARCHAR(80) NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

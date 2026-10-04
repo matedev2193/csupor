@@ -155,6 +155,7 @@ class User(UserMixin, db.Model):
     )
 
     profile = db.relationship("UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    photo = db.relationship("ProfilePhoto", back_populates="user", uselist=False, cascade="all, delete-orphan")
     dependents = db.relationship("Dependent", back_populates="user", cascade="all, delete-orphan")
     qualifications = db.relationship(
         "EducationalQualification", back_populates="user", cascade="all, delete-orphan"
@@ -175,6 +176,27 @@ class User(UserMixin, db.Model):
 
     def check_password(self, raw_password: str) -> bool:
         return check_password_hash(self.password_hash, raw_password)
+
+
+class ProfilePhoto(db.Model):
+    """A normalised avatar stored independently of existing profile columns."""
+
+    __tablename__ = "profile_photos"
+    __table_args__ = (
+        db.CheckConstraint("width BETWEEN 1 AND 384 AND height BETWEEN 1 AND 384", name="profile_photo_dimensions"),
+        db.CheckConstraint("size_bytes > 0 AND size_bytes <= 1048576", name="profile_photo_size"),
+    )
+
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), primary_key=True, autoincrement=False)
+    version = db.Column(db.String(32), nullable=False)
+    mime_type = db.Column(db.String(30), nullable=False, default="image/jpeg")
+    width = db.Column(db.Integer, nullable=False)
+    height = db.Column(db.Integer, nullable=False)
+    size_bytes = db.Column(db.Integer, nullable=False)
+    updated_at = db.Column(db.DateTime, nullable=False)
+    data = db.deferred(db.Column(db.LargeBinary().with_variant(MEDIUMBLOB(), "mysql", "mariadb"), nullable=False))
+
+    user = db.relationship("User", back_populates="photo")
 
 
 class UserProfile(db.Model):
@@ -235,6 +257,7 @@ class EducationalQualification(db.Model):
     institution_name = db.Column(db.String(120), nullable=False)
     degree_number = db.Column(db.String(80), nullable=False)
     year_obtained = db.Column(db.Integer, nullable=False)
+    date_obtained = db.Column(db.Date, nullable=True)
     highest = db.Column(db.Boolean, nullable=False, default=False)
 
     user = db.relationship("User", back_populates="qualifications")
@@ -248,6 +271,7 @@ class ProfessionalExam(db.Model):
 
     qualification_name = db.Column(db.String(120), nullable=False)
     year_obtained = db.Column(db.Integer, nullable=False)
+    date_obtained = db.Column(db.Date, nullable=True)
     degree_number = db.Column(db.String(80), nullable=False)
 
     user = db.relationship("User", back_populates="professional_exam")

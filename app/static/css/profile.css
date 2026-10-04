@@ -1,0 +1,39 @@
+/* The whole signed-in account is one profile link. */
+.sidebar-account {
+  gap: 9px;
+  padding: 12px 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-muted);
+  transition: background .16s ease, border-color .16s ease;
+}
+.sidebar-account:hover, .sidebar-account[aria-current="page"] {
+  border-color: #e5c6b0;
+  background: var(--primary-tint);
+}
+.sidebar-account-copy { flex: 1; min-width: 0; }
+.sidebar-account strong { overflow: visible; overflow-wrap: anywhere; text-overflow: clip; line-height: 1.4; }
+.sidebar-account small { display: block; margin-top: 3px; overflow-wrap: anywhere; line-height: 1.4; }
+.sidebar-account .sidebar-account-chevron { width: 13px; height: 13px; color: var(--text-soft); }
+.account-avatar { width: 42px; height: 42px; overflow: hidden; }
+.account-avatar img, .profile-photo-preview img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* Photo upload is independent of saving the personal-details form. */
+.profile-photo-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 25px;
+  padding-bottom: 25px;
+  border-bottom: 1px solid var(--border);
+}
+.profile-photo-preview { width: 80px; height: 80px; border-radius: 18px; overflow: hidden; font-size: 27px; }
+.profile-photo-form { flex: 1; min-width: 0; gap: 12px; }
+.profile-photo-form h3 { margin: 0; font-size: 15px; }
+.profile-photo-form input[type="file"] { width: 100%; min-width: 0; font-size: 12px; }
+.profile-photo-form > button { justify-self: start; }
+
+@media (max-width: 600px) {
+  .profile-photo-section { flex-direction: column; gap: 15px; }
+  .profile-photo-form { width: 100%; }
+}

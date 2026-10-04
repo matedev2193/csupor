@@ -10,8 +10,8 @@
     </p>
     <ul>
       <li>{{ _('Leave all fields empty and submit to remove the current record.') }}</li>
-      <li>{{ _('Use a valid year that reflects the official exam completion date.') }}</li>
-      <li>{{ _('Keep the degree number aligned with your documentation.') }}</li>
+      <li>{{ _('Enter the exact date obtained as shown on the document.') }}</li>
+      <li>{{ _('Use the document number shown by the issuing institution.') }}</li>
     </ul>
   </aside>
 
@@ -23,18 +23,22 @@
       </div>
     </div>
     <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <div class="form-grid">
         <div class="field field-full">
           <label for="qualification_name">{{ _('Name of qualification') }}</label>
-          <input id="qualification_name" name="qualification_name" value="{{ exam.qualification_name or '' }}">
+          <input id="qualification_name" name="qualification_name" value="{{ form_values.get('qualification_name', '') }}">
         </div>
         <div class="field">
-          <label for="year_obtained">{{ _('Year obtained') }}</label>
-          <input id="year_obtained" type="number" name="year_obtained" value="{{ exam.year_obtained or '' }}">
+          <label for="date_obtained">{{ _('Date obtained') }}</label>
+          <input id="date_obtained" type="date" name="date_obtained" min="1900-01-01" max="{{ latest_obtained_date }}" value="{{ form_values.get('date_obtained', '') }}"{% if not exam.date_obtained and exam.year_obtained %} aria-describedby="exam-date-help"{% endif %}>
+          {% if not exam.date_obtained and exam.year_obtained %}
+          <small class="help-text" id="exam-date-help">{{ exam.year_obtained }} — {{ _('Exact date not recorded') }}</small>
+          {% endif %}
         </div>
         <div class="field">
-          <label for="degree_number">{{ _('Degree number') }}</label>
-          <input id="degree_number" name="degree_number" value="{{ exam.degree_number or '' }}">
+          <label for="degree_number">{{ _('Document number') }}</label>
+          <input id="degree_number" name="degree_number" value="{{ form_values.get('degree_number', '') }}">
         </div>
       </div>
       <div class="button-row">
