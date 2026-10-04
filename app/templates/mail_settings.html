@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Settings') }} · {{ _('CSUPOR Portal') }}{% endblock %}
+{% block content %}
+<section class="section-heading">
+  <div><span class="eyebrow">{{ _('Developer') }}</span><h1>{{ _('Settings') }}</h1><p>{{ _('Configure the email server used for leave notifications.') }}</p></div>
+</section>
+<form method="post" class="layout-stack" autocomplete="off">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <input type="hidden" name="revision" value="{{ revision }}">
+  <section class="form-shell">
+    <div class="section-heading"><div><h2>{{ _('Email notifications') }}</h2><p>{{ _('Changes are collected into one email per recipient each day at 20:00, Europe/Budapest time. Changes to leave starting within 24 hours, or already started, are sent immediately.') }}</p></div></div>
+    <label class="checkbox-field" for="mail-enabled"><input id="mail-enabled" type="checkbox" name="enabled" value="1"{% if values.enabled %} checked{% endif %}> {{ _('Enable email notifications') }}</label>
+    <p class="help-text">{{ _('Emails are sent to the email address saved in each user account.') }}</p>
+  </section>
+  <section class="form-shell">
+    <div class="section-heading"><div><h2>{{ _('Email server') }}</h2></div></div>
+    <div class="form-grid">
+      <div class="field"><label for="mail-host">{{ _('Server hostname') }}</label><input id="mail-host" name="host" value="{{ values.host }}" maxlength="255" placeholder="smtp.example.com" autocapitalize="none" spellcheck="false"></div>
+      <div class="field"><label for="mail-port">{{ _('Port') }}</label><input id="mail-port" name="port" type="number" min="1" max="65535" value="{{ values.port }}" required></div>
+      <div class="field"><label for="mail-security">{{ _('Connection security') }}</label><select id="mail-security" name="security"><option value="starttls"{% if values.security == 'starttls' %} selected{% endif %}>STARTTLS</option><option value="ssl"{% if values.security == 'ssl' %} selected{% endif %}>SSL / TLS</option><option value="none"{% if values.security == 'none' %} selected{% endif %}>{{ _('None') }}</option></select></div>
+      <div class="field"><label for="mail-username">{{ _('Username (optional)') }}</label><input id="mail-username" name="username" value="{{ values.username }}" maxlength="255" autocapitalize="none" spellcheck="false" autocomplete="off"><small class="help-text">{{ _('Leave empty if the server does not require authentication.') }}</small></div>
+      <div class="field"><label for="mail-password">{{ _('Server password') }}</label><input id="mail-password" name="password" type="password" maxlength="4096" autocomplete="new-password" aria-describedby="mail-password-help"><small id="mail-password-help" class="help-text">{{ _('A password is saved. Leave empty to keep it.') if password_saved else _('No server password has been saved.') }}</small></div>
+      {% if password_saved %}<label class="checkbox-field field-full" for="mail-clear-password"><input id="mail-clear-password" type="checkbox" name="clear_password" value="1"> {{ _('Remove the saved password') }}</label>{% endif %}
+    </div>
+  </section>
+  <section class="form-shell">
+    <div class="section-heading"><div><h2>{{ _('Sender and application') }}</h2></div></div>
+    <div class="form-grid">
+      <div class="field"><label for="mail-sender-name">{{ _('Sender name') }}</label><input id="mail-sender-name" name="sender_name" value="{{ values.sender_name }}" maxlength="120"></div>
+      <div class="field"><label for="mail-sender-email">{{ _('Sender email address') }}</label><input id="mail-sender-email" name="sender_email" type="email" value="{{ values.sender_email }}" maxlength="254" autocapitalize="none" spellcheck="false"></div>
+      <div class="field field-full"><label for="mail-base-url">{{ _('Application URL') }}</label><input id="mail-base-url" name="base_url" type="url" value="{{ values.base_url }}" maxlength="500" placeholder="https://csupor.example.com" autocapitalize="none" spellcheck="false" aria-describedby="mail-url-help"><small id="mail-url-help" class="help-text">{{ _('The web address of this CSUPOR application, used for links in notification emails.') }}</small></div>
+      <div class="button-row field-full"><button type="submit">{{ _('Save email settings') }}</button></div>
+    </div>
+  </section>
+</form>
+{% endblock %}

@@ -76,6 +76,9 @@
           </div>
         </details>
         {% endif %}
+        {% if current_user.privilege.value == 'developer' %}
+        {{ nav_item('mail_settings.settings', _('Settings'), 'settings') }}
+        {% endif %}
       </nav>
       <div class="sidebar-footer">
         {{ nav_item('change_password', _('Change password'), 'lock') }}

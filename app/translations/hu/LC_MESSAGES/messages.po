@@ -4305,3 +4305,111 @@ msgstr "Válassz munkavégzési helyet a csoportjai megtekintéséhez."
 #: app/templates/worktime.html
 msgid "Morning shifts start at 08:00; afternoon shifts end at 17:30. Assigned shift patterns alternate weekly; employees without an assigned shift are scheduled according to the group’s needs. Early starts at 06:00 for one nanny and 07:00 for one teacher rotate fairly within each workplace."
 msgstr "A délelőtti műszak 08:00-kor kezdődik, a délutáni 17:30-kor ér véget. A rögzített műszakrend hetente váltakozik; hozzárendelt műszak nélkül a csoport igényei határozzák meg a beosztást. Munkavégzési helyenként egy dajka 06:00-kor, egy óvodapedagógus 07:00-kor kezd, egyenletesen váltva egymást."
+
+msgid "Email settings must not contain line breaks or control characters."
+msgstr "Az e-mail-beállítások nem tartalmazhatnak sortörést vagy vezérlőkaraktert."
+
+msgid "Enter a valid email server hostname or IP address."
+msgstr "Adj meg érvényes kiszolgálónevet vagy IP-címet."
+
+msgid "Enter a port between 1 and 65535."
+msgstr "Adj meg egy 1 és 65535 közötti portszámot."
+
+msgid "Choose a supported connection security option."
+msgstr "Válassz egy támogatott kapcsolati titkosítást."
+
+msgid "An email setting is too long."
+msgstr "Az egyik e-mail-beállítás túl hosszú."
+
+msgid "Enter a valid sender email address."
+msgstr "Adj meg érvényes feladói e-mail-címet."
+
+msgid "Enter the full application URL starting with https:// or http://, without a query or fragment."
+msgstr "Add meg az alkalmazás teljes, https:// vagy http:// kezdetű webcímét, lekérdezési paraméter és töredékazonosító nélkül."
+
+msgid "Enter the server, sender email and application URL before enabling emails."
+msgstr "A levélküldés bekapcsolásához add meg a kiszolgálót, a feladó e-mail-címét és az alkalmazás webcímét."
+
+msgid "Either enter a new password or remove the stored password."
+msgstr "Vagy adj meg új jelszót, vagy töröld a tárolt jelszót."
+
+msgid "Email settings were changed in another session. Review the current settings and try again."
+msgstr "Az e-mail-beállításokat közben másik munkamenetben módosították. Ellenőrizd az aktuális adatokat, és próbáld újra."
+
+msgid "Set a stable server encryption key before saving a password or enabling email. If the key changed, enter the password again."
+msgstr "Jelszó mentése vagy a levélküldés bekapcsolása előtt állíts be állandó titkosítási kulcsot a szerveren. Ha megváltozott a kulcs, add meg újra a jelszót."
+
+msgid "Email settings saved."
+msgstr "Az e-mail-beállítások mentve."
+
+msgid "Settings"
+msgstr "Beállítások"
+
+msgid "Rejection by an eligible reviewer closes a pending request. Cancellation can be decided by either reviewer allowed by the selected rule."
+msgstr "A jogosult elbíráló elutasítása lezárja a függőben lévő igényt. A visszavonásról a kiválasztott szabály szerint jogosult elbírálók bármelyike dönthet."
+
+msgid "Configure the email server used for leave notifications."
+msgstr "Állítsd be a távolléti értesítésekhez használt e-mail-kiszolgálót."
+
+msgid "Email notifications"
+msgstr "E-mail-értesítések"
+
+msgid "Changes are collected into one email per recipient each day at 20:00, Europe/Budapest time. Changes to leave starting within 24 hours, or already started, are sent immediately."
+msgstr "A változásokról címzettenként napi egy összesítő készül, budapesti idő szerint 20:00-kor. A 24 órán belül kezdődő vagy már megkezdett távollétek változásairól azonnali értesítés megy."
+
+msgid "Enable email notifications"
+msgstr "E-mail-értesítések bekapcsolása"
+
+msgid "Emails are sent to the email address saved in each user account."
+msgstr "A levelek a felhasználók fiókjában megadott e-mail-címre érkeznek."
+
+msgid "Email server"
+msgstr "E-mail-kiszolgáló"
+
+msgid "Server hostname"
+msgstr "Kiszolgáló neve"
+
+msgid "Port"
+msgstr "Port"
+
+msgid "Connection security"
+msgstr "Kapcsolat titkosítása"
+
+msgid "None"
+msgstr "Nincs"
+
+msgid "Username (optional)"
+msgstr "Felhasználónév (nem kötelező)"
+
+msgid "Leave empty if the server does not require authentication."
+msgstr "Hagyd üresen, ha a kiszolgáló nem igényel hitelesítést."
+
+msgid "Server password"
+msgstr "Kiszolgáló jelszava"
+
+msgid "A password is saved. Leave empty to keep it."
+msgstr "Van mentett jelszó. Hagyd üresen a megtartásához."
+
+msgid "No server password has been saved."
+msgstr "Még nincs mentett kiszolgálójelszó."
+
+msgid "Remove the saved password"
+msgstr "Mentett jelszó törlése"
+
+msgid "Sender and application"
+msgstr "Feladó és alkalmazás"
+
+msgid "Sender name"
+msgstr "Feladó neve"
+
+msgid "Sender email address"
+msgstr "Feladó e-mail-címe"
+
+msgid "Application URL"
+msgstr "Alkalmazás webcíme"
+
+msgid "The web address of this CSUPOR application, used for links in notification emails."
+msgstr "Ennek a CSUPOR-alkalmazásnak a webcíme. Ide vezetnek majd az értesítő levelek hivatkozásai."
+
+msgid "Save email settings"
+msgstr "E-mail-beállítások mentése"
