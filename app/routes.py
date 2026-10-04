@@ -7,6 +7,7 @@ from flask import abort, flash, redirect, render_template, request, session, url
 from flask_babel import _
 from flask_login import current_user, login_required, login_user, logout_user
 from sqlalchemy.orm import joinedload
+from sqlalchemy.exc import SQLAlchemyError
 
 from . import SUPPORTED_LOCALES, db, get_locale
 
@@ -109,8 +110,22 @@ def _profile_completion_percentage(profile: UserProfile | None) -> int:
     if profile is None:
         return 0
 
-    completed = sum(1 for field in PROFILE_COMPLETION_FIELDS if getattr(profile, field))
+    completed = sum(1 for field in PROFILE_COMPLETION_FIELDS if _profile_value_present(getattr(profile, field)))
     return round((completed / len(PROFILE_COMPLETION_FIELDS)) * 100)
+
+
+def _profile_value_present(value) -> bool:
+    return bool(value.strip()) if isinstance(value, str) else value is not None
+
+
+def _profile_completion_state(profile: UserProfile | None) -> str:
+    if profile is None:
+        return "empty"
+    if all(_profile_value_present(getattr(profile, field)) for field in PROFILE_COMPLETION_FIELDS):
+        return "complete"
+    if any(_profile_value_present(getattr(profile, field)) for field in (*PROFILE_COMPLETION_FIELDS, "temporary_address", "disability")):
+        return "partial"
+    return "empty"
 
 
 def _profile_status_label(profile: UserProfile | None) -> str:
@@ -1639,8 +1654,79 @@ def init_routes(app):
     @app.route("/users/profiles")
     @privilege_manager_required
     def manage_user_profiles():
-        users = User.query.order_by(User.username.asc()).all()
-        return render_template("manage_user_profiles.html", users=users)
+        today = local_today()
+        selected_status = request.args.get("status", "active")
+        if selected_status not in {"active", "inactive", "all"}:
+            selected_status = "active"
+        selected_profile_state = request.args.get("profile_state", "all")
+        if selected_profile_state not in {"empty", "partial", "complete", "all"}:
+            selected_profile_state = "all"
+        search = request.args.get("q", "").strip()
+        users = User.query.options(joinedload(User.profile), joinedload(User.contracts)).all()
+        active_user_ids = {
+            user.id for user in users
+            if any(_is_contract_active_on(contract, today) for contract in user.contracts)
+        }
+        profile_states = {user.id: _profile_completion_state(user.profile) for user in users}
+        ceo_count = sum(user.privilege == UserPrivilege.ceo for user in users)
+        if search:
+            search_key = search.casefold()
+            users = [user for user in users if any(search_key in value.casefold() for value in (
+                user.username, user.email, user.profile.full_name or "" if user.profile else "",
+            ))]
+        if selected_profile_state != "all":
+            users = [user for user in users if profile_states[user.id] == selected_profile_state]
+        counts = {
+            "all": len(users),
+            "active": sum(user.id in active_user_ids for user in users),
+            "inactive": sum(user.id not in active_user_ids for user in users),
+        }
+        if selected_status != "all":
+            users = [user for user in users if (user.id in active_user_ids) == (selected_status == "active")]
+        users.sort(key=lambda user: (_user_display_name(user).casefold(), user.id))
+        session.setdefault("profile_delete_csrf_token", token_urlsafe(32))
+        return render_template(
+            "manage_user_profiles.html", users=users, active_user_ids=active_user_ids,
+            profile_states=profile_states, selected_status=selected_status,
+            selected_profile_state=selected_profile_state, search=search, counts=counts,
+            ceo_count=ceo_count, csrf_token=session["profile_delete_csrf_token"],
+        )
+
+    @app.route("/users/<int:user_id>/delete", methods=["POST"])
+    @privilege_manager_required
+    def delete_user_profile(user_id: int):
+        csrf_token = session.get("profile_delete_csrf_token")
+        if not csrf_token or not compare_digest(csrf_token.encode(), request.form.get("csrf_token", "").encode()):
+            abort(400)
+        if not current_user.check_password(request.form.get("manager_password", "")):
+            flash(_("Your password is incorrect. The user was not deleted."), "error")
+            return redirect(url_for("manage_user_profiles"))
+        if user_id == current_user.id:
+            flash(_("You cannot delete your own account."), "error")
+            return redirect(url_for("manage_user_profiles"))
+
+        from .account_deletion import AccountDeletionConflict, delete_user_account
+
+        try:
+            # Lock the CEO set in a consistent order so concurrent deletions
+            # cannot both remove the last remaining account with this role.
+            ceos = User.query.filter_by(privilege=UserPrivilege.ceo).order_by(User.id).with_for_update().all()
+            target_user = User.query.filter_by(id=user_id).with_for_update().populate_existing().first()
+            if target_user is None:
+                flash(_("User not found."), "error")
+            elif target_user.privilege == UserPrivilege.ceo and len(ceos) <= 1:
+                flash(_("The last CEO account cannot be deleted."), "error")
+            else:
+                username = target_user.username
+                delete_user_account(target_user)
+                db.session.commit()
+                flash(_("Deleted the account and personal records for %(username)s.", username=username), "success")
+                return redirect(url_for("manage_user_profiles"))
+            db.session.rollback()
+        except (SQLAlchemyError, AccountDeletionConflict):
+            db.session.rollback()
+            flash(_("The user could not be deleted. No changes were saved. Please try again."), "error")
+        return redirect(url_for("manage_user_profiles"))
 
     @app.route("/users/<int:user_id>/profile", methods=["GET", "POST"])
     @privilege_manager_required

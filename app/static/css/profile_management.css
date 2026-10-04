@@ -1,0 +1,23 @@
+.profile-count { margin: 20px 0 12px; }
+.profile-management-table { min-width: 800px; }
+.profile-management-table td { vertical-align: middle; }
+.profile-management-table td:nth-child(2) { min-width: 180px; overflow-wrap: anywhere; }
+.profile-row-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.profile-status-partial { color: #795611; background: #fff2c6; border: 1px solid #e9cc73; }
+.profile-delete-button { color: #9e3434; background: #fff; border: 1px solid #e5c2c2; }
+.profile-delete-button:hover:not(:disabled) { background: #fff0f0; border-color: #c98282; }
+.profile-delete-button:disabled { opacity: .5; cursor: not-allowed; }
+.profile-delete-dialog { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); box-sizing: border-box; padding: 28px; border: 1px solid var(--border); border-radius: 16px; color: var(--text); background: #fff; overflow: auto; }
+.profile-delete-dialog::backdrop { background: rgb(28 34 44 / 50%); }
+.profile-delete-dialog h2 { margin: 0 0 12px; }
+.profile-delete-dialog p { line-height: 1.6; }
+.profile-delete-dialog .profile-delete-person { font-weight: 700; overflow-wrap: anywhere; }
+.profile-delete-dialog .field { margin-top: 20px; }
+.profile-delete-dialog small { display: block; color: var(--text-soft); line-height: 1.5; }
+.profile-delete-dialog .button-row { justify-content: flex-end; margin-top: 24px; }
+.profile-delete-dialog .profile-delete-confirm { color: #fff; background: #9e3434; border: 1px solid #9e3434; }
+.profile-delete-dialog .profile-delete-confirm:hover { background: #7e2828; }
+@media (max-width: 560px) {
+  .profile-delete-dialog { padding: 20px; }
+  .profile-delete-dialog .button-row { flex-direction: column-reverse; align-items: stretch; }
+}

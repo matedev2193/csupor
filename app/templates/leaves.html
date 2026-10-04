@@ -1,4 +1,12 @@
 {% extends "base.html" %}
+{% set calendar_categories = {
+  'paid leave': (_('PL'), enum_label('paid leave')),
+  'health leave': (_('HL'), enum_label('health leave')),
+  'childcare sickness benefit': (_('CSB'), enum_label('childcare sickness benefit')),
+  'childbirth leave': (_('ML'), enum_label('childbirth leave')),
+  'exemption from obligation to work': (_('EX'), enum_label('exemption from obligation to work')),
+  'unpaid leave': (_('UL'), enum_label('unpaid leave')),
+} %}
 {% macro gyap_form_link(form) -%}
   {% if form.url %}
   <a class="text-link" href="{{ form.url }}" download>{{ _('Download the %(year)s GYÁP form', year=form.year) }}</a>
@@ -45,19 +53,25 @@
     <div class="calendar-grid day-grid">
       {% for day in calendar_days %}
       {% if day %}
+      {% set day_requests = namespace(items=[]) %}
+      {% for leave_request in month_requests %}
+        {% if leave_request.status.value not in ['cancelled', 'rejected'] and leave_request_overlaps_day(leave_request, day) %}
+          {% set day_requests.items = day_requests.items + [leave_request] %}
+        {% endif %}
+      {% endfor %}
       <button
         type="button"
         class="calendar-day calendar-day-button"
         data-calendar-date="{{ day.isoformat() }}"
-        aria-label="{{ _("Select %(month)s %(day)s, %(year)s as a leave date", month=day|dateformat('MMMM'), day=day.day, year=day.year) }}"
+        aria-label="{{ _("Select %(month)s %(day)s, %(year)s as a leave date", month=day|dateformat('MMMM'), day=day.day, year=day.year) }}{% for leave_request in day_requests.items %} · {{ calendar_categories[leave_request.category.value][1] }}: {{ enum_label(leave_request.status) }}{% endfor %}"
       >
         <time datetime="{{ day.isoformat() }}">{{ day.day }}</time>
-        {% for leave_request in month_requests %}
-          {% if leave_request.status.value not in ['cancelled', 'rejected'] and leave_request_overlaps_day(leave_request, day) %}
-          <span class="leave-chip status-{{ leave_request.status.value|replace(' ', '-') }}" title="{{ enum_label(leave_request.category) }} · {{ enum_label(leave_request.status) }}">
-            {{ enum_label(leave_request.category) }}
+        {% for leave_request in day_requests.items %}
+          {% set category_display = calendar_categories[leave_request.category.value] %}
+          {% set request_description = category_display[1] ~ ' · ' ~ enum_label(leave_request.status) %}
+          <span class="leave-chip status-{{ leave_request.status.value|replace(' ', '-') }}" role="img" title="{{ request_description }}" aria-label="{{ request_description }}">
+            {{ category_display[0] }}
           </span>
-          {% endif %}
         {% endfor %}
       </button>
       {% else %}
@@ -65,6 +79,15 @@
       {% endif %}
       {% endfor %}
     </div>
+
+    <section class="leave-calendar-legend" aria-labelledby="calendar-abbreviations-heading">
+      <h3 id="calendar-abbreviations-heading">{{ _('Calendar abbreviations') }}</h3>
+      <dl>
+        {% for category, display in calendar_categories.items() %}
+        <div><dt>{{ display[0] }}</dt><dd>{{ display[1] }}</dd></div>
+        {% endfor %}
+      </dl>
+    </section>
 
     <div class="request-list">
       <h3>{{ _("This month") }}</h3>

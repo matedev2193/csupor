@@ -19,17 +19,32 @@
   </aside>
 </section>
 
-{% if is_own_birthday or birthday_colleagues %}
+{% if is_own_birthday %}
 <section class="birthday-card" aria-labelledby="birthday-heading">
   <span class="birthday-symbol" aria-hidden="true">{{ icon('cake') }}</span>
-  <div>{% if is_own_birthday %}
+  <div>
     <h2 id="birthday-heading">{{ _('Happy birthday, %(name)s!', name=current_user.profile.full_name or current_user.username) }}</h2>
     <p>{{ _('Wishing you a wonderful day filled with joy!') }}</p>
-  {% else %}
-    <h2 id="birthday-heading">{{ _("Today's birthdays at your workplace") }}</h2>
-    <p>{{ _('Remember to wish your colleagues a happy birthday:') }}</p>
-    <ul>{% for colleague in birthday_colleagues %}<li>{{ colleague.profile.full_name or colleague.username }}</li>{% endfor %}</ul>
-  {% endif %}</div>
+  </div>
+</section>
+{% endif %}
+{% if birthday_colleagues %}
+{% set birthday_names -%}
+  {%- for colleague in birthday_colleagues -%}
+    {%- if not loop.first %}{{ ' ' ~ _('and') ~ ' ' if loop.last else ', ' }}{% endif -%}
+    <strong>{{ colleague.profile.full_name or colleague.username }}</strong>
+  {%- endfor -%}
+{%- endset %}
+<section class="birthday-card" aria-labelledby="colleague-birthday-heading">
+  <span class="birthday-symbol" aria-hidden="true">{{ icon('cake') }}</span>
+  <div>
+    <h2 id="colleague-birthday-heading">{{ _("Today's birthdays") }}</h2>
+    {% if birthday_colleagues|length == 1 %}
+    <p>{{ _("Your colleague %(names)s is celebrating their birthday today. Don't forget to wish them a happy birthday!", names=birthday_names) }}</p>
+    {% else %}
+    <p>{{ _("Your colleagues %(names)s are celebrating their birthdays today. Don't forget to wish them a happy birthday!", names=birthday_names) }}</p>
+    {% endif %}
+  </div>
 </section>
 {% endif %}
 

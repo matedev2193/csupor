@@ -2851,14 +2851,27 @@ msgstr "Regisztráció"
 msgid "Already have an account?"
 msgstr "Már van fiókod?"
 
+#, python-format
 msgid "The following calendar years are not open for leave requests: %(years)s. Please contact HR."
-msgstr "Az alábbi naptári évek még nincsenek megnyitva szabadságigénylésre: %(years)s. Kérjük, jelezd a HR-nek."
+msgstr ""
+"Az alábbi naptári évek még nincsenek megnyitva szabadságigénylésre: %(years)s. Kérjük, jelezd a "
+"HR-nek."
 
-msgid "Paid leave requested for %(year)s needs %(requested)s days, but only %(remaining)s days remain for that year."
-msgstr "A(z) %(year)s. évre eső időszakhoz %(requested)s nap fizetett szabadság szükséges, de erre az évre csak %(remaining)s nap maradt."
+#, python-format
+msgid ""
+"Paid leave requested for %(year)s needs %(requested)s days, but only %(remaining)s days remain "
+"for that year."
+msgstr ""
+"A(z) %(year)s. évre eső időszakhoz %(requested)s nap fizetett szabadság szükséges, de erre az "
+"évre csak %(remaining)s nap maradt."
 
-msgid "The paid leave balances valid on the requested dates in %(year)s do not cover every working day. Please contact HR to check the validity periods."
-msgstr "A(z) %(year)s. évre eső igényelt időszak egyes munkanapjaira nincs felhasználható szabadságkeret. Kérjük, egyeztesd a HR-rel a keretek érvényességi időszakát."
+#, python-format
+msgid ""
+"The paid leave balances valid on the requested dates in %(year)s do not cover every working day. "
+"Please contact HR to check the validity periods."
+msgstr ""
+"A(z) %(year)s. évre eső igényelt időszak egyes munkanapjaira nincs felhasználható szabadságkeret."
+" Kérjük, egyeztesd a HR-rel a keretek érvényességi időszakát."
 
 msgid "GYÁP forms"
 msgstr "GYÁP-nyomtatványok"
@@ -2866,8 +2879,12 @@ msgstr "GYÁP-nyomtatványok"
 msgid "GYÁP forms · CSUPOR Portal"
 msgstr "GYÁP-nyomtatványok · CSUPOR"
 
-msgid "Upload the blank childcare sickness benefit form for each year. Employees can download it when requesting this type of absence."
-msgstr "Töltsd fel az adott év üres gyermekápolási táppénz-nyomtatványát. A munkatársak GYÁP-távollét igénylésekor tudják letölteni."
+msgid ""
+"Upload the blank childcare sickness benefit form for each year. Employees can download it when "
+"requesting this type of absence."
+msgstr ""
+"Töltsd fel az adott év üres gyermekápolási táppénz-nyomtatványát. A munkatársak GYÁP-távollét "
+"igénylésekor tudják letölteni."
 
 msgid "Upload a form"
 msgstr "Nyomtatvány feltöltése"
@@ -2878,6 +2895,7 @@ msgstr "Az ugyanahhoz az évhez feltöltött új nyomtatvány lecseréli a korá
 msgid "Blank GYÁP form"
 msgstr "Üres GYÁP-nyomtatvány"
 
+#, python-format
 msgid "PDF, DOC or DOCX, up to %(size)s MB."
 msgstr "PDF, DOC vagy DOCX formátum, legfeljebb %(size)s MB."
 
@@ -2896,20 +2914,26 @@ msgstr "Feltöltve"
 msgid "Download"
 msgstr "Letöltés"
 
+#, python-format
 msgid "Download the %(year)s GYÁP form"
 msgstr "A(z) %(year)s. évi GYÁP-nyomtatvány letöltése"
 
 msgid "No GYÁP forms have been uploaded yet."
 msgstr "Még nincs feltöltött GYÁP-nyomtatvány."
 
+#, python-format
 msgid "The %(year)s GYÁP form is not available yet. Please contact HR."
 msgstr "A(z) %(year)s. évi GYÁP-nyomtatvány még nem érhető el. Kérjük, jelezd a HR-nek."
 
 msgid "Childcare sickness benefit form"
 msgstr "GYÁP-nyomtatvány"
 
-msgid "Download the form for each year of your childcare sickness benefit absence. If a form is missing, please contact HR."
-msgstr "Töltsd le a GYÁP-távolléted által érintett évek nyomtatványait. Ha valamelyik hiányzik, jelezd a HR-nek."
+msgid ""
+"Download the form for each year of your childcare sickness benefit absence. If a form is missing,"
+" please contact HR."
+msgstr ""
+"Töltsd le a GYÁP-távolléted által érintett évek nyomtatványait. Ha valamelyik hiányzik, jelezd a "
+"HR-nek."
 
 msgid "The GYAP form must be no larger than 10 MB."
 msgstr "A GYÁP-nyomtatvány mérete legfeljebb 10 MB lehet."
@@ -2926,5 +2950,228 @@ msgstr "PDF, DOC vagy DOCX formátumú dokumentumot tölts fel."
 msgid "The document is empty, damaged or does not match its file type."
 msgstr "A dokumentum üres, sérült, vagy a tartalma nem felel meg a fájltípusának."
 
+#, python-format
 msgid "GYAP form saved for %(year)s."
 msgstr "A(z) %(year)s. évi GYÁP-nyomtatvány mentve."
+
+#: app/templates/dashboard.html:34
+msgid "and"
+msgstr "és"
+
+#: app/templates/dashboard.html:41
+msgid "Today's birthdays"
+msgstr "Mai születésnapok"
+
+#: app/templates/dashboard.html:43
+#, python-format
+msgid ""
+"Your colleague %(names)s is celebrating their birthday today. Don't forget to wish them a happy "
+"birthday!"
+msgstr "Ma ünnepli születésnapját %(names)s munkatársad. Ne felejtsd el felköszönteni őt!"
+
+#: app/templates/dashboard.html:45
+#, python-format
+msgid ""
+"Your colleagues %(names)s are celebrating their birthdays today. Don't forget to wish them a "
+"happy birthday!"
+msgstr "Ma ünneplik születésnapjukat %(names)s munkatársaid. Ne felejtsd el felköszönteni őket!"
+
+#: app/templates/leaves.html:3
+msgid "PL"
+msgstr "FSZ"
+
+#: app/templates/leaves.html:4
+msgid "HL"
+msgstr "EÜ"
+
+#: app/templates/leaves.html:5
+msgid "CSB"
+msgstr "GYÁP"
+
+#: app/templates/leaves.html:6
+msgid "ML"
+msgstr "SZ"
+
+#: app/templates/leaves.html:7
+msgid "EX"
+msgstr "MAM"
+
+#: app/templates/leaves.html:8
+msgid "UL"
+msgstr "FNSZ"
+
+#: app/templates/leaves.html:84
+msgid "Calendar abbreviations"
+msgstr "Naptári rövidítések"
+
+#: app/templates/profile.html:53
+msgid "Profile photo"
+msgstr "Profilkép"
+
+#: app/templates/profile.html:55
+msgid "Choose a photo"
+msgstr "Válassz profilképet"
+
+#: app/templates/profile.html:57
+#, python-format
+msgid "JPEG, PNG or WebP, up to %(size)s MB."
+msgstr "JPEG-, PNG- vagy WebP-kép, legfeljebb %(size)s MB."
+
+#: app/templates/profile.html:59
+msgid "Upload photo"
+msgstr "Profilkép feltöltése"
+
+#: app/profile_photos.py:35
+msgid "Upload a JPEG, PNG or WebP photo."
+msgstr "JPEG-, PNG- vagy WebP-képet tölts fel."
+
+#: app/profile_photos.py:41 app/profile_photos.py:66
+msgid "The photo is empty, damaged or does not match its file type."
+msgstr "A kép üres, sérült, vagy nem felel meg a fájltípusának."
+
+#: app/profile_photos.py:44 app/profile_photos.py:64
+msgid "The photo is too large. Use an image up to 20 megapixels and 10,000 pixels per side."
+msgstr ""
+"A kép túl nagy. Legfeljebb 20 megapixeles képet válassz, amelynek egyik oldala sem hosszabb 10 "
+"000 képpontnál."
+
+#: app/profile_photos.py:101 app/profile_photos.py:112
+msgid "The profile photo must be no larger than 5 MB."
+msgstr "A profilkép mérete legfeljebb 5 MB lehet."
+
+#: app/profile_photos.py:108
+msgid "Choose a profile photo to upload."
+msgstr "Válassz egy profilképet a feltöltéshez."
+
+#: app/profile_photos.py:133
+msgid "Profile photo updated."
+msgstr "A profilkép frissítve."
+
+#: app/routes.py:1702
+msgid "Your password is incorrect. The user was not deleted."
+msgstr "Hibás jelszót adtál meg. A felhasználót nem töröltük."
+
+#: app/routes.py:1705 app/templates/manage_user_profiles.html:37
+msgid "You cannot delete your own account."
+msgstr "A saját fiókodat nem törölheted."
+
+#: app/routes.py:1718 app/templates/manage_user_profiles.html:39
+msgid "The last CEO account cannot be deleted."
+msgstr "Az utolsó CEO-jogosultságú fiók nem törölhető."
+
+#: app/routes.py:1723
+#, python-format
+msgid "Deleted the account and personal records for %(username)s."
+msgstr "%(username)s fiókját és személyes nyilvántartásait töröltük."
+
+#: app/routes.py:1728
+msgid "The user could not be deleted. No changes were saved. Please try again."
+msgstr "A felhasználót nem sikerült törölni. Nem mentettünk módosítást. Próbáld újra."
+
+#: app/templates/manage_user_profiles.html:6
+msgid "Search employee profiles and filter them by active contract or recorded details."
+msgstr ""
+"Keress a munkatársak profiljai között, és szűrj az aktív szerződésük vagy az adataik "
+"kitöltöttsége alapján."
+
+#: app/templates/manage_user_profiles.html:7
+msgid "Filter profiles by contract status"
+msgstr "Profilok szűrése a szerződés állapota alapján"
+
+#: app/templates/manage_user_profiles.html:8 app/templates/manage_user_profiles.html:32
+msgid "Inactive"
+msgstr "Inaktív"
+
+#: app/templates/manage_user_profiles.html:8
+msgid "All users"
+msgstr "Összes felhasználó"
+
+#: app/templates/manage_user_profiles.html:14
+msgid "Search profiles"
+msgstr "Profilok keresése"
+
+#: app/templates/manage_user_profiles.html:14
+msgid "Name, username or e-mail"
+msgstr "Név, felhasználónév vagy e-mail"
+
+#: app/templates/manage_user_profiles.html:16
+msgid "All profile statuses"
+msgstr "Bármilyen kitöltöttség"
+
+#: app/templates/manage_user_profiles.html:16 app/templates/manage_user_profiles.html:33
+msgid "No details recorded"
+msgstr "Adatok még nincsenek rögzítve"
+
+#: app/templates/manage_user_profiles.html:16 app/templates/manage_user_profiles.html:33
+msgid "Details partially recorded"
+msgstr "Adatok részben rögzítve"
+
+#: app/templates/manage_user_profiles.html:16 app/templates/manage_user_profiles.html:33
+msgid "Details complete"
+msgstr "Adatok rögzítve"
+
+#: app/templates/manage_user_profiles.html:22
+#, python-format
+msgid "%(count)s users match the selected filters."
+msgstr "A kiválasztott szűrőknek %(count)s felhasználó felel meg."
+
+#: app/templates/manage_user_profiles.html:25
+msgid "Contract status"
+msgstr "Szerződés állapota"
+
+#: app/templates/manage_user_profiles.html:37 app/templates/manage_user_profiles.html:39
+#: app/templates/manage_user_profiles.html:41
+msgid "Delete user"
+msgstr "Felhasználó törlése"
+
+#: app/templates/manage_user_profiles.html:48
+msgid "No users match the selected filters."
+msgstr "Nincs a kiválasztott szűrőknek megfelelő felhasználó."
+
+#: app/templates/manage_user_profiles.html:48
+msgid "Try another search, change the profile status, or show all users."
+msgstr ""
+"Keress más kifejezésre, módosítsd a kitöltöttségi szűrőt, vagy jelenítsd meg az összes "
+"felhasználót."
+
+#: app/templates/manage_user_profiles.html:48
+msgid "Show all users"
+msgstr "Összes felhasználó megjelenítése"
+
+#: app/templates/manage_user_profiles.html:55
+msgid "Delete this user?"
+msgstr "Törlöd ezt a felhasználót?"
+
+#: app/templates/manage_user_profiles.html:57
+msgid ""
+"This permanently deletes the account, profile and photo, dependents, qualifications, professional"
+" exam, contracts, leadership assignments and leave requests belonging to this user. The user will"
+" no longer be able to sign in. This cannot be undone."
+msgstr ""
+"Végleg törlődik a felhasználó fiókja, profilja, profilképe, eltartottainak adatai, végzettségei, "
+"szakvizsgája, szerződései, vezetői megbízásai és szabadságigényei. A felhasználó ezután nem tud "
+"bejelentkezni. A törlés nem vonható vissza."
+
+#: app/templates/manage_user_profiles.html:58
+msgid ""
+"Other users' records and shared GYÁP forms will be kept. References to this user as approver or "
+"uploader will be cleared."
+msgstr ""
+"Más felhasználók nyilvántartásai és a közös GYÁP-nyomtatványok megmaradnak. A törölt felhasználó "
+"neve többé nem jelenik meg jóváhagyóként vagy feltöltőként."
+
+#: app/templates/manage_user_profiles.html:59
+msgid "Your own password"
+msgstr "Saját jelszavad"
+
+#: app/templates/manage_user_profiles.html:59
+msgid "Confirm with the password of your currently signed-in HR or CEO account."
+msgstr "A megerősítéshez a jelenleg bejelentkezett HR- vagy CEO-fiókod jelszavát add meg."
+
+#: app/templates/manage_user_profiles.html:60
+msgid "Permanently delete user"
+msgstr "Felhasználó végleges törlése"
+
+#: app/templates/manage_user_profiles.html:63
+msgid "Enable JavaScript to open the user deletion confirmation."
+msgstr "A törlés megerősítő ablakának megnyitásához engedélyezd a JavaScriptet."

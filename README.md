@@ -75,6 +75,16 @@ See [compact leave limits and grouped navigation](docs/design/compact-limits-nav
 
 See [year boundaries and annual GYÁP forms](docs/design/year-boundaries-gyap.md) for leave requests spanning calendar years and HR-managed childcare sickness benefit documents.
 
+## Profile administration and account display
+
+HR and director accounts can search user profiles and filter by active/inactive contracts or profile completeness. Active status uses inclusive contract dates in Europe/Budapest. The existing completion checklist determines whether details are complete; whitespace-only fields do not count, and incomplete profiles show a yellow status.
+
+Deleting a user requires the signed-in HR/director's own password in a confirmation dialog. This permanently removes the account and its owned records, including contracts, leave requests and profile photo. Other users' records and shared annual GYÁP forms remain, with references to the deleted approver/uploader cleared. Self-deletion and deletion of the final director account are blocked. Deletion is transactional, CSRF-protected, and rolls back on failure.
+
+Users can upload their own JPEG, PNG or WebP profile photo (up to 5 MiB). Photos are decoded, oriented, stripped of metadata and resized before database storage. The new `profile_photos` table is created automatically at startup using the existing MySQL identifier compatibility handling; no existing table columns change. Install the updated requirements for Pillow support. Only the owner, HR and directors can retrieve a photo. The sidebar account link shows the name and newest active contract's job title, with username and privilege fallbacks.
+
+Birthday reminders keep shared-workplace visibility for employees, show every director's birthday to everyone, and show every active employee's birthday to directors. Names are bold and the reminder uses singular/plural wording. Leave-calendar abbreviations have a visible legend and full accessible labels. Weekly hours remain editable on contracts but are omitted from the summary table.
+
 ## Manual portal testing
 
 ### Configurable leave approvals

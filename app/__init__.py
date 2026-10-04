@@ -8,6 +8,7 @@ from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 
 from .i18n import LOGIN_MESSAGE
+from .upload_request import UploadRequest
 
 
 load_dotenv()
@@ -57,11 +58,15 @@ def _build_database_uri() -> str:
 
 def create_app() -> Flask:
     app = Flask(__name__)
+    app.request_class = UploadRequest
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret-key-change-me")
     app.config["SQLALCHEMY_DATABASE_URI"] = _build_database_uri()
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["BABEL_DEFAULT_LOCALE"] = DEFAULT_LOCALE
     app.config["BABEL_TRANSLATION_DIRECTORIES"] = "translations"
+    # Bound multipart parsing even for chunked requests without Content-Length;
+    # leave room for the existing 10 MiB GYAP document plus form overhead.
+    app.config["MAX_CONTENT_LENGTH"] = 11 * 1024 * 1024
 
     db.init_app(app)
     babel.init_app(app, locale_selector=get_locale)
@@ -74,6 +79,14 @@ def create_app() -> Flask:
     from .gyap_forms import gyap
 
     app.register_blueprint(gyap)
+
+    from .profile_photos import profile_photos
+
+    app.register_blueprint(profile_photos)
+
+    from .account_display import account_template_context
+
+    app.context_processor(account_template_context)
 
     with app.app_context():
         from .schema import create_missing_tables

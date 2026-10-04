@@ -15,7 +15,7 @@
     <div class="button-row"><button type="submit">{{ _('Apply filters') }}</button><a class="button button-secondary" href="{{ url_for('manage_contracts') }}">{{ _('Reset') }}</a></div>
   </form>
   {% if contracts %}<div class="table-wrap"><table class="contracts-table">
-    <thead><tr><th>{{ _('Contract') }}</th><th>{{ _('Employee') }}</th><th>{{ _('Job title / contract type') }}</th><th>{{ _('Employer / workplace') }}</th><th>{{ _('Period') }}</th><th>{{ _('Hours/week') }}</th><th>{{ _('Status') }}</th><th>{{ _('Actions') }}</th></tr></thead>
+    <thead><tr><th>{{ _('Contract') }}</th><th>{{ _('Employee') }}</th><th>{{ _('Job title / contract type') }}</th><th>{{ _('Employer / workplace') }}</th><th>{{ _('Period') }}</th><th>{{ _('Status') }}</th><th>{{ _('Actions') }}</th></tr></thead>
     <tbody>{% for contract in contracts %}
       {% set active = contract.start_date <= today and (not contract.end_date or contract.end_date >= today) %}
       <tr data-contract-id="{{ contract.id }}"{% if contract.end_date and contract.end_date < today %} class="contract-ended"{% endif %}>
@@ -24,7 +24,6 @@
         <td><strong>{{ contract.job_title }}</strong><div class="muted">{{ enum_label(contract.contract_type) }}</div></td>
         <td>{{ contract.employer.name }}<div class="muted">{{ contract.place_of_work.address }}</div></td>
         <td class="nowrap">{{ contract.start_date }}<div class="muted">{{ contract.end_date or _('Open-ended') }}</div></td>
-        <td>{{ contract.working_hours_per_week }}</td>
         <td><span class="status-pill {{ 'status-approved' if active else 'status-pending-approval' if contract.start_date > today else 'status-cancelled' }}">{{ _('Active') if active else _('Upcoming') if contract.start_date > today else _('Ended') }}</span></td>
         <td><a class="button button-secondary" href="{{ url_for('edit_contract', contract_id=contract.id) }}">{{ _('Edit') }}</a></td>
       </tr>
