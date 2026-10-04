@@ -3318,7 +3318,7 @@ msgstr "A kivágás maradjon a képen belül."
 msgid "Your profile photo changed in another window. Reload the editor and try again."
 msgstr "A profilképed egy másik ablakban megváltozott. Nyisd meg újra a szerkesztőt, és próbáld újra."
 
-#: app/profile_photos.py:212
+#: app/profile_photos.py:212 app/worktime.py:51
 msgid "Your session expired. Reload the page and try again."
 msgstr "A munkameneted lejárt. Frissítsd az oldalt, és próbáld újra."
 
@@ -3333,3 +3333,830 @@ msgstr "A szerkesztéshez előbb tölts fel egy profilképet."
 #: app/profile_photos.py:229
 msgid "Choose either a new photo or the saved photo."
 msgstr "Válassz egy új képet, vagy szerkeszd a mentett profilképedet."
+
+msgid "The employee has overlapping active contracts; resolve them before scheduling."
+msgstr "A dolgozóhoz több aktív szerződés tartozik; előbb tisztázni kell a beosztását."
+
+msgid "No working-time rule is configured for this job role."
+msgstr "A munkakörhöz nincs munkaidő-szabály beállítva."
+
+msgid "Contract weekly hours must be a positive number no greater than 40."
+msgstr "A szerződés heti munkaideje hiányzik, vagy nem 0 és 40 óra közötti pozitív érték."
+
+msgid "The employee has overlapping group assignments on this date."
+msgstr "A dolgozóhoz ezen a napon több csoportbeosztás tartozik."
+
+msgid "Teachers and nursery assistants must have a group assignment."
+msgstr "Az óvodapedagógushoz vagy dajkához csoportot kell rendelni."
+
+msgid "The assigned group is not active at the employee’s workplace."
+msgstr "A csoport nem található a dolgozó munkavégzési helyén."
+
+msgid "A merge requires two different active groups at the same workplace."
+msgstr "Az összevonás két különböző, azonos helyszíni csoport között adható meg."
+
+msgid "A group can merge into only one other group per day."
+msgstr "Egy csoport egy napon csak egy másik csoporthoz vonható össze."
+
+msgid "The destination of a group merge cannot itself be merged into another group."
+msgstr "Az összevonás célcsoportja nem lehet egy másik összevonás forrása."
+
+msgid "The scheduling search reached its limit; unresolved conflicts require a manual decision."
+msgstr "A beosztáskeresés elérte a korlátját; a feloldatlan ütközésekhez kézi döntés szükséges."
+
+msgid "Early opening and afternoon cover cannot both be allocated; an HR or CEO decision is required."
+msgstr "A korai kezdés és a délutáni helyettesítések együtt nem oszthatók ki; HR/CEO döntés szükséges."
+
+msgid "Coverage or the rotation of early starts requires a different shift on this day."
+msgstr "A lefedés vagy a korai kezdések elosztása miatt a heti műszakrend ettől a naptól eltér."
+
+msgid "Working, teaching and break times must be non-negative whole minutes."
+msgstr "A munkaidő és a szünet nemnegatív egész perc lehet."
+
+msgid "Daily working time cannot exceed 8 hours, excluding the break."
+msgstr "A napi munkaidő legfeljebb 8 óra lehet, a munkaközi szüneten felül."
+
+msgid "Teaching time cannot exceed working time and is available only for teachers."
+msgstr ""
+"A neveléssel-oktatással lekötött idő nem haladhatja meg a munkaidőt, és csak óvodapedagógusnál "
+"adható meg."
+
+msgid "No working time can be assigned on a day of absence."
+msgstr "Távollét napján nem osztható be munkaidő."
+
+msgid "A zero-hours entry cannot contain start, end or break times."
+msgstr "Nulla munkaidőnél kezdő- és végidő, szünet nem szerepelhet."
+
+msgid "Start, end, break and working times do not agree."
+msgstr "A kezdés, befejezés, szünet és ledolgozott idő nem egyezik."
+
+msgid "Working time over six hours requires a 20-minute break; otherwise there is no break."
+msgstr "Hat órát meghaladó munkaidőhöz 20 perc munkaközi szünet szükséges; egyébként nincs szünet."
+
+msgid "The employee can work in another group only through a recorded group merge."
+msgstr "A dolgozó másik csoportba csak rögzített összevonással osztható be."
+
+msgid "The employee’s daily schedule entry is missing."
+msgstr "Hiányzik a dolgozó napi munkaidő-beosztása."
+
+msgid "An employee can have only one schedule entry per day."
+msgstr "Egy dolgozóhoz naponta csak egy beosztási sor tartozhat."
+
+msgid "No active teacher is assigned to this group."
+msgstr "A csoporthoz nincs aktív óvodapedagógus rendelve."
+
+msgid "All teachers in this group are absent; HR or CEO must record a group merge."
+msgstr ""
+"A csoport minden óvodapedagógusa távol van; HR/CEO jogosultsággal kézi csoportösszevonás "
+"szükséges."
+
+msgid "A teacher must be continuously present in the group between 08:00 and 12:00."
+msgstr "08:00 és 12:00 között folyamatos óvodapedagógusi jelenlét szükséges a csoportban."
+
+msgid "Teachers in the group require at least two hours of overlapping working time, excluding breaks."
+msgstr "A csoport óvodapedagógusainak legalább 2 óra tényleges, szünet nélküli átfedés szükséges."
+
+msgid ""
+"A teacher, the group’s nursery assistant or a workplace teaching assistant must cover the "
+"afternoon until 17:30."
+msgstr ""
+"17:30-ig délutános óvodapedagógus, a csoport dajkája vagy helyszíni pedagógiai asszisztens "
+"szükséges."
+
+msgid "The group’s only available teacher must work in the morning."
+msgstr "A csoport egyetlen jelen lévő óvodapedagógusának délelőtt kell dolgoznia."
+
+msgid "Exactly one teacher at the workplace must start at 07:00."
+msgstr "A munkavégzési helyen egy óvodapedagógusnak 07:00-kor kell kezdenie."
+
+msgid "Exactly one nursery assistant at the workplace must start at 06:00."
+msgstr "A munkavégzési helyen egy dajkának 06:00-kor kell kezdenie."
+
+msgid "The schedule entry does not belong to a supplied working day or contract."
+msgstr "A beosztási sor nem a megadott munkanaphoz vagy szerződéshez tartozik."
+
+msgid "The schedule entry’s employee and contract do not match."
+msgstr "A beosztási sor dolgozója és szerződése nem egyezik."
+
+msgid "Scheduling information is missing or inconsistent."
+msgstr "A beosztáshoz szükséges adatok hiányoznak vagy ellentmondásosak."
+
+msgid "Afternoon cover in this group."
+msgstr "Délutáni helyettesítés a csoportban."
+
+#: app/worktime_service.py:203 app/worktime_service.py:206 app/worktime_service.py:213
+msgid "Absence"
+msgstr "Távollét"
+
+#, python-format
+msgid "Merged group: %(source)s → %(target)s."
+msgstr "Összevont csoport: %(source)s → %(target)s."
+
+#, python-format
+msgid ""
+"Working time for the week starting %(week)s is %(actual)s minutes; the proportional target is "
+"%(expected)s minutes."
+msgstr "A %(week)s kezdetű hétre eső munkaidő %(actual)s perc, az elvárt arányos keret %(expected)s perc."
+
+#, python-format
+msgid ""
+"Teaching time for the week starting %(week)s is %(actual)s minutes; the proportional target is "
+"%(expected)s minutes."
+msgstr ""
+"A %(week)s kezdetű hétre eső neveléssel-oktatással lekötött idő %(actual)s perc, az elvárt "
+"arányos keret %(expected)s perc."
+
+msgid "The early start could not be assigned to a different eligible employee on this day."
+msgstr "Ezen a napon a korai kezdést nem lehetett másik alkalmas dolgozónak kiosztani."
+
+msgid ""
+"The group has an uncovered period between 08:00 and 17:30; revise the afternoon cover or record a"
+" group merge."
+msgstr ""
+"A csoport 08:00 és 17:30 között ellátatlan időszakkal rendelkezik; módosítsd a délutáni "
+"helyettesítést, vagy rögzíts csoportösszevonást."
+
+msgid ""
+"Work must start at 08:00 or end at 17:30, except for the designated 07:00 teacher and 06:00 "
+"nursery assistant."
+msgstr ""
+"A munka 08:00-kor kezdődjön vagy 17:30-kor végződjön, a kijelölt 07:00-s óvodapedagógus és "
+"06:00-s dajka kivételével."
+
+msgid "The schedule entry’s group is not active at the employee’s workplace."
+msgstr "A beosztási sor csoportja nem aktív a dolgozó munkavégzési helyén."
+
+msgid "The schedule entry falls outside the contract’s active dates."
+msgstr "A beosztási sor a szerződés érvényességén kívüli napra esik."
+
+#: app/templates/worktime.html:83
+#, python-format
+msgid "%(minutes)s min"
+msgstr "%(minutes)s perc"
+
+#: app/templates/worktime.html:93
+msgid "A 20-minute break is required when worked time exceeds six hours."
+msgstr "Hat órát meghaladó munkavégzés esetén 20 perc munkaközi szünet szükséges."
+
+#: app/templates/worktime.html:136 app/templates/worktime.html:137
+msgid ""
+"A working day contains at most eight worked hours. A 20-minute break is added only when worked "
+"time exceeds six hours; at exactly six hours there is no break."
+msgstr ""
+"Egy munkanap legfeljebb nyolc ledolgozott órából állhat. Hat órát meghaladó munkavégzés esetén "
+"ehhez 20 perc munkaközi szünet adódik; pontosan hat óránál nincs szünet."
+
+#: app/templates/worktime.html:62
+msgid "Action required"
+msgstr "Intézkedést igényel"
+
+#: app/templates/worktime_groups.html:36
+msgid "Assign an employee"
+msgstr "Munkavállaló hozzárendelése"
+
+#: app/templates/worktime_groups.html:36
+msgid ""
+"Assign the two teachers to opposite weekly shifts. Assign nannies and teaching assistants to "
+"their usual group as well."
+msgstr ""
+"A két óvodapedagógust ellentétes heti műszakba oszd be. A dajkákat és a pedagógiai "
+"asszisztenseket is rendeld a szokásos csoportjukhoz."
+
+#: app/templates/worktime_groups.html:64
+msgid "Assignments apply only within both the assignment and contract dates."
+msgstr "A hozzárendelés csak a megadott időszakon és a munkaszerződés érvényességén belül alkalmazható."
+
+#: app/templates/worktime.html:125
+msgid "At least two groups at this workplace are needed to record a merger."
+msgstr "Csoportösszevonáshoz legalább két csoport szükséges ezen a munkavégzési helyen."
+
+#: app/templates/worktime_groups.html:15
+msgid "Back to working-time records"
+msgstr "Vissza a munkaidő-nyilvántartáshoz"
+
+#: app/templates/worktime.html:79
+msgid "Break"
+msgstr "Munkaközi szünet"
+
+#: app/templates/worktime.html:93
+msgid "Break starts at"
+msgstr "Munkaközi szünet kezdete"
+
+#: app/templates/worktime_groups.html:50
+msgid ""
+"Close a date range when a group or assignment changes, so earlier months keep their original "
+"organisation."
+msgstr ""
+"Változáskor zárd le a korábbi csoport vagy hozzárendelés időszakát, hogy a korábbi hónapok "
+"beosztása megmaradjon."
+
+#: app/templates/worktime.html:50
+msgid "Confirm working-time records"
+msgstr "Munkaidő-nyilvántartás igazolása"
+
+#: app/templates/worktime.html:33
+msgid "Confirmed"
+msgstr "Igazolt"
+
+#: app/templates/worktime.html:35
+msgid ""
+"Contracts, absences or group assignments have changed. Regenerate the schedule before confirming "
+"or exporting it."
+msgstr ""
+"Változtak a szerződések, a távollétek vagy a csoportbeosztások. Igazolás vagy exportálás előtt "
+"készítsd el újra a beosztást."
+
+#: app/templates/worktime_groups.html:46
+msgid "Create a group and add an employee contract at this workplace to make assignments."
+msgstr ""
+"A hozzárendeléshez hozz létre egy csoportot, és rögzíts munkaszerződést ehhez a munkavégzési "
+"helyhez."
+
+#: app/templates/worktime_groups.html:32
+msgid "Create group"
+msgstr "Csoport létrehozása"
+
+#: app/templates/worktime.html:77
+msgid "Daily working-time records"
+msgstr "Napi munkaidő-nyilvántartás"
+
+#: app/templates/worktime.html:79 app/templates/worktime.html:119
+msgid "Date"
+msgstr "Dátum"
+
+#: app/templates/worktime.html:73
+msgid "Download CSV"
+msgstr "CSV letöltése"
+
+#: app/templates/worktime.html:73
+msgid "Download PDF"
+msgstr "PDF letöltése"
+
+#: app/templates/worktime.html:33
+msgid "Draft"
+msgstr "Tervezet"
+
+#: app/templates/worktime.html:76
+msgid "Durations are shown as hours:minutes. Breaks are excluded from worked hours."
+msgstr ""
+"Az időtartamok óra:perc formátumban láthatók. A munkaközi szünet nem számít bele a ledolgozott "
+"munkaidőbe."
+
+#: app/templates/worktime_groups.html:53
+msgid "Edit group"
+msgstr "Csoport szerkesztése"
+
+#: app/templates/worktime_groups.html:40
+msgid "Employee / contract"
+msgstr "Munkavállaló / szerződés"
+
+#: app/templates/worktime_groups.html:64 app/templates/worktime_groups.html:65
+msgid "Employee assignments"
+msgstr "Munkavállalók csoportbeosztása"
+
+#: app/templates/worktime.html:92
+msgid "End"
+msgstr "Befejezés"
+
+#: app/templates/worktime.html:139 app/templates/worktime.html:140
+msgid ""
+"Every group needs a teacher from 08:00 to 12:00. Two present teachers in the same group need two "
+"hours of overlap. If one is absent, the other works mornings and a nanny or teaching assistant "
+"covers the afternoon."
+msgstr ""
+"Minden csoportban 08:00 és 12:00 között óvodapedagógusnak kell jelen lennie. Két jelen lévő "
+"óvodapedagógus munkaideje két órában átfedi egymást. Egyikük távolléte esetén a másik délelőttös,"
+" a délutáni sávot dajka vagy pedagógiai asszisztens látja el."
+
+#: app/templates/worktime.html:19
+msgid "Filter working-time records"
+msgstr "Munkaidő-nyilvántartás szűrése"
+
+#: app/templates/worktime.html:44
+msgid "Generate schedule"
+msgstr "Beosztás elkészítése"
+
+#: app/templates/worktime_groups.html:41 app/templates/worktime_groups.html:66
+#: app/templates/worktime_groups.html:72
+msgid "Group"
+msgstr "Csoport"
+
+#: app/templates/worktime.html:79
+msgid "Group / note"
+msgstr "Csoport / megjegyzés"
+
+#: app/templates/worktime.html:114
+msgid "Group mergers"
+msgstr "Csoportösszevonások"
+
+#: app/templates/worktime_groups.html:30 app/templates/worktime_groups.html:56
+msgid "Group name"
+msgstr "Csoport neve"
+
+#: app/templates/worktime.html:120
+msgid "Group without teachers"
+msgstr "Óvodapedagógus nélkül maradt csoport"
+
+#: app/templates/worktime.html:16 app/templates/worktime_groups.html:14
+msgid "Groups and assignments"
+msgstr "Csoportok és beosztások"
+
+#: app/templates/worktime_groups.html:10
+msgid "Groups and assignments · CSUPOR Portal"
+msgstr "Csoportok és beosztások · CSUPOR Portál"
+
+#: app/templates/worktime.html:114
+msgid "HR / CEO"
+msgstr "HR / Igazgató"
+
+#: app/templates/worktime.html:49
+msgid "I have checked the recorded hours for this workplace and month against attendance."
+msgstr "Ellenőriztem, hogy e munkavégzési hely havi munkaidő-adatai megfelelnek a tényleges jelenlétnek."
+
+#: app/templates/worktime.html:140 app/templates/worktime.html:141
+msgid ""
+"If both teachers are absent, HR or the CEO must record a group merger. Unresolved coverage or "
+"incompatible rules are highlighted for review."
+msgstr ""
+"Mindkét óvodapedagógus távollétekor a HR-nek vagy az igazgatónak kell rögzítenie a "
+"csoportösszevonást. A hiányzó felügyeletet és az összeegyeztethetetlen szabályokat a rendszer "
+"jelzi."
+
+#: app/templates/worktime.html:115
+msgid ""
+"If both teachers of a group are absent, choose another group at the same workplace for that day. "
+"The merger appears on the working-time records."
+msgstr ""
+"Ha a csoport mindkét óvodapedagógusa távol van, válassz arra a napra másik csoportot ugyanazon a "
+"munkavégzési helyen. Az összevonás szerepel a munkaidő-nyilvántartásban."
+
+#: app/templates/worktime.html:60
+msgid "Items needing attention"
+msgstr "Ellenőrzést igénylő tételek"
+
+#: app/templates/worktime.html:86
+msgid "Manually edited"
+msgstr "Kézzel módosítva"
+
+#: app/templates/worktime.html:22
+msgid "Month"
+msgstr "Hónap"
+
+#: app/templates/worktime.html:15
+msgid "Monthly schedules, working hours and employee records in one place."
+msgstr "Havi beosztások, munkaidők és munkavállalói nyilvántartások egy helyen."
+
+#: app/templates/worktime.html:101
+msgid "Monthly total"
+msgstr "Havi összesen"
+
+#: app/templates/worktime_groups.html:9
+#, python-format
+msgid "Morning in the week of %(date)s"
+msgstr "Délelőttös a(z) %(date)s napjával kezdődő héten"
+
+#: app/templates/worktime.html:137 app/templates/worktime.html:138
+msgid ""
+"Morning shifts start at 08:00; afternoon shifts end at 17:30. Shifts alternate weekly. Early "
+"starts at 06:00 for one nanny and 07:00 for one teacher rotate fairly within each workplace."
+msgstr ""
+"A délelőtti műszak 08:00-kor kezdődik, a délutáni 17:30-kor ér véget. A műszakok hetente "
+"váltakoznak. Munkavégzési helyenként egy dajka 06:00-kor, egy óvodapedagógus 07:00-kor kezd, "
+"egyenletesen váltva egymást."
+
+#: app/templates/worktime.html:33
+msgid "Needs updating"
+msgstr "Frissítés szükséges"
+
+#: app/templates/worktime_groups.html:27
+msgid "New group"
+msgstr "Új csoport"
+
+#: app/templates/worktime_groups.html:79
+msgid "No employees have been assigned yet."
+msgstr "Még nincs rögzített csoportbeosztás."
+
+#: app/templates/worktime_groups.html:61
+msgid "No groups have been created at this workplace yet."
+msgstr "Ezen a munkavégzési helyen még nincs rögzített csoport."
+
+#: app/templates/worktime.html:38
+msgid "No schedule has been generated for this workplace and month yet."
+msgstr "Ehhez a munkavégzési helyhez és hónaphoz még nem készült beosztás."
+
+#: app/templates/worktime.html:33
+msgid "Not generated"
+msgstr "Még nem készült el"
+
+#: app/templates/worktime.html:138 app/templates/worktime.html:139
+msgid "Opening duty or an absence may change the usual weekly shift."
+msgstr "Nyitóügyelet vagy távollét miatt az alapértelmezett heti műszak változhat."
+
+#: app/templates/worktime.html:121
+msgid "Receiving group"
+msgstr "Fogadó csoport"
+
+#: app/templates/worktime.html:65
+msgid "Record a group merger"
+msgstr "Csoportösszevonás rögzítése"
+
+#: app/templates/worktime.html:123
+msgid "Record merger"
+msgstr "Összevonás rögzítése"
+
+#: app/templates/worktime.html:44
+msgid "Regenerate schedule"
+msgstr "Beosztás újrakészítése"
+
+#: app/templates/worktime_groups.html:77
+msgid "Remove assignment"
+msgstr "Hozzárendelés törlése"
+
+#: app/templates/worktime.html:126
+msgid "Remove merger"
+msgstr "Összevonás törlése"
+
+#: app/templates/worktime.html:43
+msgid "Replace manually edited hours when regenerating"
+msgstr "A kézzel módosított munkaidők felülírhatók az újrakészítéskor"
+
+#: app/templates/worktime.html:60
+msgid ""
+"Resolve these items before confirming the schedule. Missing coverage is never silently filled "
+"with invalid hours."
+msgstr ""
+"A beosztás igazolása előtt rendezd ezeket a tételeket. A rendszer jelzi, ha a szükséges "
+"felügyelet a szabályok betartásával nem biztosítható."
+
+#: app/templates/worktime.html:65
+msgid "Review groups and assignments"
+msgstr "Csoportok és beosztások ellenőrzése"
+
+#: app/templates/worktime_groups.html:44
+msgid "Save assignment"
+msgstr "Hozzárendelés mentése"
+
+#: app/templates/worktime.html:132
+msgid "Scheduling rules"
+msgstr "Beosztási szabályok"
+
+#: app/templates/worktime_groups.html:40
+msgid "Select a contract"
+msgstr "Válassz szerződést"
+
+#: app/templates/worktime.html:120 app/templates/worktime.html:121
+#: app/templates/worktime_groups.html:41
+msgid "Select a group"
+msgstr "Válassz csoportot"
+
+#: app/templates/worktime.html:23 app/templates/worktime_groups.html:20
+msgid "Select a workplace"
+msgstr "Válassz munkavégzési helyet"
+
+#: app/templates/worktime_groups.html:81
+msgid "Select a workplace to create its groups and employee assignments."
+msgstr "Válassz munkavégzési helyet a csoportok és a munkavállalói beosztások rögzítéséhez."
+
+#: app/templates/worktime.html:56
+msgid "Select a workplace to view its working-time records."
+msgstr "Válassz munkavégzési helyet a munkaidő-nyilvántartás megtekintéséhez."
+
+#: app/templates/worktime.html:24
+msgid "Select an employee"
+msgstr "Válassz munkavállalót"
+
+#: app/templates/worktime.html:109
+msgid "Select an employee to view and export their monthly record."
+msgstr "Válassz munkavállalót a havi nyilvántartása megtekintéséhez és exportálásához."
+
+#: app/templates/worktime_groups.html:14
+msgid ""
+"Set up groups and assign employees before generating a schedule. Date ranges preserve earlier "
+"assignments."
+msgstr ""
+"A beosztás elkészítése előtt rögzítsd a csoportokat és rendeld hozzájuk a munkavállalókat. Az "
+"érvényességi időszakok megőrzik a korábbi beosztásokat."
+
+#: app/templates/worktime_groups.html:21
+msgid "Show groups"
+msgstr "Csoportok megjelenítése"
+
+#: app/templates/worktime.html:92
+msgid "Start"
+msgstr "Kezdés"
+
+#: app/templates/worktime.html:79
+msgid "Start / end"
+msgstr "Kezdés / befejezés"
+
+#: app/templates/worktime.html:134
+msgid ""
+"Teachers: 32 hours of bound working time and 32 teaching hours per five-day week. Trainees: 32 "
+"hours of bound working time, including 26 teaching hours. NOKS and Labour Code employees: 40 "
+"hours."
+msgstr ""
+"Ötnapos munkahéten a pedagógusok kötött munkaideje és neveléssel-oktatással lekötött munkaideje "
+"32 óra. A gyakornokok kötött munkaideje 32 óra, ebből 26 óra neveléssel-oktatással lekötött "
+"munkaidő. NOKS és Mt. szerinti munkavállalók: 40 óra."
+
+#: app/templates/worktime.html:79 app/templates/worktime.html:105
+msgid "Teaching time"
+msgstr "Neveléssel-oktatással lekötött idő"
+
+#: app/templates/worktime.html:94
+msgid "Teaching time (minutes)"
+msgstr "Neveléssel-oktatással lekötött idő (perc)"
+
+#: app/templates/worktime_groups.html:43
+msgid ""
+"The following week is afternoon, then shifts alternate weekly. Early starts are allocated "
+"separately."
+msgstr ""
+"A következő héten délutános, ezután a műszakok hetente váltakoznak. A korai kezdéseket a rendszer"
+" külön osztja el."
+
+#: app/templates/worktime.html:36
+msgid "The recorded hours have been checked and confirmed. Any change requires another check."
+msgstr "A rögzített munkaidőket ellenőrizték és igazolták. Módosítás után újabb ellenőrzés szükséges."
+
+#: app/templates/worktime.html:107
+msgid "There are no working-time entries for this employee in the selected month."
+msgstr "A kiválasztott hónapban nincs munkaidő-bejegyzés ehhez a munkavállalóhoz."
+
+#: app/templates/worktime.html:37
+msgid ""
+"This is a planned schedule. Check the recorded hours against attendance before confirming it as a"
+" working-time record."
+msgstr ""
+"Ez tervezett beosztás. Munkaidő-nyilvántartásként történő igazolása előtt ellenőrizd, hogy az "
+"órák megfelelnek-e a tényleges jelenlétnek."
+
+#: app/templates/worktime_groups.html:31 app/templates/worktime_groups.html:42
+#: app/templates/worktime_groups.html:57 app/templates/worktime_groups.html:73
+msgid "Valid from"
+msgstr "Érvényesség kezdete"
+
+#: app/templates/worktime_groups.html:31 app/templates/worktime_groups.html:42
+#: app/templates/worktime_groups.html:57 app/templates/worktime_groups.html:74
+msgid "Valid until (optional)"
+msgstr "Érvényesség vége (nem kötelező)"
+
+#: app/templates/worktime.html:62
+msgid "Warning"
+msgstr "Figyelmeztetés"
+
+#: app/templates/worktime.html:135 app/templates/worktime.html:136
+msgid ""
+"Weekly hours follow the number of working days. Absences count as zero worked hours; the missing "
+"hours are not redistributed to other days."
+msgstr ""
+"A heti munkaidő a munkanapok számával arányos. Távollét esetén a ledolgozott idő nulla; a kieső "
+"órákat nem osztjuk szét a többi napra."
+
+#: app/templates/worktime_groups.html:43 app/templates/worktime_groups.html:66
+#: app/templates/worktime_groups.html:75
+msgid "Weekly shift rotation"
+msgstr "Heti műszakváltás"
+
+#: app/templates/worktime.html:105
+msgid "Weekly totals"
+msgstr "Heti összesítés"
+
+#: app/templates/worktime.html:105
+msgid "Within this month"
+msgstr "E hónapra eső rész"
+
+#: app/templates/worktime.html:79 app/templates/worktime.html:105
+msgid "Worked hours"
+msgstr "Ledolgozott idő"
+
+#: app/templates/worktime.html:72
+msgid "Working-time record"
+msgstr "Munkaidő-nyilvántartás"
+
+#: app/templates/base.html:56 app/templates/worktime.html:15 app/templates/worktime_groups.html:14
+msgid "Working-time register"
+msgstr "Munkaidő-nyilvántartás"
+
+#: app/templates/worktime.html:11
+msgid "Working-time register · CSUPOR Portal"
+msgstr "Munkaidő-nyilvántartás · CSUPOR Portál"
+
+#: app/templates/worktime.html:23 app/templates/worktime_groups.html:20
+msgid "Workplace"
+msgstr "Munkavégzési hely"
+
+#: app/templates/worktime_groups.html:50
+msgid "Workplace groups"
+msgstr "A munkavégzési hely csoportjai"
+
+#: app/templates/worktime.html:32
+msgid "Workplace schedule"
+msgstr "A munkavégzési hely beosztása"
+
+#: app/templates/worktime.html:21
+msgid "Year"
+msgstr "Év"
+
+#: app/worktime.py:125 app/worktime.py:212 app/worktime.py:385
+msgid "workplace"
+msgstr "munkavégzési helyet"
+
+#: app/worktime.py:219
+msgid "employee"
+msgstr "munkavállalót"
+
+#: app/worktime.py:431 app/worktime.py:454 app/worktime.py:493 app/worktime.py:494
+msgid "group"
+msgstr "csoportot"
+
+#: app/worktime.py:400 app/worktime.py:464
+msgid "assignment"
+msgstr "csoportbeosztást"
+
+#: app/worktime.py:453
+msgid "contract"
+msgstr "szerződést"
+
+#: app/worktime.py:485
+msgid "group merge"
+msgstr "csoportösszevonást"
+
+#: app/worktime.py:282
+msgid "The draft register has been generated. Review the warnings before verifying it."
+msgstr ""
+"Elkészült a munkaidő-nyilvántartás tervezete. Az ellenőrzöttnek jelölés előtt nézd át a "
+"figyelmeztetéseket."
+
+#: app/worktime.py:307
+msgid "The register has been verified."
+msgstr "A munkaidő-nyilvántartást ellenőrzöttnek jelöltük."
+
+#: app/worktime.py:376
+msgid "The entry has been saved. Review the updated scheduling warnings."
+msgstr "A bejegyzést mentettük. Nézd át a frissített beosztási figyelmeztetéseket."
+
+#: app/worktime.py:513
+msgid "Group merge saved. Regenerate the monthly register."
+msgstr "A csoportösszevonást mentettük. Generáld újra a havi munkaidő-nyilvántartást."
+
+#: app/worktime.py:146 app/worktime.py:159 app/worktime.py:281
+msgid "The register changed in another window. Reload the page and try again."
+msgstr "A nyilvántartás egy másik ablakban megváltozott. Töltsd újra az oldalt, majd próbáld újra."
+
+#: app/worktime.py:151
+msgid "The register is out of date. Regenerate it before making changes."
+msgstr "A nyilvántartás nem naprakész. Módosítás előtt generáld újra."
+
+#: app/worktime.py:250
+msgid "Confirm that manual changes may be replaced before regenerating."
+msgstr "Az újragenerálás előtt erősítsd meg, hogy a kézi módosítások felülírhatók."
+
+#: app/worktime.py:293
+msgid "Generate employee entries before verifying the register."
+msgstr "Az ellenőrzöttnek jelölés előtt generáld le a munkavállalók bejegyzéseit."
+
+#: app/worktime.py:298
+msgid "Resolve every scheduling conflict before verifying the register."
+msgstr "Az ellenőrzöttnek jelölés előtt oldj fel minden beosztási ütközést."
+
+#: app/worktime.py:300
+msgid "Confirm that you have checked the entries against actual attendance."
+msgstr "Erősítsd meg, hogy a bejegyzéseket összevetetted a tényleges jelenléttel."
+
+#: app/worktime.py:339
+msgid "Keep the note within 2,000 characters."
+msgstr "A megjegyzés legfeljebb 2000 karakter lehet."
+
+#: app/worktime.py:341
+msgid "Enter both the start and end of the working day."
+msgstr "Add meg a munkaidő kezdetét és végét is."
+
+#: app/worktime.py:411
+msgid "Group settings saved. Regenerate affected registers."
+msgstr "A csoportbeállításokat mentettük. Generáld újra az érintett nyilvántartásokat."
+
+#: app/worktime.py:426
+msgid "The end date cannot be before the start date."
+msgstr "A záró dátum nem lehet korábbi a kezdő dátumnál."
+
+#: app/worktime.py:437
+msgid "Enter a group name of at most 120 characters."
+msgstr "Adj meg egy legfeljebb 120 karakteres csoportnevet."
+
+#: app/worktime.py:456
+msgid "Choose a contract and group at the same workplace."
+msgstr "Azonos munkavégzési helyhez tartozó szerződést és csoportot válassz."
+
+#: app/worktime.py:463
+msgid "Choose the weekly shift pattern."
+msgstr "Válaszd ki a heti műszakváltás rendjét."
+
+#: app/worktime.py:470
+msgid "This contract already has a group assignment during these dates."
+msgstr "Ehhez a szerződéshez a megadott időszakban már tartozik csoportbeosztás."
+
+#: app/worktime.py:529
+msgid "Choose PDF or CSV for the export."
+msgstr "Az exportáláshoz PDF- vagy CSV-formátumot válassz."
+
+#: app/worktime.py:71
+#, python-format
+msgid "Choose a valid %(field)s."
+msgstr "Válassz érvényes %(field)s."
+
+#: app/worktime.py:83
+msgid "Enter a valid date."
+msgstr "Adj meg érvényes dátumot."
+
+#: app/worktime.py:321
+msgid "Enter a valid time in HH:MM format."
+msgstr "Adj meg érvényes időpontot óó:pp formátumban."
+
+#: app/worktime.py:352
+msgid "A working day may contain at most eight working hours and a 20-minute break."
+msgstr "Egy munkanap legfeljebb nyolc óra munkaidőből és 20 perc munkaközi szünetből állhat."
+
+#: app/worktime.py:354
+msgid "Place the 20-minute break inside the working day."
+msgstr "A 20 perces munkaközi szünetet a munkanapon belülre helyezd."
+
+#: app/worktime.py:358
+msgid "An absent employee must have zero working time."
+msgstr "Távollévő munkavállalónál a munkaidőnek nullának kell lennie."
+
+#: app/worktime.py:390
+msgid "Create a workplace before adding groups."
+msgstr "Csoportok hozzáadása előtt hozz létre munkavégzési helyet."
+
+#: app/worktime.py:393
+msgid "Group settings changed in another window. Reload the page and try again."
+msgstr "A csoportbeállítások egy másik ablakban megváltoztak. Töltsd újra az oldalt, majd próbáld újra."
+
+#: app/worktime.py:460
+msgid "The assignment must stay inside the contract and group dates."
+msgstr "A beosztás időszakának a szerződés és a csoport érvényességi idején belül kell maradnia."
+
+#: app/worktime.py:492
+msgid "Choose a merge date inside the selected month."
+msgstr "Az összevonás dátuma a kiválasztott hónapba essen."
+
+#: app/worktime.py:496
+msgid "Choose two different active groups at the same workplace."
+msgstr "Válassz két különböző, aktív csoportot ugyanazon a munkavégzési helyen."
+
+#: app/worktime.py:499
+msgid "A group merge cannot form a chain or a cycle."
+msgstr "A csoportösszevonások nem alkothatnak láncot vagy körkörös hivatkozást."
+
+#: app/worktime.py:506
+msgid "Keep the merge note within 255 characters."
+msgstr "Az összevonás megjegyzése legfeljebb 255 karakter lehet."
+
+#: app/worktime.py:364
+msgid "Teaching minutes must be between zero and the working minutes."
+msgstr "A neveléssel-oktatással lekötött percek száma nulla és a munkaidő perceinek száma között lehet."
+
+#: app/worktime.py:410
+msgid "This group name already exists at the workplace."
+msgstr "Ezen a munkavégzési helyen már létezik ilyen nevű csoport."
+
+#: app/worktime.py:442
+msgid "The group dates must contain all existing assignments."
+msgstr "A csoport érvényességi idejének minden meglévő beosztást le kell fednie."
+
+#: app/worktime.py:445
+msgid "The group dates must contain all existing group merges."
+msgstr "A csoport érvényességi idejének minden meglévő csoportösszevonást le kell fednie."
+
+#: app/worktime.py:405 app/worktime.py:483
+msgid "Choose a valid action."
+msgstr "Válassz érvényes műveletet."
+
+#: app/worktime_service.py:243 app/worktime_service.py:248
+msgid "This employee has no contract in the selected month."
+msgstr "A munkavállalónak nincs szerződése a kiválasztott hónapban."
+
+#: app/worktime.py:57 app/worktime_service.py:30
+msgid "Choose a valid year and month."
+msgstr "Válassz érvényes évet és hónapot."
+
+#: app/worktime_service.py:248 app/worktime_service.py:253
+msgid "Generate the register for every workplace before exporting this employee's month."
+msgstr ""
+"A munkavállaló havi nyilvántartásának exportálása előtt minden érintett munkavégzési helyen "
+"generáld le a nyilvántartást."
+
+#: app/worktime_service.py:251 app/worktime_service.py:256
+msgid "The register is out of date. Regenerate it before exporting."
+msgstr "A nyilvántartás nem naprakész. Exportálás előtt generáld újra."
+
+#: app/worktime_service.py:212 app/worktime_service.py:217
+msgid "Approved absence; regenerate the register."
+msgstr "Jóváhagyott távollét; generáld újra a nyilvántartást."
+
+#: app/templates/worktime.html:135
+msgid ""
+"For part-time employees, every working-time allowance is multiplied by the contract’s weekly "
+"hours divided by 40."
+msgstr "Részmunkaidőben minden munkaidőkeret a szerződéses heti óraszám és a 40 óra arányával csökken."

@@ -411,3 +411,100 @@ CREATE TABLE IF NOT EXISTS working_day_overrides (
   PRIMARY KEY (id),
   UNIQUE KEY uq_working_day_overrides_day (day)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS work_groups (
+  id INT NOT NULL AUTO_INCREMENT,
+  place_of_work_id INT NOT NULL,
+  name VARCHAR(120) NOT NULL,
+  start_date DATE NOT NULL,
+  end_date DATE NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_work_group_name (place_of_work_id, name),
+  FOREIGN KEY (place_of_work_id) REFERENCES places_of_work(id) ON DELETE CASCADE,
+  CONSTRAINT work_group_dates CHECK (end_date IS NULL OR end_date >= start_date)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS work_assignments (
+  id INT NOT NULL AUTO_INCREMENT,
+  contract_id INT NOT NULL,
+  group_id INT NOT NULL,
+  start_date DATE NOT NULL,
+  end_date DATE NULL,
+  shift_phase INT NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  KEY ix_work_assignments_contract_id (contract_id),
+  FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE CASCADE,
+  FOREIGN KEY (group_id) REFERENCES work_groups(id) ON DELETE CASCADE,
+  CONSTRAINT work_assignment_phase CHECK (shift_phase IN (0, 1)),
+  CONSTRAINT work_assignment_dates CHECK (end_date IS NULL OR end_date >= start_date)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS work_group_merges (
+  id INT NOT NULL AUTO_INCREMENT,
+  day DATE NOT NULL,
+  source_group_id INT NOT NULL,
+  target_group_id INT NOT NULL,
+  note VARCHAR(255) NOT NULL DEFAULT '',
+  created_by_id INT UNSIGNED NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_work_group_merge_day (day, source_group_id),
+  KEY ix_work_group_merges_day (day),
+  FOREIGN KEY (source_group_id) REFERENCES work_groups(id) ON DELETE CASCADE,
+  FOREIGN KEY (target_group_id) REFERENCES work_groups(id) ON DELETE CASCADE,
+  FOREIGN KEY (created_by_id) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT work_merge_distinct_groups CHECK (source_group_id != target_group_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS work_schedules (
+  id INT NOT NULL AUTO_INCREMENT,
+  place_of_work_id INT NOT NULL,
+  year INT NOT NULL,
+  month INT NOT NULL,
+  revision VARCHAR(32) NOT NULL,
+  source_hash VARCHAR(64) NOT NULL,
+  issues JSON NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'draft',
+  generated_at DATETIME NOT NULL,
+  generated_by_id INT UNSIGNED NULL,
+  confirmed_at DATETIME NULL,
+  confirmed_by_id INT UNSIGNED NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_work_schedule_month (place_of_work_id, year, month),
+  FOREIGN KEY (place_of_work_id) REFERENCES places_of_work(id) ON DELETE CASCADE,
+  FOREIGN KEY (generated_by_id) REFERENCES users(id) ON DELETE SET NULL,
+  FOREIGN KEY (confirmed_by_id) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT work_schedule_period CHECK (month BETWEEN 1 AND 12 AND year BETWEEN 1970 AND 2100),
+  CONSTRAINT work_schedule_status CHECK (status IN ('draft', 'confirmed'))
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS work_time_entries (
+  id INT NOT NULL AUTO_INCREMENT,
+  schedule_id INT NOT NULL,
+  contract_id INT NOT NULL,
+  user_id INT UNSIGNED NOT NULL,
+  group_id INT NULL,
+  day DATE NOT NULL,
+  start_minute INT NULL,
+  end_minute INT NULL,
+  break_start INT NULL,
+  break_minutes INT NOT NULL DEFAULT 0,
+  work_minutes INT NOT NULL DEFAULT 0,
+  teaching_minutes INT NOT NULL DEFAULT 0,
+  shift VARCHAR(24) NOT NULL,
+  note TEXT NOT NULL,
+  note_parts JSON NOT NULL,
+  is_manual TINYINT(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_work_time_entry_day (schedule_id, contract_id, day),
+  KEY ix_work_time_entries_schedule_id (schedule_id),
+  KEY ix_work_time_entries_contract_id (contract_id),
+  KEY ix_work_time_entries_user_id (user_id),
+  KEY ix_work_time_entries_day (day),
+  FOREIGN KEY (schedule_id) REFERENCES work_schedules(id) ON DELETE CASCADE,
+  FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (group_id) REFERENCES work_groups(id) ON DELETE SET NULL,
+  CONSTRAINT work_entry_minutes CHECK (work_minutes BETWEEN 0 AND 480),
+  CONSTRAINT work_entry_teaching CHECK (teaching_minutes >= 0 AND teaching_minutes <= work_minutes),
+  CONSTRAINT work_entry_break CHECK (break_minutes IN (0, 20))
+) ENGINE=InnoDB;

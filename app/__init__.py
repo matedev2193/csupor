@@ -84,6 +84,10 @@ def create_app() -> Flask:
 
     app.register_blueprint(profile_photos)
 
+    from .worktime import worktime
+
+    app.register_blueprint(worktime)
+
     from .account_display import account_template_context
 
     app.context_processor(account_template_context)

@@ -168,3 +168,11 @@ python -m unittest discover -s tests -v
 ```
 
 The checks cover generated MySQL DDL for signed/unsigned identifiers, fresh and existing schemas, and an actual SQLite create/restart cycle that preserves stored records. MySQL DDL tests use SQLAlchemy's dialect and a reflected-schema fixture; they do not require or modify a live MySQL server.
+
+## Working-time register
+
+The **Working-time register** menu provides dated group assignments, monthly draft rosters, manual HR/director group mergers and day corrections, and employee/month PDF and CSV exports. Employees can access their own records; HR and directors manage all records. The scheduler uses the configured Hungarian working calendar and approved absences, accounts for unpaid breaks and trainee teaching hours, alternates weekly shifts, and distributes early opening duties among eligible staff. Conflicting requirements produce actionable issues instead of excessive hours or scheduling absent staff.
+
+Generated hours are a draft until HR/director verification. Changed source data or stale browser revisions cannot silently produce a confirmed/exported outdated register. For teachers, totals represent scheduled **bound working time**, with teaching hours tracked separately; the remainder of a 40-hour contract is not automatically treated as worked. Partial weeks are explicitly totalled within the selected month.
+
+Five additional tables are created automatically at startup, with existing MySQL foreign-key type compatibility preserved. Install the updated requirements for ReportLab PDF support. Bundled DejaVu fonts support Hungarian names without system-font dependencies. See [the allocation algorithm and operating workflow](docs/working-time.md) for the detailed institutional rules and conflict handling.
