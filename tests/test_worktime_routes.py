@@ -49,7 +49,7 @@ class WorktimeRoutesTests(unittest.TestCase):
             self.contracts[name] = contract
             if name != "assistant":
                 group = self.groups[0 if name in {"teacher1", "teacher2", "nanny1"} else 1]
-                db.session.add(WorkAssignment(contract=contract, group=group, start_date=date(2025, 1, 1), shift_phase=1 if name in {"teacher2", "teacher4"} else 0))
+                db.session.add(WorkAssignment(contract=contract, group=group, start_date=date(2025, 1, 1), shift_phase=1 if name in {"teacher2", "teacher4", "nanny2"} else 0))
         db.session.commit()
         self.login("hr")
 
@@ -311,6 +311,71 @@ class WorktimeRoutesTests(unittest.TestCase):
         payload, before = build_payload(self.site.id, 2026, 2)
         historic = next(row for row in payload["history"] if row["day"] == entry.day.isoformat() and row["contract_id"] == entry.contract_id)
         self.assertEqual(historic["shift"], "early_teacher")
+        self.assertEqual(historic["user_id"], entry.user_id)
+        self.assertEqual(historic["site_id"], self.site.id)
+        # The preceding month's actual opening on a shared boundary week must
+        # not be replaced by a simulated early start from the next month.
+        boundary_entry = next(row for row in january.entries if row.start_minute == 420 and row.day >= date(2026, 1, 26))
+        self.assertTrue(any(row["day"] == boundary_entry.day.isoformat() and row["contract_id"] == boundary_entry.contract_id for row in payload["history"]))
         entry.note = "Historical comment"
         db.session.commit()
         self.assertEqual(before, build_payload(self.site.id, 2026, 2)[1])
+
+    def test_hr_and_ceo_select_actual_employee_rows_and_monthly_export(self):
+        self.generate()
+        for manager in ("hr", "ceo"):
+            self.login(manager)
+            for employee in ("teacher1", "teacher4"):
+                with self.subTest(manager=manager, employee=employee):
+                    employee_id = self.users[employee].id
+                    query = f"year=2026&month=2&place_id={self.site.id}&user_id={employee_id}"
+                    with patch("app.worktime.render_template", return_value="rendered") as render:
+                        self.assertEqual(self.client.get("/worktime?" + query).status_code, 200)
+                        context = render.call_args.kwargs
+                    self.assertEqual(context["selected_user_id"], employee_id)
+                    self.assertEqual(context["selected_user"].id, employee_id)
+                    self.assertTrue(context["can_manage_worktime"])
+                    self.assertTrue(context["rows"])
+                    self.assertEqual({row["user_id"] for row in context["rows"]}, {employee_id})
+                    self.assertEqual({row["teaching_minutes"] for row in context["rows"]}, {312 if employee == "teacher4" else 384})
+                    self.assertEqual(context["monthly_total_minutes"], sum(row["work_minutes"] for row in context["rows"]))
+                    html = self.client.get("/worktime?" + query).get_data(as_text=True)
+                    self.assertIn(f'/worktime/export/{employee_id}?', html)
+                    exported = self.client.get(f"/worktime/export/{employee_id}?year=2026&month=2&format=csv")
+                    self.assertEqual(exported.status_code, 200)
+                    csv_text = exported.data.decode("utf-8-sig")
+                    self.assertIn(f"Minta {employee}", csv_text)
+                    self.assertNotIn("Minta " + ("teacher4" if employee == "teacher1" else "teacher1"), csv_text)
+
+    def test_manager_site_change_resets_employee_and_staff_cannot_cross_site(self):
+        contract = Contract(user=self.users["developer"], contract_type=ContractType.secretary,
+                            start_date=date(2026, 2, 1), job_title="Other secretary", working_hours_per_week=40,
+                            legal_entity_id=self.site.legal_entity_id, place_of_work=self.other_site)
+        db.session.add(contract)
+        db.session.commit()
+        for manager in ("hr", "ceo"):
+            self.login(manager)
+            # A normal filter submission can still contain the old site's user.
+            with patch("app.worktime.render_template", return_value="rendered") as render:
+                response = self.client.get(f"/worktime?year=2026&month=2&place_id={self.other_site.id}&user_id={self.users['teacher1'].id}")
+                self.assertEqual(response.status_code, 200)
+                context = render.call_args.kwargs
+            self.assertEqual(context["selected_place_id"], self.other_site.id)
+            self.assertEqual(context["selected_user_id"], self.users["developer"].id)
+            self.assertEqual([user.id for user in context["users"]], [self.users["developer"].id])
+        self.login("teacher1")
+        self.assertEqual(self.client.get(f"/worktime?year=2026&month=2&place_id={self.other_site.id}").status_code, 403)
+        self.assertEqual(self.client.get(f"/worktime?year=2026&month=2&user_id={self.users['teacher4'].id}").status_code, 403)
+        self.assertEqual(self.client.get(f"/worktime/export/{self.users['teacher4'].id}?year=2026&month=2&format=csv").status_code, 403)
+
+    def test_previous_allocation_policy_register_is_stale_until_regenerated(self):
+        with patch("app.worktime_service.SCHEDULING_RULE_VERSION", 1):
+            self.generate()
+        with patch("app.worktime.render_template", return_value="rendered") as render:
+            self.client.get(f"/worktime?year=2026&month=2&place_id={self.site.id}&user_id={self.users['teacher1'].id}")
+            self.assertTrue(render.call_args.kwargs["is_stale"])
+        self.assertEqual(self.post("/worktime/confirm", acknowledge="1").status_code, 409)
+        url = f"/worktime/export/{self.users['teacher1'].id}?year=2026&month=2&format=csv"
+        self.assertEqual(self.client.get(url, headers={"Accept": "application/json"}).status_code, 409)
+        self.generate()
+        self.assertEqual(self.client.get(url).status_code, 200)

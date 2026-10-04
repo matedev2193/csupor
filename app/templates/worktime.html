@@ -21,8 +21,8 @@
       <div class="field"><label for="worktime-year">{{ _('Year') }}</label><input id="worktime-year" name="year" type="number" min="1970" max="2100" value="{{ selected_year }}" required></div>
       <div class="field"><label for="worktime-month">{{ _('Month') }}</label><select id="worktime-month" name="month">{% for month_number in range(1, 13) %}<option value="{{ month_number }}"{% if month_number == selected_month %} selected{% endif %}>{{ '%02d'|format(month_number) }}</option>{% endfor %}</select></div>
       <div class="field worktime-filter-place"><label for="worktime-place">{{ _('Workplace') }}</label><select id="worktime-place" name="place_id"><option value="">{{ _('Select a workplace') }}</option>{% for place in places %}<option value="{{ place.id }}"{% if place.id == selected_place_id %} selected{% endif %}>{{ place.address }}</option>{% endfor %}</select></div>
-      {% if can_manage_worktime %}<div class="field worktime-filter-person"><label for="worktime-user">{{ _('Employee') }}</label><select id="worktime-user" name="user_id"><option value="">{{ _('Select an employee') }}</option>{% for user in users %}<option value="{{ user.id }}"{% if user.id == selected_user_id %} selected{% endif %}>{{ user_display_name(user) }}</option>{% endfor %}</select></div>{% endif %}
-      <button type="submit">{{ _('Apply filters') }}</button>
+      {% if can_manage_worktime %}<div class="field worktime-filter-person"><div class="worktime-person-copy"><label for="worktime-user">{{ _('Employee schedule') }}</label><small id="worktime-user-help" class="help-text">{{ _('Choose from employees with a contract at the selected workplace in this month.') }}</small></div><select id="worktime-user" name="user_id" aria-describedby="worktime-user-help"><option value="">{{ _('Select an employee') }}</option>{% for user in users %}<option value="{{ user.id }}"{% if user.id == selected_user_id %} selected{% endif %}>{{ user_display_name(user) }}</option>{% endfor %}</select></div>{% endif %}
+      <button type="submit">{{ _('View schedule') }}</button>
     </form>
   </section>
 
@@ -136,7 +136,7 @@
         <li>{{ _('Weekly hours follow the number of working days. Absences count as zero worked hours; the missing hours are not redistributed to other days.') }}</li>
         <li>{{ _('A working day contains at most eight worked hours. A 20-minute break is added only when worked time exceeds six hours; at exactly six hours there is no break.') }}</li>
         <li>{{ _('Morning shifts start at 08:00; afternoon shifts end at 17:30. Shifts alternate weekly. Early starts at 06:00 for one nanny and 07:00 for one teacher rotate fairly within each workplace.') }}</li>
-        <li>{{ _('Opening duty or an absence may change the usual weekly shift.') }}</li>
+        <li>{{ _('Opening duty is assigned only to morning-shift employees. An absence may change the usual weekly shift.') }}</li>
         <li>{{ _('Every group needs a teacher from 08:00 to 12:00. Two present teachers in the same group need two hours of overlap. If one is absent, the other works mornings and a nanny or teaching assistant covers the afternoon.') }}</li>
         <li>{{ _('If both teachers are absent, HR or the CEO must record a group merger. Unresolved coverage or incompatible rules are highlighted for review.') }}</li>
       </ul>

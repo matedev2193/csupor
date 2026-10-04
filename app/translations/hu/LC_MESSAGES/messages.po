@@ -3444,7 +3444,8 @@ msgstr "A beosztáshoz szükséges adatok hiányoznak vagy ellentmondásosak."
 msgid "Afternoon cover in this group."
 msgstr "Délutáni helyettesítés a csoportban."
 
-#: app/worktime_service.py:203 app/worktime_service.py:206 app/worktime_service.py:213
+#: app/worktime_service.py:203 app/worktime_service.py:206 app/worktime_service.py:211
+#: app/worktime_service.py:213
 msgid "Absence"
 msgstr "Távollét"
 
@@ -4133,25 +4134,25 @@ msgstr "A csoport érvényességi idejének minden meglévő csoportösszevonás
 msgid "Choose a valid action."
 msgstr "Válassz érvényes műveletet."
 
-#: app/worktime_service.py:243 app/worktime_service.py:248
+#: app/worktime_service.py:243 app/worktime_service.py:248 app/worktime_service.py:256
 msgid "This employee has no contract in the selected month."
 msgstr "A munkavállalónak nincs szerződése a kiválasztott hónapban."
 
-#: app/worktime.py:57 app/worktime_service.py:30
+#: app/worktime.py:57 app/worktime_service.py:30 app/worktime_service.py:34
 msgid "Choose a valid year and month."
 msgstr "Válassz érvényes évet és hónapot."
 
-#: app/worktime_service.py:248 app/worktime_service.py:253
+#: app/worktime_service.py:248 app/worktime_service.py:253 app/worktime_service.py:261
 msgid "Generate the register for every workplace before exporting this employee's month."
 msgstr ""
 "A munkavállaló havi nyilvántartásának exportálása előtt minden érintett munkavégzési helyen "
 "generáld le a nyilvántartást."
 
-#: app/worktime_service.py:251 app/worktime_service.py:256
+#: app/worktime_service.py:251 app/worktime_service.py:256 app/worktime_service.py:264
 msgid "The register is out of date. Regenerate it before exporting."
 msgstr "A nyilvántartás nem naprakész. Exportálás előtt generáld újra."
 
-#: app/worktime_service.py:212 app/worktime_service.py:217
+#: app/worktime_service.py:212 app/worktime_service.py:217 app/worktime_service.py:225
 msgid "Approved absence; regenerate the register."
 msgstr "Jóváhagyott távollét; generáld újra a nyilvántartást."
 
@@ -4160,3 +4161,47 @@ msgid ""
 "For part-time employees, every working-time allowance is multiplied by the contract’s weekly "
 "hours divided by 40."
 msgstr "Részmunkaidőben minden munkaidőkeret a szerződéses heti óraszám és a 40 óra arányával csökken."
+
+#: app/templates/base.html:69
+msgid "Groups"
+msgstr "Csoportok"
+
+#: app/templates/worktime.html:24
+msgid "Employee schedule"
+msgstr "Munkavállaló beosztása"
+
+#: app/templates/worktime.html:24
+msgid "Choose from employees with a contract at the selected workplace in this month."
+msgstr ""
+"Az adott hónapban a kiválasztott munkavégzési helyen szerződéssel rendelkező munkavállalók közül "
+"választhatsz."
+
+#: app/templates/worktime.html:25
+msgid "View schedule"
+msgstr "Beosztás megtekintése"
+
+#: app/templates/worktime.html:139
+msgid ""
+"Opening duty is assigned only to morning-shift employees. An absence may change the usual weekly "
+"shift."
+msgstr ""
+"Nyitóügyeletre csak délelőttös munkavállaló osztható be. Távollét miatt az alapértelmezett heti "
+"műszak változhat."
+
+msgid "The early start is assigned to the same employee as on the preceding scheduled day."
+msgstr "A korai kezdés az előző beosztott naphoz hasonlóan ugyanarra a munkavállalóra jut."
+
+msgid "An early start can only be assigned to an employee who is on the morning shift that day."
+msgstr "Korai kezdés csak az adott napon délelőttös munkavállalónak osztható ki."
+
+msgid "No morning-shift teacher is available for the 07:00 opening duty."
+msgstr "A 07:00-s nyitáshoz nincs elérhető délelőttös óvodapedagógus."
+
+msgid "No morning-shift nursery assistant is available for the 06:00 opening duty."
+msgstr "A 06:00-s nyitáshoz nincs elérhető délelőttös dajka."
+
+msgid "The daily shift differs from the configured weekly shift."
+msgstr "A napi műszak eltér a beállított heti műszaktól."
+
+msgid "The group’s available teachers must include both a morning and an afternoon shift."
+msgstr "A csoport jelen lévő óvodapedagógusai között délelőttösnek és délutánosnak is lennie kell."

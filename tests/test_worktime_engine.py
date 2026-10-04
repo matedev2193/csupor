@@ -18,7 +18,7 @@ def fixture(days=None):
             "groups": [{"id": 1, "name": "Group A", "site_id": 1}, {"id": 2, "name": "Group B", "site_id": 1}],
             "workers": [worker(1, "teacher", 1), worker(2, "teacher", 1, phase=1, trainee=True),
                         worker(3, "teacher", 2), worker(4, "teacher", 2, phase=1),
-                        worker(5, "nursery_assistant", 1), worker(6, "nursery_assistant", 2),
+                        worker(5, "nursery_assistant", 1), worker(6, "nursery_assistant", 2, phase=1),
                         worker(7, "teaching_assistant"), worker(8, "secretary"),
                         worker(9, "employee_under_the_labour_code")],
             "absences": [], "merges": [], "history": []}
@@ -101,14 +101,18 @@ class WorktimeEngineTests(unittest.TestCase):
                 absent = next(row for row in rows if row["day"] == "2026-10-06")
                 self.assertEqual((absent["work_minutes"], absent["teaching_minutes"], absent["break_minutes"]), (0, 0, 0))
 
-    def test_rotating_openers_no_consecutive_repeats_and_weekly_shift_preference(self):
+    def test_openers_rotate_within_the_fixed_morning_pool_and_balance_across_weeks(self):
         payload = fixture([f"2026-10-{day:02d}" for day in range(5, 10)] + [f"2026-10-{day:02d}" for day in range(12, 17)])
         result = build_schedule(payload)
         self.assert_feasible(payload, result)
         for shift in ("early_teacher", "early_nursery"):
             openers = [row["contract_id"] for row in result["entries"] if row["shift"] == shift]
             self.assertEqual(len(openers), 10)
-            self.assertTrue(all(a != b for a, b in zip(openers, openers[1:])))
+            if shift == "early_teacher":
+                self.assertTrue(all(a != b for a, b in zip(openers, openers[1:])))
+            else:
+                # There is only one morning nursery assistant per week.
+                self.assertEqual(openers, [6] * 5 + [5] * 5)
             counts = Counter(openers)
             self.assertLessEqual(max(counts.values()) - min(counts.values()), 1)
         self.assertNotIn("shift_preference_changed", codes(result, "warning"))
@@ -189,6 +193,7 @@ class WorktimeEngineTests(unittest.TestCase):
         payload = fixture(["2026-10-05"])
         payload["groups"] = payload["groups"][:1]
         payload["workers"] = [person for person in payload["workers"] if person["contract_id"] in (1, 2, 5, 7)]
+        next(person for person in payload["workers"] if person["contract_id"] == 5)["assignments"][0]["shift_phase"] = 1
         next(person for person in payload["workers"] if person["contract_id"] == 7)["weekly_hours"] = 10
         payload["absences"] = [{"user_id": 2, "start_date": "2026-10-05", "end_date": "2026-10-05"}]
         self.assertIn("group_coverage_gap", codes(build_schedule(payload)))
@@ -262,6 +267,7 @@ class WorktimeEngineTests(unittest.TestCase):
         payload = fixture(["2026-10-05"])
         payload["groups"] = payload["groups"][:1]
         payload["workers"] = [person for person in payload["workers"] if person["contract_id"] in (1, 2, 5)]
+        next(person for person in payload["workers"] if person["contract_id"] == 5)["assignments"][0]["shift_phase"] = 1
         payload["workers"] += [worker(7, "teaching_assistant", hours=10), worker(10, "teaching_assistant")]
         payload["absences"] = [{"user_id": 2, "start_date": "2026-10-05", "end_date": "2026-10-05"}]
         result = build_schedule(payload)
@@ -280,11 +286,131 @@ class WorktimeEngineTests(unittest.TestCase):
         payload = fixture(["2026-10-05", "2026-10-06"])
         payload["groups"] = payload["groups"][:1]
         payload["workers"] = [person for person in payload["workers"] if person["contract_id"] in (1, 2, 5, 7)]
+        next(person for person in payload["workers"] if person["contract_id"] == 5)["assignments"][0]["shift_phase"] = 1
+        payload["absences"] = [{"user_id": 2, "start_date": "2026-10-05", "end_date": "2026-10-05"}]
         result = build_schedule(payload)
         self.assert_feasible(payload, result)
         warning_codes = codes(validate_schedule(payload, result["entries"], validation_days=payload["days"]), "warning")
         self.assertIn("shift_preference_changed", warning_codes)
         self.assertIn("early_rotation_repeated", warning_codes)
+
+    def test_only_daily_morning_employees_can_open_even_when_pm_counts_are_lower(self):
+        payload = fixture(["2026-10-05", "2026-10-06"])
+        payload["history"] = [
+            {"day": f"2026-09-{day:02d}", "contract_id": cid, "shift": "early_teacher"}
+            for cid in (2, 4) for day in range(1, 5)
+        ]
+        result = build_schedule(payload)
+        self.assert_feasible(payload, result)
+        for row in result["entries"]:
+            if row["shift"] == "early_teacher":
+                self.assertIn(row["contract_id"], (2, 4))
+            if row["contract_id"] in (1, 3, 5):
+                self.assertEqual((row["shift"], row["end_minute"]), ("afternoon", 1050))
+            if row["shift"] == "early_nursery":
+                self.assertEqual(row["contract_id"], 6)
+
+    def test_missing_morning_openers_is_a_hard_conflict_without_promoting_pm_staff(self):
+        for role, expected in (("teacher", "no_morning_teacher"), ("nursery_assistant", "no_morning_nursery")):
+            with self.subTest(role=role):
+                payload = fixture(["2026-10-05"])
+                for person in payload["workers"]:
+                    if person["role"] == role:
+                        person["assignments"][0]["shift_phase"] = 0
+                result = build_schedule(payload)
+                self.assertIn(expected, codes(result))
+                ids = {person["contract_id"] for person in payload["workers"] if person["role"] == role}
+                self.assertTrue(all(row["shift"] == "afternoon" for row in result["entries"] if row["contract_id"] in ids))
+
+    def test_fairness_count_precedes_avoiding_consecutive_openings(self):
+        payload = fixture(["2026-10-05"])
+        payload["history"] = [
+            {"day": f"2026-09-{day:02d}", "contract_id": 4, "shift": "early_teacher"}
+            for day in range(1, 9)
+        ] + [{"day": "2026-10-02", "contract_id": 2, "shift": "early_teacher"}]
+        result = build_schedule(payload)
+        self.assert_feasible(payload, result)
+        self.assertEqual(next(row["contract_id"] for row in result["entries"] if row["shift"] == "early_teacher"), 2)
+        self.assertIn("early_rotation_repeated", codes(result, "warning"))
+        self.assertIn("early_rotation_repeated", codes(validate_schedule(payload, result["entries"]), "warning"))
+
+    def test_opening_feasibility_precedes_fairness_without_changing_base_shifts(self):
+        payload = fixture(["2026-10-05"])
+        # At 08:00 this 35-hour teacher has 150 minutes of overlap; at 07:00
+        # only 110 remain. The other morning teacher must open instead.
+        payload["workers"][1]["weekly_hours"] = 35
+        payload["history"] = [{"day": f"2026-09-{day:02d}", "contract_id": 4, "shift": "early_teacher"} for day in range(1, 9)]
+        result = build_schedule(payload)
+        self.assert_feasible(payload, result)
+        self.assertEqual(next(row["contract_id"] for row in result["entries"] if row["shift"] == "early_teacher"), 4)
+        self.assertEqual(next(row["start_minute"] for row in result["entries"] if row["contract_id"] == 2), 480)
+        self.assertTrue(all(row["shift"] == "afternoon" for row in result["entries"] if row["contract_id"] in (1, 3)))
+
+    def test_absence_forced_morning_teacher_is_eligible_but_afternoon_cover_nurse_is_not(self):
+        payload = fixture(["2026-10-05"])
+        payload["absences"] = [{"user_id": cid, "start_date": "2026-10-05", "end_date": "2026-10-05"} for cid in (2, 4)]
+        result = build_schedule(payload)
+        self.assert_feasible(payload, result)
+        opener = next(row for row in result["entries"] if row["shift"] == "early_teacher")
+        self.assertIn(opener["contract_id"], (1, 3))
+        self.assertEqual(next(row["contract_id"] for row in result["entries"] if row["shift"] == "early_nursery"), 6)
+        self.assertEqual(next(row["end_minute"] for row in result["entries"] if row["contract_id"] == 5), 1050)
+        self.assertNotIn("early_requires_morning", codes(validate_schedule(payload, result["entries"])))
+
+    def test_manual_early_start_cannot_promote_an_afternoon_teacher_or_nurse(self):
+        for cid, incumbent, start, work in ((1, 2, 420, 384), (5, 6, 360, 480)):
+            with self.subTest(contract_id=cid):
+                payload = fixture(["2026-10-05"])
+                rows = build_schedule(payload)["entries"]
+                target = next(row for row in rows if row["contract_id"] == cid)
+                target.update(start_minute=start, end_minute=start + work + 20,
+                              break_start=720 if cid == 1 else 600, shift="manual")
+                former = next(row for row in rows if row["contract_id"] == incumbent)
+                former.update(start_minute=480, end_minute=480 + work + 20, break_start=720, shift="manual")
+                self.assertIn("early_requires_morning", codes(validate_schedule(payload, rows)))
+
+    def test_previous_contract_openings_count_for_the_same_person_and_workplace(self):
+        payload = fixture(["2026-10-05"])
+        payload["history"] = [
+            # Expired contract 99 is deliberately absent from current workers.
+            {"day": "2026-01-12", "contract_id": 99, "user_id": 2, "site_id": 1,
+             "shift": "early_teacher", "start_minute": 420},
+            # Another workplace must not bias this site's rotation.
+            {"day": "2026-01-13", "contract_id": 98, "user_id": 4, "site_id": 2,
+             "shift": "early_teacher", "start_minute": 420},
+        ]
+        result = build_schedule(payload)
+        self.assert_feasible(payload, result)
+        self.assertEqual(next(row["contract_id"] for row in result["entries"] if row["shift"] == "early_teacher"), 4)
+
+    def test_saved_boundary_days_count_while_simulated_warmup_days_do_not(self):
+        payload = fixture(["2026-09-28", "2026-09-29", "2026-09-30", "2026-10-01", "2026-10-02"])
+        payload.update(year=2026, month=10)
+        payload["history"] = [
+            {"day": day, "contract_id": 1, "user_id": 1, "site_id": 1,
+             "shift": "manual", "role": "teacher", "start_minute": 420}
+            for day in ("2026-09-28", "2026-09-29", "2026-09-30")
+        ]
+        result = build_schedule(payload)
+        self.assert_feasible(payload, result)
+        october_openers = [row["contract_id"] for row in result["entries"] if row["day"].startswith("2026-10") and row["shift"] == "early_teacher"]
+        self.assertEqual(october_openers, [3, 3])
+        # Omitting unused pre-month simulation dates changes no October duties.
+        shorter = deepcopy(payload)
+        shorter["days"] = ["2026-10-01", "2026-10-02"]
+        short_result = build_schedule(shorter)
+        self.assertEqual([row for row in result["entries"] if row["day"].startswith("2026-10")], short_result["entries"])
+
+    def test_same_phase_teachers_are_a_visible_conflict_even_when_a_nurse_closes(self):
+        payload = fixture(["2026-10-01"])
+        payload["workers"][0]["assignments"][0]["shift_phase"] = 0
+        payload["workers"][1]["assignments"][0]["shift_phase"] = 0
+        payload["workers"][4]["assignments"][0]["shift_phase"] = 1
+        payload["workers"][5]["assignments"][0]["shift_phase"] = 0
+        result = build_schedule(payload)
+        self.assertIn("teacher_shift_conflict", codes(result))
+        self.assertFalse(any(row["shift"] == "afternoon" for row in result["entries"] if row["contract_id"] in (1, 2)))
+        self.assertEqual(next(row["end_minute"] for row in result["entries"] if row["contract_id"] == 5), 1050)
 
     def test_deterministic_output_independent_of_input_worker_order(self):
         payload = fixture()
