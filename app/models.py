@@ -156,6 +156,7 @@ class User(UserMixin, db.Model):
 
     profile = db.relationship("UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
     photo = db.relationship("ProfilePhoto", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    photo_source = db.relationship("ProfilePhotoSource", back_populates="user", uselist=False, cascade="all, delete-orphan")
     dependents = db.relationship("Dependent", back_populates="user", cascade="all, delete-orphan")
     qualifications = db.relationship(
         "EducationalQualification", back_populates="user", cascade="all, delete-orphan"
@@ -197,6 +198,28 @@ class ProfilePhoto(db.Model):
     data = db.deferred(db.Column(db.LargeBinary().with_variant(MEDIUMBLOB(), "mysql", "mariadb"), nullable=False))
 
     user = db.relationship("User", back_populates="photo")
+
+
+class ProfilePhotoSource(db.Model):
+    """Safe editable source and crop state, separate from the displayed avatar."""
+
+    __tablename__ = "profile_photo_sources"
+    __table_args__ = (
+        db.CheckConstraint("width BETWEEN 1 AND 2048 AND height BETWEEN 1 AND 2048", name="profile_photo_source_dimensions"),
+        db.CheckConstraint("size_bytes > 0 AND size_bytes <= 8388608", name="profile_photo_source_size"),
+        db.CheckConstraint("center_x BETWEEN 0 AND 1 AND center_y BETWEEN 0 AND 1 AND zoom BETWEEN 1 AND 8", name="profile_photo_source_crop"),
+    )
+
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), primary_key=True, autoincrement=False)
+    width = db.Column(db.Integer, nullable=False)
+    height = db.Column(db.Integer, nullable=False)
+    size_bytes = db.Column(db.Integer, nullable=False)
+    center_x = db.Column(db.Double, nullable=False, default=0.5)
+    center_y = db.Column(db.Double, nullable=False, default=0.5)
+    zoom = db.Column(db.Double, nullable=False, default=1.0)
+    data = db.deferred(db.Column(db.LargeBinary().with_variant(MEDIUMBLOB(), "mysql", "mariadb"), nullable=False))
+
+    user = db.relationship("User", back_populates="photo_source")
 
 
 class UserProfile(db.Model):

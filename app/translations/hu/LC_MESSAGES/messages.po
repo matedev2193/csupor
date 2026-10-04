@@ -3231,3 +3231,105 @@ msgstr "A kiállító intézmény által megadott okiratszámot add meg."
 #: app/templates/qualification_form.html:22
 msgid "Update your educational qualification details."
 msgstr "Frissítsd a képesítésed adatait."
+
+#: app/templates/profile.html:53
+msgid "Loading photo…"
+msgstr "Kép betöltése…"
+
+#: app/templates/profile.html:53
+msgid "Saving photo…"
+msgstr "Profilkép mentése…"
+
+#: app/templates/profile.html:54
+msgid "The photo could not be opened. Please try again."
+msgstr "A képet nem sikerült megnyitni. Próbáld újra."
+
+#: app/templates/profile.html:55
+msgid "The photo could not be saved. Please try again."
+msgstr "A profilképet nem sikerült menteni. Próbáld újra."
+
+#: app/templates/profile.html:70 app/templates/profile.html:78
+msgid "Edit photo"
+msgstr "Profilkép szerkesztése"
+
+#: app/templates/profile.html:79
+msgid "Close photo editor"
+msgstr "Képszerkesztő bezárása"
+
+#: app/templates/profile.html:81
+msgid "Drag the photo to position it. Use the zoom slider or mouse wheel to resize it."
+msgstr ""
+"Húzd a képet a megfelelő helyre. A csúszkával vagy az egér görgőjével nagyíthatod és "
+"kicsinyítheted."
+
+#: app/templates/profile.html:82
+msgid "Use arrow keys to move the photo. Hold Shift for larger steps."
+msgstr "A nyílbillentyűkkel is mozgathatod a képet. A Shift lenyomásával nagyobb lépésekben mozgathatsz."
+
+#: app/templates/profile.html:85
+msgid "Photo crop area"
+msgstr "A kép kivágási területe"
+
+#: app/templates/profile.html:91
+msgid "Zoom"
+msgstr "Nagyítás"
+
+#: app/templates/profile.html:94
+msgid "Photo position"
+msgstr "Kép helyzete"
+
+#: app/templates/profile.html:95
+msgid "Move photo left"
+msgstr "Kép mozgatása balra"
+
+#: app/templates/profile.html:96
+msgid "Move photo up"
+msgstr "Kép mozgatása felfelé"
+
+#: app/templates/profile.html:97
+msgid "Move photo down"
+msgstr "Kép mozgatása lefelé"
+
+#: app/templates/profile.html:98
+msgid "Move photo right"
+msgstr "Kép mozgatása jobbra"
+
+#: app/templates/profile.html:100
+msgid "Reset position"
+msgstr "Alaphelyzet"
+
+#: app/templates/profile.html:101
+msgid "Preview"
+msgstr "Előnézet"
+
+#: app/templates/profile.html:107
+msgid "Save photo"
+msgstr "Profilkép mentése"
+
+#: app/profile_photos.py:100
+msgid "Choose a valid crop and a zoom level between 1 and 8."
+msgstr "Válassz érvényes képkivágást és 1–8-szoros nagyítást."
+
+#: app/profile_photos.py:117
+msgid "Keep the crop inside the photo."
+msgstr "A kivágás maradjon a képen belül."
+
+#: app/profile_photos.py:155
+msgid "Your profile photo changed in another window. Reload the editor and try again."
+msgstr "A profilképed egy másik ablakban megváltozott. Nyisd meg újra a szerkesztőt, és próbáld újra."
+
+#: app/profile_photos.py:212
+msgid "Your session expired. Reload the page and try again."
+msgstr "A munkameneted lejárt. Frissítsd az oldalt, és próbáld újra."
+
+#: app/profile_photos.py:218
+msgid "Reload the photo editor before saving changes."
+msgstr "A módosítások mentése előtt nyisd meg újra a képszerkesztőt."
+
+#: app/profile_photos.py:227 app/profile_photos.py:318
+msgid "Upload a profile photo before editing it."
+msgstr "A szerkesztéshez előbb tölts fel egy profilképet."
+
+#: app/profile_photos.py:229
+msgid "Choose either a new photo or the saved photo."
+msgstr "Válassz egy új képet, vagy szerkeszd a mentett profilképedet."

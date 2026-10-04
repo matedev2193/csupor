@@ -63,6 +63,26 @@ CREATE TABLE IF NOT EXISTS profile_photos (
   CONSTRAINT chk_profile_photo_size CHECK (size_bytes > 0 AND size_bytes <= 1048576)
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS profile_photo_sources (
+  user_id INT UNSIGNED NOT NULL,
+  width INT NOT NULL,
+  height INT NOT NULL,
+  size_bytes INT NOT NULL,
+  center_x DOUBLE NOT NULL DEFAULT 0.5,
+  center_y DOUBLE NOT NULL DEFAULT 0.5,
+  zoom DOUBLE NOT NULL DEFAULT 1.0,
+  data MEDIUMBLOB NOT NULL,
+  PRIMARY KEY (user_id),
+  CONSTRAINT fk_profile_photo_sources_user_id
+    FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE CASCADE,
+  CONSTRAINT chk_profile_photo_source_dimensions
+    CHECK (width BETWEEN 1 AND 2048 AND height BETWEEN 1 AND 2048),
+  CONSTRAINT chk_profile_photo_source_size CHECK (size_bytes > 0 AND size_bytes <= 8388608),
+  CONSTRAINT chk_profile_photo_source_crop
+    CHECK (center_x BETWEEN 0 AND 1 AND center_y BETWEEN 0 AND 1 AND zoom BETWEEN 1 AND 8)
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS user_profiles (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id INT UNSIGNED NOT NULL,

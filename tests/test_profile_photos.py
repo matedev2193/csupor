@@ -15,7 +15,7 @@ from sqlalchemy import create_mock_engine, event, inspect, text
 from sqlalchemy.dialects import mysql
 
 from app import create_app, db
-from app.models import ProfilePhoto, User, UserPrivilege
+from app.models import ProfilePhoto, ProfilePhotoSource, User, UserPrivilege
 from app.profile_photos import MAX_PHOTO_BYTES, profile_photo_url
 from app.schema import create_missing_tables
 
@@ -231,6 +231,8 @@ class ProfilePhotoTests(unittest.TestCase):
         db.session.expire_all()
         photo = db.session.get(ProfilePhoto, self.users["employee"].id)
         self.assertIn("data", inspect(photo).unloaded)
+        source = db.session.get(ProfilePhotoSource, self.users["employee"].id)
+        self.assertIn("data", inspect(source).unloaded)
         statements = []
 
         def collect(connection, cursor, statement, parameters, context, executemany):
@@ -248,6 +250,7 @@ class ProfilePhotoTests(unittest.TestCase):
         finally:
             event.remove(db.engine, "before_cursor_execute", collect)
         self.assertFalse(any("profile_photos.data" in sql for sql in statements))
+        self.assertFalse(any("profile_photo_sources.data" in sql for sql in statements))
 
     def test_unknown_length_multipart_is_bounded_before_file_decoding(self):
         self.login("employee")
@@ -280,6 +283,7 @@ class ProfilePhotoTests(unittest.TestCase):
         db.session.delete(self.users["employee"])
         db.session.commit()
         self.assertIsNone(db.session.get(ProfilePhoto, employee_id))
+        self.assertIsNone(db.session.get(ProfilePhotoSource, employee_id))
         self.login("other")
         self.upload()
         other_id = self.users["other"].id
@@ -289,12 +293,14 @@ class ProfilePhotoTests(unittest.TestCase):
             self.assertEqual(connection.execute(text("PRAGMA foreign_keys")).scalar(), 1)
             connection.execute(User.__table__.delete().where(User.id == other_id))
             self.assertEqual(connection.execute(ProfilePhoto.__table__.select()).all(), [])
+            self.assertEqual(connection.execute(ProfilePhotoSource.__table__.select()).all(), [])
 
     def test_photo_survives_application_restart(self):
         self.login("employee")
         self.upload()
         user_id = self.users["employee"].id
         expected = self.saved().data
+        expected_source = db.session.get(ProfilePhotoSource, user_id).data
         with patch.dict(os.environ, {"DATABASE_URL": self.database_url, "SECRET_KEY": "photo-test-only"}):
             restarted = create_app()
         restarted.config.update(TESTING=True)
@@ -306,6 +312,7 @@ class ProfilePhotoTests(unittest.TestCase):
             response = new_client.get(f"/users/{user_id}/photo")
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.data, expected)
+            self.assertEqual(db.session.get(ProfilePhotoSource, user_id).data, expected_source)
             db.session.remove()
             db.engine.dispose()
 
