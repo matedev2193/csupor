@@ -10,7 +10,7 @@ from app import db
 from app.models import Contract, ContractType, LegalEntity, PlaceOfWork, User
 from app.worktime_engine import build_schedule
 from app.worktime_models import WorkAssignment, WorkGroup, WorkSchedule, WorkTimeEntry
-from app.worktime_service import build_payload
+from app.worktime_service import build_payload, settings_revision
 
 
 class MorningOpeningHistoryIntegrationTests(unittest.TestCase):
@@ -111,6 +111,22 @@ class MorningOpeningHistoryIntegrationTests(unittest.TestCase):
         # the result into B's turn before the first October entry even exists.
         opener = next(row for row in rows if row["shift"] == "early_teacher")
         self.assertEqual(opener["user_id"], self.users["morning_a"].id)
+
+    def test_flexible_assignment_changes_payload_freshness_and_settings_revision(self):
+        _, original_hash = build_payload(self.site.id, 2026, 10)
+        original_revision = settings_revision(self.site.id)
+        contract = self.contracts["nurse_a"]
+        assignment = WorkAssignment.query.filter_by(contract_id=contract.id).one()
+        assignment.flexible_shift = True
+        db.session.commit()
+
+        payload, flexible_hash = build_payload(self.site.id, 2026, 10)
+        nurse = next(worker for worker in payload["workers"] if worker["contract_id"] == contract.id)
+        self.assertIsNone(nurse["assignments"][0]["shift_phase"])
+        self.assertNotEqual(original_hash, flexible_hash)
+        self.assertNotEqual(original_revision, settings_revision(self.site.id))
+        # The legacy phase is retained so older assignments remain unchanged.
+        self.assertEqual(assignment.shift_phase, 0)
 
 
 if __name__ == "__main__":

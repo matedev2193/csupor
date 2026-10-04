@@ -96,7 +96,7 @@ def _response_error(error):
     flash(str(error), "error")
     if request.method == "POST":
         values = request.form
-        target = "worktime.groups" if request.endpoint == "worktime.groups" else "worktime.management"
+        target = "worktime.groups" if request.endpoint == "worktime.legacy_groups" else "worktime.management"
         return redirect(url_for(target, year=values.get("year"), month=values.get("month"), place_id=values.get("place_id"), user_id=values.get("user_id")))
     return default_exceptions[error.status](description=str(error)).get_response()
 
@@ -400,24 +400,123 @@ def edit_entry(entry_id):
     return _success(_("The entry has been saved. Review the updated scheduling warnings."), place_id=place.id, year=year, month=month, revision=schedule.revision, user_id=entry.user_id)
 
 
-@worktime.route("/worktime/groups", methods=["GET", "POST"])
+@worktime.get("/groups")
 @manager_required
 def groups():
-    values = request.form if request.method == "POST" else request.args
-    year, month = _period(values)
     places = PlaceOfWork.query.order_by(PlaceOfWork.id).all()
-    selected_id = _integer(values.get("place_id"), _("workplace"), optional=True)
-    selected_place = _place(values.get("place_id"), lock=True) if request.method == "POST" else (_place(selected_id) if selected_id else (places[0] if places else None))
+    selected_id = _integer(request.args.get("place_id"), _("workplace"), optional=True)
+    selected_place = _place(selected_id) if selected_id else (places[0] if places else None)
+    site_id = selected_place.id if selected_place else None
+    site_groups = WorkGroup.query.filter_by(place_of_work_id=site_id).order_by(WorkGroup.name, WorkGroup.id).all() if site_id else []
+    assignments = WorkAssignment.query.filter(WorkAssignment.group_id.in_([group.id for group in site_groups])).order_by(WorkAssignment.start_date, WorkAssignment.id).all() if site_groups else []
+    assignments_by_group = {group.id: [] for group in site_groups}
+    for assignment in assignments:
+        assignments_by_group[assignment.group_id].append(assignment)
+    return render_template("worktime_groups.html", places=places, selected_place=selected_place,
+                           selected_place_id=site_id or "", groups=site_groups,
+                           assignments_by_group=assignments_by_group, current_day=local_today(),
+                           can_manage_worktime=True, user_display_name=user_display_name)
+
+
+@worktime.route("/groups/new", methods=["GET", "POST"])
+@manager_required
+def group_new():
+    return _group_editor()
+
+
+@worktime.route("/groups/<int:group_id>/edit", methods=["GET", "POST"])
+@manager_required
+def group_edit(group_id):
+    group = db.session.get(WorkGroup, group_id)
+    if group is None:
+        abort(404)
+    return _group_editor(group)
+
+
+def _group_editor(group=None):
+    values = request.form if request.method == "POST" else request.args
+    if group is not None:
+        selected_place = _place(group.place_of_work_id, lock=request.method == "POST")
+        supplied_place = _integer(values.get("place_id"), _("workplace"), optional=True)
+        if supplied_place is not None and supplied_place != selected_place.id:
+            abort(404)
+    else:
+        selected_place = _place(values.get("place_id"), lock=request.method == "POST")
+    status = 200
+    if request.method == "POST":
+        try:
+            _check_csrf()
+            if not compare_digest(request.form.get("settings_revision", ""), settings_revision(selected_place.id, lock=True)):
+                raise WorktimeError(_("Group settings changed in another window. Reload the page and try again."), 409)
+            action = request.form.get("action")
+            if action == "group":
+                group = _save_group(selected_place, group.id if group else None)
+            elif group is not None and action == "assignment":
+                _save_assignment(selected_place, group_id=group.id, restrict_group=True)
+            elif group is not None and action == "delete_assignment":
+                assignment = db.session.get(WorkAssignment, _integer(request.form.get("assignment_id"), _("assignment")))
+                if assignment is None or assignment.group_id != group.id:
+                    abort(404)
+                db.session.delete(assignment)
+            else:
+                raise WorktimeError(_("Choose a valid action."))
+            db.session.commit()
+        except (WorktimeError, IntegrityError) as error:
+            db.session.rollback()
+            if isinstance(error, IntegrityError):
+                error = WorktimeError(_("This group name already exists at the workplace."), 409)
+            if _wants_json():
+                return jsonify(error=str(error)), error.status
+            flash(str(error), "error")
+            status = error.status
+            # A failed INSERT must render the create form, not an unpersisted group.
+            if request.endpoint == "worktime.group_new":
+                group = None
+        else:
+            return _success(_("Group settings saved. Regenerate affected registers."),
+                            target="worktime.group_edit", group_id=group.id,
+                            _anchor="group-assignments" if action != "group" or request.endpoint == "worktime.group_new" else None)
+    assignments = WorkAssignment.query.filter_by(group_id=group.id).order_by(WorkAssignment.start_date, WorkAssignment.id).all() if group else []
+    contracts = Contract.query.filter_by(place_of_work_id=selected_place.id).order_by(Contract.start_date.desc(), Contract.id).all()
+    today = local_today()
+    monday = today - timedelta(days=today.weekday())
+    phase_weeks = {phase: monday + timedelta(days=7 * (((monday - date(1970, 1, 5)).days // 7 + phase) % 2)) for phase in (0, 1)}
+    group_values = {"name": group.name if group else "", "start_date": str(group.start_date) if group else today.isoformat(), "end_date": str(group.end_date) if group and group.end_date else ""}
+    assignment_values = {"contract_id": "", "start_date": max(today, group.start_date).isoformat() if group else today.isoformat(), "end_date": "", "shift_phase": ""}
+    editing_assignment_id = ""
+    if request.method == "POST" and status != 200:
+        if request.form.get("action") == "group":
+            group_values = {key: request.form.get(key, "") for key in group_values}
+        elif request.form.get("action") == "assignment":
+            assignment_values = {key: request.form.get(key, "") for key in assignment_values}
+            editing_assignment_id = request.form.get("assignment_id", "")
+    return render_template("worktime_group_form.html", group=group, group_values=group_values,
+                           assignments=assignments, contracts=contracts, selected_place=selected_place,
+                           selected_place_id=selected_place.id, csrf_token=_csrf_token(),
+                           settings_revision=settings_revision(selected_place.id), shift_phase_weeks=phase_weeks,
+                           assignment_values=assignment_values, editing_assignment_id=editing_assignment_id,
+                           current_day=today, can_manage_worktime=True, user_display_name=user_display_name), status
+
+
+@worktime.route("/worktime/groups", methods=["GET", "POST"])
+@manager_required
+def legacy_groups():
+    # Keep existing bookmarks and already-open legacy forms usable.
+    if request.method == "GET":
+        return redirect(url_for("worktime.groups", place_id=request.args.get("place_id")))
+    values = request.form
+    year, month = _period(values)
+    selected_place = _place(values.get("place_id"), lock=True)
     if request.method == "POST":
         _check_csrf()
         if selected_place is None:
             raise WorktimeError(_("Create a workplace before adding groups."))
         submitted_revision = request.form.get("settings_revision", "")
-        if not compare_digest(submitted_revision, settings_revision(selected_place.id)):
+        if not compare_digest(submitted_revision, settings_revision(selected_place.id, lock=True)):
             raise WorktimeError(_("Group settings changed in another window. Reload the page and try again."), 409)
         action = request.form.get("action")
         if action == "group":
-            _save_group(selected_place)
+            _save_group(selected_place, request.form.get("group_id"))
         elif action == "assignment":
             _save_assignment(selected_place)
         elif action == "delete_assignment":
@@ -433,15 +532,6 @@ def groups():
             db.session.rollback()
             raise WorktimeError(_("This group name already exists at the workplace."), 409) from None
         return _success(_("Group settings saved. Regenerate affected registers."), target="worktime.groups", place_id=selected_place.id, year=year, month=month)
-    site_id = selected_place.id if selected_place else None
-    site_groups = WorkGroup.query.filter_by(place_of_work_id=site_id).order_by(WorkGroup.name).all() if site_id else []
-    assignments = WorkAssignment.query.filter(WorkAssignment.group_id.in_([group.id for group in site_groups])).order_by(WorkAssignment.start_date, WorkAssignment.id).all() if site_groups else []
-    contracts = Contract.query.filter_by(place_of_work_id=site_id).order_by(Contract.start_date.desc(), Contract.id).all() if site_id else []
-    monday = date(year, month, 1)
-    monday -= timedelta(days=monday.weekday())
-    phase_weeks = {phase: monday + timedelta(days=7 * (((monday - date(1970, 1, 5)).days // 7 + phase) % 2)) for phase in (0, 1)}
-    return render_template("worktime_groups.html", settings_revision=settings_revision(site_id) if site_id else "", shift_phase_weeks=phase_weeks, places=places, selected_place=selected_place, selected_place_id=site_id or "", groups=site_groups, assignments=assignments, contracts=contracts, csrf_token=_csrf_token(), selected_year=year, selected_month=month, can_manage_worktime=True, user_display_name=user_display_name)
-
 
 def _date_range():
     start = _parse_date(request.form.get("start_date"))
@@ -451,8 +541,8 @@ def _date_range():
     return start, end
 
 
-def _save_group(place):
-    group_id = _integer(request.form.get("group_id"), _("group"), optional=True)
+def _save_group(place, group_id=None):
+    group_id = _integer(group_id, _("group"), optional=True)
     group = db.session.get(WorkGroup, group_id) if group_id else None
     if group_id and (group is None or group.place_of_work_id != place.id):
         abort(404)
@@ -471,23 +561,24 @@ def _save_group(place):
         group = WorkGroup(place_of_work_id=place.id)
         db.session.add(group)
     group.name, group.start_date, group.end_date = name, start, end
+    return group
 
 
-def _save_assignment(place):
+def _save_assignment(place, *, group_id=None, restrict_group=False):
     contract = db.session.get(Contract, _integer(request.form.get("contract_id"), _("contract")))
-    group = db.session.get(WorkGroup, _integer(request.form.get("group_id"), _("group")))
+    group = db.session.get(WorkGroup, _integer(group_id if group_id is not None else request.form.get("group_id"), _("group")))
     if contract is None or group is None or contract.place_of_work_id != place.id or group.place_of_work_id != place.id:
         raise WorktimeError(_("Choose a contract and group at the same workplace."))
     start, end = _date_range()
     for owner in (contract, group):
         if start < owner.start_date or (owner.end_date is not None and (end is None or end > owner.end_date)):
             raise WorktimeError(_("The assignment must stay inside the contract and group dates."))
-    phase = request.form.get("shift_phase")
-    if phase not in {"0", "1"}:
+    phase = request.form.get("shift_phase", "")
+    if phase not in {"", "0", "1"}:
         raise WorktimeError(_("Choose the weekly shift pattern."))
     assignment_id = _integer(request.form.get("assignment_id"), _("assignment"), optional=True)
     assignment = db.session.get(WorkAssignment, assignment_id) if assignment_id else None
-    if assignment_id and (assignment is None or assignment.group.place_of_work_id != place.id):
+    if assignment_id and (assignment is None or assignment.group.place_of_work_id != place.id or (restrict_group and assignment.group_id != group.id)):
         abort(404)
     others = WorkAssignment.query.filter_by(contract_id=contract.id).all()
     if any(row.id != assignment_id and intersects(start, end, row.start_date, row.end_date) for row in others):
@@ -496,7 +587,10 @@ def _save_assignment(place):
         assignment = WorkAssignment()
         db.session.add(assignment)
     assignment.contract_id, assignment.group_id = contract.id, group.id
-    assignment.start_date, assignment.end_date, assignment.shift_phase = start, end, int(phase)
+    assignment.start_date, assignment.end_date = start, end
+    assignment.flexible_shift = phase == ""
+    assignment.shift_phase = int(phase) if phase else (assignment.shift_phase or 0)
+    return assignment
 
 
 @worktime.post("/worktime/merges")

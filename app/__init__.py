@@ -93,10 +93,15 @@ def create_app() -> Flask:
     app.context_processor(account_template_context)
 
     with app.app_context():
-        from .schema import create_missing_tables, ensure_qualification_date_columns
+        from .schema import (
+            create_missing_tables,
+            ensure_qualification_date_columns,
+            ensure_work_assignment_flexible_shift_column,
+        )
 
         create_missing_tables(db.engine, db.metadata)
         ensure_qualification_date_columns(db.engine)
+        ensure_work_assignment_flexible_shift_column(db.engine)
         from .leave_approval import initialise_leave_approval_settings
 
         initialise_leave_approval_settings()

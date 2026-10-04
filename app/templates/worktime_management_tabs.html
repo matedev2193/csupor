@@ -1,4 +1,4 @@
 <nav class="worktime-tabs" aria-label="{{ _('Working-time management') }}">
   <a class="worktime-tab{% if request.endpoint == 'worktime.management' %} active{% endif %}" href="{{ url_for('worktime.management', place_id=selected_place_id, year=selected_year, month=selected_month, user_id=selected_user_id|default('')) }}"{% if request.endpoint == 'worktime.management' %} aria-current="page"{% endif %}>{{ _('Schedules and records') }}</a>
-  <a class="worktime-tab{% if request.endpoint == 'worktime.groups' %} active{% endif %}" href="{{ url_for('worktime.groups', place_id=selected_place_id, year=selected_year, month=selected_month) }}"{% if request.endpoint == 'worktime.groups' %} aria-current="page"{% endif %}>{{ _('Groups and assignments') }}</a>
+  <a class="worktime-tab{% if request.endpoint == 'worktime.groups' %} active{% endif %}" href="{{ url_for('worktime.groups', place_id=selected_place_id) }}"{% if request.endpoint == 'worktime.groups' %} aria-current="page"{% endif %}>{{ _('Groups') }}</a>
 </nav>

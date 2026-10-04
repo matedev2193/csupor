@@ -431,6 +431,7 @@ CREATE TABLE IF NOT EXISTS work_assignments (
   start_date DATE NOT NULL,
   end_date DATE NULL,
   shift_phase INT NOT NULL DEFAULT 0,
+  flexible_shift BOOLEAN NOT NULL DEFAULT FALSE,
   PRIMARY KEY (id),
   KEY ix_work_assignments_contract_id (contract_id),
   FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE CASCADE,

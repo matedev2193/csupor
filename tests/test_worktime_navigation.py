@@ -129,7 +129,7 @@ class WorktimeNavigationTests(unittest.TestCase):
             self.assertEqual(len(links), 1)
             self.assertTrue({"workspace-menu", "management-menu", "records-menu"}.isdisjoint(links[0]["ancestors"]))
         self.assertNotIn("records-menu", nav.ids)
-        self.assertFalse(nav.matching(self.path("worktime.groups")))
+        self.assertEqual(len(nav.matching(self.path("worktime.groups"))), 1)
         managed = nav.matching(self.path("worktime.management"))
         self.assertEqual(len(managed), 1)
         self.assertIn("management-menu", managed[0]["ancestors"])
@@ -178,20 +178,25 @@ class WorktimeNavigationTests(unittest.TestCase):
                 self.assertEqual(page.status_code, 200)
                 self.assertIn('id="worktime-user"', page.get_data(as_text=True))
 
-    def test_groups_is_internal_to_management_and_keeps_management_navigation_active(self):
-        response = self.client.get(f"/worktime/groups?year=2026&month=10&place_id={self.site.id}")
-        self.assertEqual(response.status_code, 200)
-        html = response.get_data(as_text=True)
-        nav = SidebarLinks(html)
-        self.assertFalse(nav.matching(self.path("worktime.groups")))
-        management = nav.matching(self.path("worktime.management"))
-        self.assertEqual(len(management), 1)
-        self.assertEqual(management[0].get("aria-current"), "page")
-        self.assertIn('href="/worktime/manage?', html)
+    def test_groups_has_its_own_management_item_and_root_level_routes(self):
+        self.assertEqual(self.path("worktime.groups"), "/groups")
+        for path in (f"/groups?place_id={self.site.id}", f"/groups/new?place_id={self.site.id}"):
+            response = self.client.get(path)
+            self.assertEqual(response.status_code, 200)
+            html = response.get_data(as_text=True)
+            nav = SidebarLinks(html)
+            group_links = nav.matching(self.path("worktime.groups"))
+            self.assertEqual(len(group_links), 1)
+            self.assertIn("management-menu", group_links[0]["ancestors"])
+            self.assertEqual(group_links[0].get("aria-current"), "page")
+            self.assertIsNone(nav.matching(self.path("worktime.management"))[0].get("aria-current"))
+            self.assertNotIn('class="worktime-tabs"', html)
+        managed = self.client.get(f"/worktime/manage?place_id={self.site.id}").get_data(as_text=True)
+        self.assertIn('href="/groups?', managed)
         for name in ("employee", "developer"):
             self.login(name)
-            self.assertEqual(self.client.get("/worktime/manage").status_code, 403)
-            self.assertEqual(self.client.get("/worktime/groups").status_code, 403)
+            for path in ("/worktime/manage", "/groups", "/groups/new", "/worktime/groups"):
+                self.assertEqual(self.client.get(path).status_code, 403)
 
 
 if __name__ == "__main__":

@@ -110,11 +110,21 @@ def _assignment(worker, day):
     return assignments[0] if len(assignments) == 1 else None
 
 
+def _effective_group(worker, day, merges):
+    group_id = (_assignment(worker, day) or {}).get("group_id")
+    return merges.get(group_id, group_id)
+
+
 def _preferred(worker, day):
     assignment = _assignment(worker, day) or {}
+    phase = assignment.get("shift_phase", 0)
+    # An explicitly unassigned shift is free to cover either part of the day.
+    # Missing legacy fields still retain their original phase-zero behaviour.
+    if phase is None:
+        return None
     # 1970-01-05 was a Monday. The phase is persistent rather than month-relative.
     week = (_date(day) - date(1970, 1, 5)).days // 7
-    phase = int(assignment.get("shift_phase") or 0) % 2
+    phase = int(phase) % 2
     return "morning" if (week + phase) % 2 == 0 else "afternoon"
 
 
@@ -235,31 +245,62 @@ def _merges(payload, day):
 def _morning_eligible(worker, day, present, merges):
     """Resolve the day's shift before opening duties are considered.
 
-    A group's sole available teacher must cover the morning. All other teachers
-    and nursery assistants retain their configured weekly shift. An afternoon
-    substitute is excluded separately by the opening/cover matching.
+    Flexible teachers may open when another teacher can cover the afternoon.
+    Flexible nursery assistants may open unless reserved as an afternoon
+    substitute by the opening/cover matching. Fixed weekly shifts are retained.
     """
     if _preferred(worker, day) == "morning":
         return True
+    preferred = _preferred(worker, day)
     if worker["role"] != TEACHER:
-        return False
-    gid = (_assignment(worker, day) or {}).get("group_id")
-    if gid is None or gid in merges:
-        return False
+        return preferred is None
+    gid = _effective_group(worker, day, merges)
+    if gid is None:
+        return preferred is None
     colleagues = [person for person in present if person["role"] == TEACHER
                   and _site(person) == _site(worker)
-                  and (_assignment(person, day) or {}).get("group_id") == gid]
-    return len(colleagues) == 1
+                  and _effective_group(person, day, merges) == gid]
+    return len(colleagues) == 1 or (preferred is None and any(
+        person["contract_id"] != worker["contract_id"] and _preferred(person, day) in (None, "afternoon")
+        for person in colleagues
+    ))
 
 
-def _teacher_rows(workers, day, early_id):
+def _teacher_shifts(workers, day, early_id=None):
+    """Fill missing AM/PM roles without assigning a fictitious weekly phase.
+
+    A flexible pair is stable for identical inputs, but either member can open
+    when rotation calls for it. Its partner then takes the afternoon.
+    """
+    if len(workers) == 1:
+        return {workers[0]["contract_id"]: "morning"}
+    shifts = {worker["contract_id"]: _preferred(worker, day) for worker in workers}
+    flexible = sorted((worker for worker in workers if shifts[worker["contract_id"]] is None),
+                      key=lambda worker: (_key(worker["user_id"]), _key(worker["contract_id"])))
+    if early_id in shifts and shifts[early_id] is None:
+        shifts[early_id] = "morning"
+    for worker in flexible:
+        cid = worker["contract_id"]
+        if shifts[cid] is not None:
+            continue
+        if "morning" not in shifts.values():
+            shifts[cid] = "morning"
+        elif "afternoon" not in shifts.values():
+            shifts[cid] = "afternoon"
+        else:
+            shifts[cid] = "morning"
+    return shifts
+
+
+def _teacher_rows(workers, day, early_id, group_id=None):
     """Apply opening time only after fixing the independent daily AM/PM shifts."""
     rows = []
+    shifts = _teacher_shifts(workers, day, early_id)
     for worker in workers:
-        shift = "morning" if len(workers) == 1 else _preferred(worker, day)
+        shift = shifts[worker["contract_id"]]
         if shift == "morning" and worker["contract_id"] == early_id:
             shift = "early_teacher"
-        rows.append(_entry(worker, day, shift))
+        rows.append(_entry(worker, day, shift, group_id=group_id))
     return rows
 
 
@@ -358,30 +399,30 @@ def build_schedule(payload):
             local_groups = {gid: group for gid, group in active_groups.items() if _site(group) == site}
             teachers = [worker for worker in local if worker["role"] == TEACHER]
             nurses = [worker for worker in local if worker["role"] == NURSERY]
-            group_teachers = {gid: [worker for worker in teachers if (_assignment(worker, day) or {}).get("group_id") == gid]
+            # A recorded merge creates one working roster at its destination;
+            # both teacher pairing and cover matching must use that roster.
+            group_teachers = {gid: [worker for worker in teachers if _effective_group(worker, day, mapping) == gid]
                               for gid in local_groups if gid not in mapping}
             needs = [gid for gid, members in group_teachers.items() if len(members) == 1]
             candidates = {gid: sorted([worker for worker in local if worker["role"] == ASSISTANT or (
-                worker["role"] == NURSERY and (_assignment(worker, day) or {}).get("group_id") == gid)],
+                worker["role"] == NURSERY and _effective_group(worker, day, mapping) == gid)],
                 key=lambda worker: (worker["role"] != NURSERY, _key(worker["contract_id"]))) for gid in needs}
             local_last = {role: last.get((site, role)) for role in EARLY_SHIFTS}
             early_teachers = sorted([worker for worker in teachers if _morning_eligible(worker, day, local, mapping)],
                                     key=lambda w: _rotation_key(w, TEACHER, counts, local_last)) or [None]
             early_nurses = sorted([worker for worker in nurses if _morning_eligible(worker, day, local, mapping)],
                                   key=lambda w: _rotation_key(w, NURSERY, counts, local_last)) or [None]
+            if any(_preferred(worker, day) is None for worker in nurses) and early_nurses != [None]:
+                # If every available flexible nurse is needed for closing,
+                # keep that cover and report the missing opener explicitly.
+                early_nurses.append(None)
             best_solution, budget = None, [0]
             for early_teacher in early_teachers:
                 if budget[0] >= SEARCH_LIMIT:
                     break
                 teacher_rows = []
                 for gid, members in group_teachers.items():
-                    teacher_rows.extend(_teacher_rows(members, day, early_teacher["contract_id"] if early_teacher else None))
-                # Staff of a manually merged source join the named destination.
-                for worker in teachers:
-                    gid = (_assignment(worker, day) or {}).get("group_id")
-                    if gid in mapping:
-                        shift = "early_teacher" if worker == early_teacher else _preferred(worker, day)
-                        teacher_rows.append(_entry(worker, day, shift, group_id=mapping[gid]))
+                    teacher_rows.extend(_teacher_rows(members, day, early_teacher["contract_id"] if early_teacher else None, group_id=gid))
                 for early_nurse in early_nurses:
                     if budget[0] >= SEARCH_LIMIT:
                         break
@@ -395,16 +436,24 @@ def build_schedule(payload):
                         for worker in local:
                             if worker["contract_id"] in trial:
                                 continue
-                            shift = "early_nursery" if worker == early_nurse else _preferred(worker, day)
-                            gid = (_assignment(worker, day) or {}).get("group_id")
-                            trial[worker["contract_id"]] = _entry(worker, day, shift, group_id=mapping.get(gid, gid))
+                            shift = "early_nursery" if worker == early_nurse else (_preferred(worker, day) or "morning")
+                            trial[worker["contract_id"]] = _entry(worker, day, shift, group_id=_effective_group(worker, day, mapping))
                         # Local rule violations outrank preferences and rotation.
                         trial_errors = _validate_day(payload, day, list(trial.values()) + list(rows.values()), restrict_site=site,
                                                     include_missing=False)
                         error_count = sum(issue["severity"] == "error" for issue in trial_errors)
+                        # Prefer the group's flexible nurse for an absent
+                        # teacher's afternoon, whenever opening can still be
+                        # covered. A shared assistant remains a fallback.
+                        flexible_cover_misses = sum(
+                            any(candidate["role"] == NURSERY and _preferred(candidate, day) is None
+                                for candidate in candidates[gid])
+                            and not (worker["role"] == NURSERY and _preferred(worker, day) is None)
+                            for gid, worker in matched.items()
+                        )
                         teacher_fair = _rotation_key(early_teacher, TEACHER, counts, local_last)[:2] if early_teacher else (0, 0)
                         nurse_fair = _rotation_key(early_nurse, NURSERY, counts, local_last)[:2] if early_nurse else (0, 0)
-                        score = (error_count, sum((teacher_fair[0], nurse_fair[0])), sum((teacher_fair[1], nurse_fair[1])),
+                        score = (error_count, flexible_cover_misses, sum((teacher_fair[0], nurse_fair[0])), sum((teacher_fair[1], nurse_fair[1])),
                                  _key(early_teacher["contract_id"] if early_teacher else ""), _key(early_nurse["contract_id"] if early_nurse else ""))
                         if best_solution is None or score < best_solution[0]:
                             best_solution = (score, trial, early_teacher, early_nurse)
@@ -422,10 +471,11 @@ def build_schedule(payload):
             else:
                 # Preserve normal hours while explicitly reporting the unresolved opening/closing conflict.
                 for gid, members in group_teachers.items():
-                    result = _teacher_rows(members, day, None)
+                    result = _teacher_rows(members, day, None, group_id=gid)
                     rows.update((row["contract_id"], row) for row in result)
                 for worker in local:
-                    rows.setdefault(worker["contract_id"], _entry(worker, day, _preferred(worker, day)))
+                    rows.setdefault(worker["contract_id"], _entry(worker, day, _preferred(worker, day) or "morning",
+                                                                 group_id=_effective_group(worker, day, mapping)))
                 issues.append(_issue("allocation_conflict", "Early opening and afternoon cover cannot both be allocated; an HR or CEO decision is required.", day=day))
         for row in rows.values():
             worker = next(worker for worker in workers if worker["contract_id"] == row["contract_id"])
@@ -438,7 +488,7 @@ def build_schedule(payload):
                         "params": {"source": groups[source]["name"], "target": groups[target]["name"]}})
             if row["shift"] in ("morning", "afternoon", "early_teacher") and worker["role"] == TEACHER:
                 actual = "morning" if row["shift"] == "early_teacher" else row["shift"]
-                if actual != _preferred(worker, day):
+                if _preferred(worker, day) is not None and actual != _preferred(worker, day):
                     issues.append(_issue("shift_preference_changed", "The daily shift differs from the configured weekly shift.", day=day, contract_id=worker["contract_id"], severity="warning"))
         all_entries.extend(sorted(rows.values(), key=lambda row: _key(row["contract_id"])))
     issues.extend(validate_schedule(payload, all_entries))
@@ -505,7 +555,7 @@ def _validate_day(payload, day, entries, *, restrict_site=None, include_missing=
                 continue
         if worker["role"] == TEACHER:
             actual_shift = "morning" if start <= 480 else "afternoon"
-            if actual_shift != _preferred(worker, day):
+            if _preferred(worker, day) is not None and actual_shift != _preferred(worker, day):
                 issues.append(_issue("shift_preference_changed", "The daily shift differs from the configured weekly shift.", day=day, contract_id=cid, severity="warning"))
         valid_rows.append(row)
     for worker in workers:
@@ -520,7 +570,7 @@ def _validate_day(payload, day, entries, *, restrict_site=None, include_missing=
         gid = group["id"]
         if gid in mapping:
             continue
-        roster = [worker for worker in usable if worker["role"] == TEACHER and (_assignment(worker, day) or {}).get("group_id") == gid]
+        roster = [worker for worker in usable if worker["role"] == TEACHER and _effective_group(worker, day, mapping) == gid]
         present = [worker for worker in roster if not _absent(payload, worker, day)]
         group_rows = [row for row in valid_rows if row.get("group_id") == gid]
         teacher_rows = [row for row in group_rows if worker_map[row["contract_id"]]["role"] == TEACHER]
@@ -533,7 +583,7 @@ def _validate_day(payload, day, entries, *, restrict_site=None, include_missing=
         present_ids = {worker["contract_id"] for worker in present}
         own_teacher_rows = [row for row in teacher_rows if row["contract_id"] in present_ids]
         if len(present) >= 2:
-            configured_shifts = {_preferred(worker, day) for worker in present}
+            configured_shifts = set(_teacher_shifts(present, day).values())
             actual_shifts = {"morning" if row["start_minute"] <= 480 else "afternoon" for row in own_teacher_rows}
             if not {"morning", "afternoon"}.issubset(configured_shifts) or not {"morning", "afternoon"}.issubset(actual_shifts):
                 issues.append(_issue("teacher_shift_conflict", "The group’s available teachers must include both a morning and an afternoon shift.", day=day, group_id=gid))

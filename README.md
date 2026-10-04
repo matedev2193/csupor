@@ -65,7 +65,7 @@ mysql -u root -p < sql/schema.sql
    python run.py
    ```
 
-Missing tables are created automatically on startup. On MySQL/MariaDB, new integer foreign keys inherit the actual referenced column type, supporting both SQL-script installations with unsigned user IDs and older ORM-created installations with signed IDs. Existing tables and data are not altered; column changes still require the applicable scripts in `sql/migrations/`.
+Missing tables are created automatically on startup. On MySQL/MariaDB, new integer foreign keys inherit the actual referenced column type, supporting both SQL-script installations with unsigned user IDs and older ORM-created installations with signed IDs. Startup also adds missing qualification-date columns and the optional flexible-shift flag, preserving existing values. Other column changes require the applicable scripts in `sql/migrations/`. The flexible-shift update is also available as an explicit, repeatable SQL migration.
 
 ## Interface
 
@@ -171,12 +171,21 @@ The checks cover generated MySQL DDL for signed/unsigned identifiers, fresh and 
 
 ## Working-time register
 
-The top-level **Working-time register** menu shows the signed-in employee's own schedule and monthly exports. Any employee with a contract can access it, including previous contracts for historical records. HR and directors use **Management → Working-time management** to select employees, generate and verify schedules, correct daily entries, record group mergers and manage groups and dated assignments. The personal page remains personal even for HR and directors.
+The top-level **Working-time register** menu shows the signed-in employee's own schedule and monthly exports. Any employee with a contract can access it, including previous contracts for historical records. HR and directors use **Management → Working-time management** to select employees, generate and verify schedules, correct daily entries, record group mergers and follow a link to group management. **Management → Groups** opens the independent `/groups` list, with workplace selection, assigned staff and separate create/edit pages. The group editor manages both group details and dated employee assignments. The personal page remains personal even for HR and directors.
 
-The scheduler uses the configured Hungarian working calendar and approved absences, accounts for unpaid breaks and trainee teaching hours, alternates weekly shifts, and distributes early opening duties as evenly as possible among that day's eligible morning-shift staff. Opening duty cannot move an afternoon worker onto the morning shift. Conflicting requirements produce actionable issues instead of excessive hours or scheduling absent staff.
+The scheduler uses the configured Hungarian working calendar and approved absences, accounts for unpaid breaks and trainee teaching hours, alternates assigned weekly shifts, fills morning/afternoon coverage for employees with **No assigned shift**, and distributes early opening duties as evenly as possible among that day's eligible morning-shift staff. Opening duty cannot move an afternoon worker onto the morning shift. Conflicting requirements produce actionable issues instead of excessive hours or scheduling absent staff.
 
 Generated hours are a draft until HR/director verification. Changed source data or stale browser revisions cannot silently produce a confirmed/exported outdated register. For teachers, totals represent scheduled **bound working time**, with teaching hours tracked separately; the remainder of a 40-hour contract is not automatically treated as worked. Partial weeks are explicitly totalled within the selected month.
 
 The PDF is a single portrait A4 page. Job title, workplace and group are header information, leaving room for daily times, weekly totals and signatures. Long notes use explicit abbreviations with a legend; the CSV preserves the full text, dated assignments and individual intervals.
 
 Five additional tables are created automatically at startup, with existing MySQL foreign-key type compatibility preserved. Install the updated requirements for ReportLab PDF support. Bundled DejaVu fonts support Hungarian names without system-font dependencies. See [the allocation algorithm and operating workflow](docs/working-time.md) for the detailed institutional rules and conflict handling.
+
+
+### Optional group shifts and schema update
+
+`/groups/new?place_id=…` creates a group; `/groups/<id>/edit` edits the group and its employee assignments. The former `/worktime/groups` address redirects to the standalone list. HR/director permissions remain required. An empty shift selection means **No assigned shift**: flexible teachers complement their partners, and a flexible nursery assistant can cover an absent teacher’s afternoon without also opening that day. A fixed 0/1 weekly rotation keeps its previous meaning.
+
+The `work_assignments.flexible_shift` Boolean column has a false default, so existing assignments retain their stored rotation. Application startup adds the column if missing; this needs `ALTER` permission. Administrators can instead run [`2026-10-04-add-flexible-work-assignment-shifts.sql`](sql/migrations/2026-10-04-add-flexible-work-assignment-shifts.sql) beforehand. The script and startup update can both be repeated without resetting assignments. No tables or existing fields are dropped.
+
+Scheduling rule version 3 marks previously generated registers as needing regeneration before confirmation/export. Existing saved entries remain until an explicit regeneration; the usual manual-entry replacement safeguard still applies. Tests use temporary SQLite databases and MySQL dialect/reflection fixtures, without connecting to production MySQL.

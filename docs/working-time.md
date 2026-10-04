@@ -24,7 +24,7 @@ Példa heti 30 órás, azaz napi 6 órás részmunkaidős szerződésre: az ará
 ## Beosztási eljárás
 
 1. A hónap határán átnyúló hetekkel együtt felépül a munkanaptár. Minden nap a szerződés és a csoporthozzárendelés aznap érvényes állapota számít. Átfedő szerződések vagy hiányzó hozzárendelések nem eredményezhetnek ugyanannak a személynek kettős beosztást.
-2. A csoportok pedagógusainak alapműszakját a rögzített váltási sorrend és a referenciahétfőtől eltelt hetek határozzák meg. Ez december–január között is tényleges heti váltást ad.
+2. A csoportok pedagógusainak alapműszakját a rögzített váltási sorrend és a referenciahétfőtől eltelt hetek határozzák meg. Ez december–január között is tényleges heti váltást ad. Hozzárendelt műszak nélkül az aznapi ellátási igény dönti el a délelőtti vagy délutáni beosztást.
 3. A távolléteket a motor először kiveszi a beosztható állományból. Egy hiányzó pedagógus mellett a jelenlévő délelőttös, a délutáni pótlásra a saját csoport dajkája vagy helyi pedagógiai asszisztens választható. Egy helyettes egyidejűleg csak egy csoportot fedhet le.
 4. A motor a napi műszakok rögzítése után, kizárólag az aznapi délelőttösök közül választja ki a 6 órás dajkanyitót és a 7 órás pedagógusnyitót. A nyitás kedvéért nem változtat délutános műszakot délelőttösre. A távollévő társa miatt kötelezően délelőttre kerülő pedagógus nyithat; a délutáni helyettesítésre beosztott dajka nem. A teljesíthető kiosztások között a korábbi nyitások száma alapján törekszik az egyenletes elosztásra.
 5. A többi délelőttös 8 órakor kezd, a délutános 17:30-kor végez. Alaphelyzetben minden beosztható napra azonos munkaidő jut. A motor ezután a tényleges, szünet nélküli időszakokkal ellenőrzi a 8–12 közötti pedagógusellátást és a pedagóguspár legalább kétórás átfedését.
@@ -37,7 +37,11 @@ Egyetlen jelenlévő, alkalmas nyitó esetén a másnapi váltás nem teljesíth
 
 ## HR/CEO munkafolyamat
 
-A Kezelés → Munkaidő-kezelés oldal Csoportok és beosztások lapján először létre kell hozni a telephely csoportjait, és dátumozottan hozzájuk kell rendelni a pedagógusokat, dajkákat. A pedagóguspár két tagja ellentétes alapműszakot kapjon. A dajkák váltási sorrendjét is úgy kell megadni, hogy mindkét héten legyen délelőttös nyitó. Az asszisztens telephelyi helyettesként csoporthozzárendelés nélkül is használható.
+A **Kezelés → Csoportok** önálló menüpont a `/groups` oldalra vezet. Felül a munkavégzési hely választható ki, alatta táblázat sorolja fel a csoportokat és a hozzájuk rendelt munkavállalókat, a hozzárendelések dátumaival. A táblázat blokkja tartalmazza a **Csoport hozzáadása** gombot; minden sorban **Szerkesztés** gomb található. A létrehozás a `/groups/new`, a szerkesztés a `/groups/<id>/edit` aloldalon történik. A Munkaidő-kezelés oldalról továbbra is elérhető a csoportlista. A régi `/worktime/groups` cím átirányít az új oldalra.
+
+A szerkesztőoldalon a csoport neve és érvényességi időszaka, valamint a munkavállalók dátumozott hozzárendelése kezelhető. Az érvényességi időszakok megtartják a korábbi beosztások adatait; a szerződésen vagy a csoport működési idején kívüli, illetve átfedő hozzárendelést a program elutasítja. Hibás mentéskor az űrlap kitöltött értékei megmaradnak.
+
+A műszakhoz a két heti váltási sorrend mellett **Nincs hozzárendelt műszak** választható, ez az új hozzárendelés alapértelmezése. Ilyenkor a dolgozó igény szerint délelőttös vagy délutános lehet. A rögzített műszakú pedagógus mellé a műszak nélküli társa az ellenkező műszakot kapja; két műszak nélküli pedagógus esetén a program biztosítja a délelőtti és délutáni beosztást. Egy hiányzó pedagógus mellett a csoport műszak nélküli dajkája délutánra kerül, ha az ellátási feltételek így teljesíthetők. A délutáni helyettes aznap nem nyithat is; ha emiatt nincs alkalmas nyitó, a rendszer külön hibát jelez. Az asszisztens telephelyi helyettesként csoporthozzárendelés nélkül is használható.
 
 A HR/CEO a Munkaidő-kezelés menüben kiválasztja a telephelyet és a hónapot, majd a Munkavállaló beosztása mezőben megadhatja, kinek a nyilvántartását szeretné látni. A lista a kiválasztott helyszínen az adott hónapban szerződéssel rendelkező dolgozókat tartalmazza. A HR/CEO elkészíti a tervezetet, feloldja a hiányjelzéseket, és szükség esetén javítja a napi adatokat. A csoportösszevonás manuális döntés. A véglegesítés külön ellenőrző művelet, és hibás vagy elavult adatokkal nem engedélyezett. A kézi adatok felülírását az újragenerálásnál külön jelezni kell.
 
@@ -55,6 +59,11 @@ A hónaphatáron átnyúló hétnél a havi nyilvántartás csak az adott hónap
 
 ## Üzemeltetés
 
-Az öt új tábla (`work_groups`, `work_assignments`, `work_group_merges`, `work_schedules`, `work_time_entries`) induláskor létrejön. Meglévő táblákhoz nem adunk új kötelező mezőt; a már létező MySQL azonosítók méretéhez és előjelességéhez az új idegen kulcsok alkalmazkodnak. A PDF-export a rögzített ReportLab-verziót és a csomagolt, magyar karaktereket támogató betűkészletet használja.
+Az öt új tábla (`work_groups`, `work_assignments`, `work_group_merges`, `work_schedules`, `work_time_entries`) induláskor létrejön. A már létező MySQL azonosítók méretéhez és előjelességéhez az új idegen kulcsok alkalmazkodnak. A PDF-export a rögzített ReportLab-verziót és a csomagolt, magyar karaktereket támogató betűkészletet használja.
 
 A munkavállaló a Munkaidő-kezelés oldal alján, a Munkaidő-beosztás doboz tetején választható ki. A választás megtartja az évet, a hónapot és a munkavégzési helyet; a felső időszakszűrő a kiválasztott dolgozót is megőrzi, amennyiben az új időszakban és helyszínen rendelkezik szerződéssel. A táblázatokban, valamint a PDF- és CSV-exportban az óraszám megnevezése **Kötött idő**.
+
+
+A műszak nélküli hozzárendeléshez a `work_assignments.flexible_shift` logikai mező került be. Alapértéke hamis, ezért a meglévő 0/1 műszakok megmaradnak. Az alkalmazás induláskor hozzáadja a hiányzó oszlopot; ehhez `ALTER` jogosultság szükséges. Ugyanez külön, megismételhető SQL-migrációként is elérhető: `sql/migrations/2026-10-04-add-flexible-work-assignment-shifts.sql`. A migráció nem töröl táblát, oszlopot vagy hozzárendelést, és ismételt futtatáskor nem állítja vissza a mentett beállításokat.
+
+A beosztási szabályverzió 3-ra változott. A korábban generált havi nyilvántartásokat az új szabályok szerinti igazolás/export előtt újra kell generálni. A mentett bejegyzéseket az indulás nem írja át; a kézi bejegyzések felülírásához továbbra is külön választás szükséges.
