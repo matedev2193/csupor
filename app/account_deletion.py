@@ -2,6 +2,7 @@
 
 from . import db
 from .models import Contract, GyapForm, LeaveApprovalSettings, LeaveRequest, LeaveYear
+from .worktime_models import WorkGroupMerge, WorkSchedule, WorkTimeEntry
 
 
 class AccountDeletionConflict(Exception):
@@ -13,6 +14,10 @@ def delete_user_account(user):
     owned_contracts = db.select(Contract.id).where(Contract.user_id == user.id)
     if LeaveRequest.query.filter(
         LeaveRequest.contract_id.in_(owned_contracts), LeaveRequest.user_id != user.id,
+    ).first() is not None:
+        raise AccountDeletionConflict()
+    if WorkTimeEntry.query.filter(
+        WorkTimeEntry.contract_id.in_(owned_contracts), WorkTimeEntry.user_id != user.id,
     ).first() is not None:
         raise AccountDeletionConflict()
 
@@ -28,6 +33,9 @@ def delete_user_account(user):
         (LeaveYear, LeaveYear.imported_by_id),
         (LeaveApprovalSettings, LeaveApprovalSettings.updated_by_id),
         (GyapForm, GyapForm.uploaded_by_id),
+        (WorkGroupMerge, WorkGroupMerge.created_by_id),
+        (WorkSchedule, WorkSchedule.generated_by_id),
+        (WorkSchedule, WorkSchedule.confirmed_by_id),
     ):
         model.query.filter(column == user.id).update({column: None}, synchronize_session="fetch")
 
