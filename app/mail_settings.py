@@ -3,7 +3,6 @@
 import base64
 import hashlib
 import ipaddress
-import os
 import re
 import smtplib
 import ssl
@@ -25,6 +24,7 @@ from sqlalchemy.orm.exc import StaleDataError
 
 from . import db
 from .mail_settings_models import MailServerSettings
+from .mail_key import MailKeyError, get_mail_secret, initialise_mail_secret, key_status
 from .models import UserPrivilege
 
 
@@ -56,12 +56,39 @@ def is_mail_enabled():
 
 
 def _cipher():
-    secret = current_app.config.get("EMAIL_SECRET_KEY") or os.getenv("EMAIL_SECRET_KEY") or current_app.config.get("SECRET_KEY")
-    if not secret or str(secret) in {"dev-secret-key-change-me", "change-me", "changeme", "secret"}:
-        raise MailDeliveryError("configuration")
+    try:
+        secret = get_mail_secret()
+    except MailKeyError:
+        raise MailDeliveryError("configuration") from None
     if isinstance(secret, str):
         secret = secret.encode("utf-8")
     return Fernet(base64.urlsafe_b64encode(hashlib.sha256(secret).digest()))
+
+
+def _check_settings_csrf():
+    token = session.get("mail_settings_csrf_token", "")
+    if not token or not compare_digest(token.encode(), request.form.get("csrf_token", "").encode()):
+        abort(400)
+
+
+@mail_settings.post("/settings/email-key")
+@login_required
+def initialise_key():
+    if current_user.privilege != UserPrivilege.developer:
+        abort(403)
+    _check_settings_csrf()
+    # A missing key must not silently replace the key of existing credentials.
+    if get_mail_settings().encrypted_password and key_status() != "ready":
+        flash(_("A server password is already saved. Restore its encryption key, or disable emails and remove the saved password before creating a new key."), "error")
+        return redirect(url_for("mail_settings.settings"))
+    try:
+        created = initialise_mail_secret()
+    except MailKeyError:
+        flash(_("The server could not securely save the encryption key. Ask your hosting provider to make the application's private instance folder writable."), "error")
+    else:
+        flash(_("Encryption key created. You can now save the email server details; no restart is needed.")
+              if created else _("Email encryption is already set up. The existing key was kept."), "success")
+    return redirect(url_for("mail_settings.settings"))
 
 
 def _has_control(value):
@@ -157,9 +184,7 @@ def settings():
         "enabled", "host", "port", "security", "username", "sender_email", "sender_name", "base_url",
     )}
     if request.method == "POST":
-        token = session.get("mail_settings_csrf_token", "")
-        if not token or not compare_digest(token.encode(), request.form.get("csrf_token", "").encode()):
-            abort(400)
+        _check_settings_csrf()
         if not compare_digest(saved.revision.encode(), request.form.get("revision", "").encode()):
             flash(_("Email settings were changed in another session. Review the current settings and try again."), "error")
             return redirect(url_for("mail_settings.settings"))
@@ -177,8 +202,15 @@ def settings():
                         cipher.decrypt(encrypted_password.encode("ascii"))
                 if request.form.get("clear_password") == "1":
                     encrypted_password = ""
-            except (MailDeliveryError, InvalidToken, ValueError, UnicodeError):
-                error = _("Set a stable server encryption key before saving a password or enabling email. If the key changed, enter the password again.")
+            except MailDeliveryError:
+                if key_status() == "missing":
+                    error = (_("A server password is already saved. Restore its encryption key, or disable emails and remove the saved password before creating a new key.")
+                             if encrypted_password else
+                             _("First use the Create encryption key button on this page, then save the email settings."))
+                else:
+                    error = _("The server encryption key is unavailable. Restore the existing key or check access to the private instance folder.")
+            except (InvalidToken, ValueError, UnicodeError):
+                error = _("The saved server password cannot be opened with the current encryption key. Please enter the password again.")
         if error:
             flash(error, "error")
             status = 400
@@ -205,6 +237,7 @@ def settings():
     response = current_app.make_response((render_template(
         "mail_settings.html", values=values, revision=saved.revision,
         password_saved=bool(saved.encrypted_password), csrf_token=session["mail_settings_csrf_token"],
+        encryption_status=key_status(),
     ), status))
     response.headers["Cache-Control"] = "no-store"
     return response

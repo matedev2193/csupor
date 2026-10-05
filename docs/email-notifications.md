@@ -3,12 +3,22 @@
 ## Configure delivery
 
 1. Install `requirements.txt`, including `cryptography`.
-2. Set a strong, stable `SECRET_KEY`. Optionally set a separate `EMAIL_SECRET_KEY` for SMTP password encryption. Back up this key securely with the database; changing it requires re-entering the SMTP password. The example/default secret cannot enable email or save a password.
-3. Sign in with a **developer** account and open **Settings** (`/settings`). Other privileges cannot read or change this page.
+2. Sign in with a **developer** account and open **Settings** (`/settings`). Other privileges cannot read or change this page.
+3. If prompted, click **Create encryption key**. The application generates and privately stores a random key on the server. No terminal command, manual environment edit or application restart is needed. If a valid key is already configured, the page shows that encryption is ready and keeps that key unchanged.
 4. Enter the SMTP hostname, port, security mode, optional username/password, sender address/name and the application's canonical public URL. STARTTLS and SSL/TLS verify server certificates. The unencrypted option supports a trusted local mail relay.
 5. Enable notifications and save. Leaving the password empty preserves the stored password; use the explicit removal option to clear it.
 
 The settings form is CSRF-protected, checks concurrent edits, and never returns the stored password or encrypted value. Sending uses one recipient per message, with no CC/BCC. The destination is the current `User.email`, not an address copied into a request or an event. SMTP credentials are only decrypted for delivery. Raw SMTP errors, credentials and message bodies are not logged.
+
+### Key storage and existing installations
+
+Browser setup writes `instance/email-secret.key`, outside Flask's public static directory and excluded from Git. The key is random, persistent and readable only by the application account on POSIX systems. Creation is atomic across workers; repeated clicks retain the existing key. The key is never returned in the page, session, database or logs. This change adds no database table or column and requires no migration.
+
+Key selection uses a valid explicit `EMAIL_SECRET_KEY` first, then the private key file, then an existing non-default `SECRET_KEY` for compatibility. Example/default values are never used for SMTP encryption. Browser setup does not rotate an existing usable key or change the application's session secret. Keep the usual strong `SECRET_KEY` configuration for Flask sessions.
+
+Preserve the private key file with the application's persistent data when updating or moving the installation, and back it up securely alongside the database. Web and separate notification workers must share the same key file or the same explicit `EMAIL_SECRET_KEY`. If releases use different directories or separate hosts, use shared persistent storage for the private instance folder or a shared environment key.
+
+If the private instance folder is not writable, the page shows an actionable storage error and changes no SMTP settings; the hosting provider must grant the application access to that private folder. Unreadable, damaged or symbolic-link key files are not replaced automatically. When credentials already exist but the key is missing, restore that key, or explicitly disable email and remove the saved password before generating a replacement and re-entering the password. A changed but usable configured key instead prompts you to enter the SMTP password again.
 
 ## Recipients and timing
 

@@ -4,6 +4,25 @@
 <section class="section-heading">
   <div><span class="eyebrow">{{ _('Developer') }}</span><h1>{{ _('Settings') }}</h1><p>{{ _('Configure the email server used for leave notifications.') }}</p></div>
 </section>
+<section class="form-shell" aria-labelledby="mail-encryption-heading">
+  <div class="section-heading"><div><h2 id="mail-encryption-heading">{{ _('Email password protection') }}</h2>
+    {% if encryption_status == 'ready' %}
+    <p>{{ _('Encryption is ready. You can save the email server details below.') }}</p>
+    {% elif encryption_status == 'missing' and not password_saved %}
+    <p>{{ _('Create the encryption key here before saving your server password. The application stores it privately on the server; no terminal or restart is needed.') }}</p>
+    {% elif password_saved %}
+    <p>{{ _('A server password is already saved. Restore its encryption key, or disable emails and remove the saved password before creating a new key.') }}</p>
+    {% else %}
+    <p>{{ _('The server encryption key is unavailable. Restore the existing key or check access to the private instance folder.') }}</p>
+    {% endif %}
+  </div></div>
+  {% if encryption_status == 'missing' and not password_saved %}
+  <form method="post" action="{{ url_for('mail_settings.initialise_key') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit" id="create-mail-key">{{ _('Create encryption key') }}</button>
+  </form>
+  {% endif %}
+</section>
 <form method="post" class="layout-stack" autocomplete="off">
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
   <input type="hidden" name="revision" value="{{ revision }}">
