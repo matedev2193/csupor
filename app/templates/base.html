@@ -1,9 +1,11 @@
 {% from '_icons.html' import icon %}
 {% macro nav_item(endpoint, label, symbol, related=[]) -%}
+  {% if can_access_endpoint(endpoint) %}
   {% set active = request.endpoint == endpoint or request.endpoint in related %}
   <a class="nav-link{% if active %} active{% endif %}" href="{{ url_for(endpoint) }}"{% if active %} aria-current="page"{% endif %}>
     {{ icon(symbol) }}<span>{{ label }}</span>{% if active %}<span class="nav-dot" aria-hidden="true"></span>{% endif %}
   </a>
+  {% endif %}
 {%- endmacro %}
 <!doctype html>
 <html lang="{{ current_locale }}">
@@ -28,7 +30,7 @@
     {% if current_user.is_authenticated %}
     <aside class="sidebar" id="main-navigation" aria-label="{{ _('Main navigation') }}">
       <div class="sidebar-brand-row">
-        <a class="brand" href="{{ url_for('dashboard') }}" aria-label="{{ _('CSUPOR Portal') }}">
+        <a class="brand" href="{{ landing_url() }}" aria-label="{{ _('CSUPOR Portal') }}">
           <img class="brand-logo" src="{{ url_for('static', filename='images/csupor-logo.webp') }}" alt="CSUPOR" width="125" height="128">
           <span class="brand-copy"><small>{{ _('Childcare Staff Unified Presence & Out-of-office Registry') }}</small></span>
         </a>
@@ -36,6 +38,7 @@
       </div>
       <nav class="sidebar-nav" aria-label="{{ _('Main navigation') }}">
         {% set workspace_active = request.endpoint in workspace_pages %}
+        {% if has_access_to_any(['dashboard', 'edit_profile', 'manage_dependents', 'add_qualification', 'professional_exam']) %}
         <details class="nav-group{% if workspace_active %} has-current{% endif %}"{% if workspace_active %} open{% endif %}>
           <summary class="nav-group-trigger" id="workspace-trigger" aria-controls="workspace-menu">
             {{ icon('home', 'nav-group-icon') }}<span>{{ _('My workspace') }}</span>{{ icon('chevron', 'nav-group-chevron') }}
@@ -48,49 +51,46 @@
             {{ nav_item('professional_exam', _('Professional exam'), 'award') }}
           </div>
         </details>
+        {% endif %}
         {{ nav_item('leaves', _('Leave calendar'), 'calendar') }}
-        {% if can_view_own_worktime %}{{ nav_item('worktime.index', _('Working-time register'), 'calendar') }}{% endif %}
-        {% if current_user.privilege.value in ['hr', 'ceo', 'developer'] or can_manage_leaves_global %}
+        {{ nav_item('worktime.index', _('Working-time register'), 'calendar') }}
+        {% if has_access_to_any(['manage_user_profiles', 'manage_contracts', 'worktime.groups', 'worktime.management', 'manage_working_days', 'manage_leave_limits', 'manage_leaves', 'gyap.manage_forms', 'leave_approval_settings', 'manage_leadership', 'manage_legal_entities', 'manage_places_of_work', 'manage_privileges']) %}
         <details class="nav-group{% if request.endpoint in management_pages %} has-current{% endif %}"{% if request.endpoint in management_pages %} open{% endif %}>
           <summary class="nav-group-trigger" id="management-trigger" aria-controls="management-menu">
             {{ icon('briefcase', 'nav-group-icon') }}<span>{{ _('Management') }}</span>{{ icon('chevron', 'nav-group-chevron') }}
           </summary>
           <div class="nav-group-menu" id="management-menu" aria-labelledby="management-trigger">
-            {% if current_user.privilege.value in ['hr', 'ceo'] %}
             {{ nav_item('manage_user_profiles', _('User profiles'), 'users', ['edit_user_profile']) }}
             {{ nav_item('manage_contracts', _('Contracts'), 'briefcase', ['create_contract', 'edit_contract', 'select_contract_employee']) }}
             {{ nav_item('worktime.groups', _('Groups'), 'users', ['worktime.group_new', 'worktime.group_edit']) }}
             {{ nav_item('worktime.management', _('Working-time management'), 'calendar') }}
             {{ nav_item('manage_working_days', _('Working days'), 'calendar') }}
             {{ nav_item('manage_leave_limits', _('Leave limits'), 'calendar') }}
-            {% endif %}
-            {% if can_manage_leaves_global %}{{ nav_item('manage_leaves', _('Leave approvals'), 'check') }}{% endif %}
-            {% if current_user.privilege.value in ['hr', 'ceo'] %}{{ nav_item('gyap.manage_forms', _('GYÁP forms'), 'briefcase') }}{% endif %}
-            {% if current_user.privilege.value == 'ceo' %}{{ nav_item('leave_approval_settings', _('Approval settings'), 'lock') }}{% endif %}
-            {% if current_user.privilege.value in ['hr', 'ceo'] %}
+            {{ nav_item('manage_leaves', _('Leave approvals'), 'check') }}
+            {{ nav_item('gyap.manage_forms', _('GYÁP forms'), 'briefcase') }}
+            {{ nav_item('leave_approval_settings', _('Approval settings'), 'lock') }}
             {{ nav_item('manage_leadership', _('Leadership'), 'award') }}
             {{ nav_item('manage_legal_entities', _('Legal entities'), 'building', ['create_legal_entity', 'edit_legal_entity']) }}
             {{ nav_item('manage_places_of_work', _('Workplaces'), 'building', ['create_place_of_work', 'edit_place_of_work']) }}
-            {% endif %}
-            {% if current_user.privilege.value in ['hr', 'ceo', 'developer'] %}{{ nav_item('manage_privileges', _('Privileges'), 'lock') }}{% endif %}
+            {{ nav_item('manage_privileges', _('Privileges'), 'lock') }}
           </div>
         </details>
         {% endif %}
-        {% if current_user.privilege.value == 'developer' %}
         {{ nav_item('mail_settings.settings', _('Settings'), 'settings') }}
-        {% endif %}
+        {{ nav_item('page_access.settings', _('Page access'), 'lock') }}
       </nav>
       <div class="sidebar-footer">
         {{ nav_item('change_password', _('Change password'), 'lock') }}
         {{ nav_item('logout', _('Logout'), 'logout') }}
         {% set account_photo_url = profile_photo_url(current_user) %}
-        <a class="sidebar-account" href="{{ url_for('edit_profile') }}" title="{{ _('My profile') }}"{% if request.endpoint == 'edit_profile' %} aria-current="page"{% endif %}>
+        {% set account_profile_link = can_access_endpoint('edit_profile') %}
+        {% if account_profile_link %}<a class="sidebar-account" href="{{ url_for('edit_profile') }}" title="{{ _('My profile') }}"{% if request.endpoint == 'edit_profile' %} aria-current="page"{% endif %}>{% else %}<div class="sidebar-account">{% endif %}
           <span class="avatar account-avatar" aria-hidden="true">
             {% if account_photo_url %}<img src="{{ account_photo_url }}" alt="" width="42" height="42">{% else %}{{ current_account.initial }}{% endif %}
           </span>
           <span class="sidebar-account-copy"><strong>{{ current_account.name }}</strong><small>{{ current_account.job_title }}</small></span>
-          {{ icon('chevron', 'sidebar-account-chevron') }}
-        </a>
+          {% if account_profile_link %}{{ icon('chevron', 'sidebar-account-chevron') }}{% endif %}
+        {% if account_profile_link %}</a>{% else %}</div>{% endif %}
       </div>
     </aside>
     <button type="button" class="menu-backdrop" data-menu-close tabindex="-1" aria-label="{{ _('Close menu') }}" hidden></button>

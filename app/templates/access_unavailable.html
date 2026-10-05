@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('No pages available') }} · {{ _('CSUPOR Portal') }}{% endblock %}
+{% block content %}
+<section class="form-shell">
+  <span class="eyebrow">CSUPOR</span>
+  <h1>{{ _('No pages available') }}</h1>
+  <p>{{ _('Your current privilege does not have access to any pages. Ask a developer to check the page access settings.') }}</p>
+  <div class="button-row"><a class="button button-secondary" href="{{ url_for('logout') }}">{{ _('Logout') }}</a></div>
+</section>
+{% endblock %}

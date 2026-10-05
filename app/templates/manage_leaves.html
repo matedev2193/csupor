@@ -9,7 +9,7 @@
       <p>{{ _('Filter by legal entity, employee, contract, and status, then approve, reject, or cancel requests directly.') }}</p>
       <p>{{ _('Current approval rule') }}: <strong>{{ leave_approval_policy_labels[leave_approval_policy] }}</strong>. {{ leave_approval_policy_descriptions[leave_approval_policy] }}</p>
     </div>
-    {% if current_user.privilege.value == 'ceo' %}<a class="button button-secondary" href="{{ url_for('leave_approval_settings') }}">{{ _('Approval settings') }}</a>{% endif %}
+    {% if can_access_endpoint('leave_approval_settings') %}<a class="button button-secondary" href="{{ url_for('leave_approval_settings') }}">{{ _('Approval settings') }}</a>{% endif %}
   </div>
 
   <form method="get" class="form-grid">

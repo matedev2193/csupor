@@ -3,6 +3,7 @@
 from . import db
 from .models import Contract, GyapForm, LeaveApprovalSettings, LeaveRequest, LeaveYear
 from .mail_settings_models import MailServerSettings
+from .page_access_models import PageAccessSettings
 from .worktime_models import WorkGroupMerge, WorkSchedule, WorkTimeEntry
 
 
@@ -34,6 +35,7 @@ def delete_user_account(user):
         (LeaveYear, LeaveYear.imported_by_id),
         (LeaveApprovalSettings, LeaveApprovalSettings.updated_by_id),
         (MailServerSettings, MailServerSettings.updated_by_id),
+        (PageAccessSettings, PageAccessSettings.updated_by_id),
         (GyapForm, GyapForm.uploaded_by_id),
         (WorkGroupMerge, WorkGroupMerge.created_by_id),
         (WorkSchedule, WorkSchedule.generated_by_id),

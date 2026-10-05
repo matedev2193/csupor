@@ -4446,3 +4446,57 @@ msgstr "A kiszolgálójelszó mentése előtt hozd létre itt a titkosítási ku
 
 msgid "Create encryption key"
 msgstr "Kulcs létrehozása"
+
+msgid "Records"
+msgstr "Nyilvántartások"
+
+msgid "An employment contract is also required."
+msgstr "A hozzáféréshez munkaszerződés is szükséges."
+
+msgid "Director privilege or an active nursery leadership appointment is also required. Approval rules and legal-entity scope still apply."
+msgstr "A hozzáféréshez igazgatói jogosultság vagy érvényes óvodavezetői, illetve helyettesi megbízás is szükséges. A jóváhagyási szabályok és a jogi személyhez tartozás továbbra is érvényesek."
+
+msgid "Email settings"
+msgstr "E-mail-beállítások"
+
+msgid "Page access"
+msgstr "Oldalhozzáférések"
+
+msgid "Developers always have access to this page. Access cannot be granted to other roles."
+msgstr "A fejlesztők mindig hozzáférnek ehhez az oldalhoz. Más jogosultsági szintnek nem adható hozzáférés."
+
+msgid "Page access was changed in another session. Review the current settings and try again."
+msgstr "Az oldal-hozzáféréseket közben egy másik munkamenetben módosították. Ellenőrizd a jelenlegi beállításokat, majd próbáld újra."
+
+msgid "Page access saved."
+msgstr "Az oldal-hozzáférések mentve."
+
+msgid "You cannot remove your own developer privilege."
+msgstr "A saját fejlesztői jogosultságodat nem vonhatod vissza."
+
+msgid "No pages available"
+msgstr "Nincs elérhető oldal"
+
+msgid "Your current privilege does not have access to any pages. Ask a developer to check the page access settings."
+msgstr "A jelenlegi jogosultságoddal egyetlen oldalhoz sem férsz hozzá. Kérj meg egy fejlesztőt az oldal-hozzáférések ellenőrzésére."
+
+msgid "Choose which pages each privilege can open. Changes also apply to menus, dashboard links and direct URLs."
+msgstr "Állítsd be, hogy az egyes jogosultsági szintekkel mely oldalak érhetők el. A beállítás a menüre, az irányítópult hivatkozásaira és a közvetlen webcímekre is érvényes."
+
+msgid "Access by privilege"
+msgstr "Hozzáférés jogosultsági szintenként"
+
+msgid "Checked: access allowed. Unchecked: access denied. Existing ownership and approval rules still apply."
+msgstr "Kipipálva: hozzáférés engedélyezve. Üresen: hozzáférés tiltva. A saját adatokra és a jóváhagyásokra vonatkozó szabályok továbbra is érvényesek."
+
+msgid "Page"
+msgstr "Oldal"
+
+msgid "Fixed permission"
+msgstr "Rögzített hozzáférés"
+
+msgid "Developers always keep access to this page, even if every other permission is removed."
+msgstr "A fejlesztők akkor is hozzáférnek ehhez az oldalhoz, ha minden más hozzáférést kikapcsolsz."
+
+msgid "Save page access"
+msgstr "Hozzáférések mentése"

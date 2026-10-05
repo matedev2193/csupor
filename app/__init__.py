@@ -103,6 +103,10 @@ def create_app() -> Flask:
 
     app.context_processor(account_template_context)
 
+    from .page_access import init_page_access, initialise_page_access_settings
+
+    init_page_access(app)
+
     with app.app_context():
         from .schema import (
             create_missing_tables,
@@ -116,6 +120,7 @@ def create_app() -> Flask:
         from .leave_approval import initialise_leave_approval_settings
 
         initialise_leave_approval_settings()
+        initialise_page_access_settings()
 
     from .notification_delivery import init_notifications
 

@@ -6,8 +6,9 @@ Flask-based login and personnel data management system backed by MySQL schema `c
 
 - Login using **e-mail or username + password**.
 - Registration using **e-mail, username, password** with the default `employee` privilege.
-- User privileges can later be assigned by users with the `hr` or `ceo` privilege.
+- User privileges can later be assigned through the Privileges page (HR, director and developer access by default).
 - User privilege enum: `employee`, `hr`, `ceo`, `developer`.
+- Developer-managed page access matrix, shared by navigation, dashboard and server-side route checks.
 - Numeric ascending user ID using MySQL auto-increment primary key.
 - Additional personnel profile data after registration.
 - Dependents management.
@@ -75,13 +76,15 @@ See [compact leave limits and grouped navigation](docs/design/compact-limits-nav
 
 See [year boundaries and annual GYÁP forms](docs/design/year-boundaries-gyap.md) for leave requests spanning calendar years and HR-managed childcare sickness benefit documents.
 
+Developers can open **Page access** (`/page-access`) to configure access to each page for employee, HR, director and developer privileges. Their access to this editor is permanently enabled. Denied pages are hidden from menus and the dashboard and reject direct requests, including child forms and actions. Existing ownership and leave-approval rules still apply. The role descriptions below are the initial defaults; see [page access and its repeatable migration](docs/page-access.md) for configuration and scope.
+
 ## Profile administration and account display
 
 HR and director accounts can search user profiles and filter by active/inactive contracts or profile completeness. Active status uses inclusive contract dates in Europe/Budapest. The existing completion checklist determines whether details are complete; whitespace-only fields do not count, and incomplete profiles show a yellow status.
 
-Deleting a user requires the signed-in HR/director's own password in a confirmation dialog. This permanently removes the account and its owned records, including contracts, leave requests and profile photo. Other users' records and shared annual GYÁP forms remain, with references to the deleted approver/uploader cleared. Self-deletion and deletion of the final director account are blocked. Deletion is transactional, CSRF-protected, and rolls back on failure.
+Deleting a user requires access to User profiles and the signed-in user's own password in a confirmation dialog. This permanently removes the account and its owned records, including contracts, leave requests and profile photo. Other users' records and shared annual GYÁP forms remain, with references to the deleted approver/uploader cleared. Self-deletion and deletion of the final director account are blocked. Deletion is transactional, CSRF-protected, and rolls back on failure.
 
-Users can upload their own JPEG, PNG or WebP profile photo (up to 5 MiB). Photos are decoded, oriented, stripped of metadata and resized before database storage. The new `profile_photos` table is created automatically at startup using the existing MySQL identifier compatibility handling; no existing table columns change. Install the updated requirements for Pillow support. Only the owner, HR and directors can retrieve a photo. The sidebar account link shows the name and newest active contract's job title, with username and privilege fallbacks.
+Users can upload their own JPEG, PNG or WebP profile photo (up to 5 MiB). Photos are decoded, oriented, stripped of metadata and resized before database storage. The new `profile_photos` table is created automatically at startup using the existing MySQL identifier compatibility handling; no existing table columns change. Install the updated requirements for Pillow support. Only the owner and users with User profiles access can retrieve a photo. The sidebar account link shows the name and newest active contract's job title, with username and privilege fallbacks.
 
 The profile-photo editor supports dragging, zooming and a circular crop preview before saving. Existing photos can be edited again, with keyboard controls as well as mouse/touch input. Saving the image keeps any unsaved personal-details form values intact. New uploads retain a private, metadata-free source image in `profile_photo_sources` so later edits can recover areas outside the previous crop. This table is created automatically; older photos use their existing image as the editable source. The server validates crop coordinates and checks photo versions to prevent stale edits from overwriting a newer photo.
 
@@ -192,7 +195,7 @@ Five additional tables are created automatically at startup, with existing MySQL
 
 ### Optional group shifts and schema update
 
-`/groups/new?place_id=…` creates a group; `/groups/<id>/edit` edits the group and its employee assignments. The former `/worktime/groups` address redirects to the standalone list. HR/director permissions remain required. An empty shift selection means **No assigned shift**: flexible teachers complement their partners, and a flexible nursery assistant can cover an absent teacher’s afternoon without also opening that day. A fixed 0/1 weekly rotation keeps its previous meaning.
+`/groups/new?place_id=…` creates a group; `/groups/<id>/edit` edits the group and its employee assignments. The former `/worktime/groups` address redirects to the standalone list. Groups access is required (HR/director by default) and is configured separately from Working-time management. An empty shift selection means **No assigned shift**: flexible teachers complement their partners, and a flexible nursery assistant can cover an absent teacher’s afternoon without also opening that day. A fixed 0/1 weekly rotation keeps its previous meaning.
 
 The `work_assignments.flexible_shift` Boolean column has a false default, so existing assignments retain their stored rotation. Application startup adds the column if missing; this needs `ALTER` permission. Administrators can instead run [`2026-10-04-add-flexible-work-assignment-shifts.sql`](sql/migrations/2026-10-04-add-flexible-work-assignment-shifts.sql) beforehand. The script and startup update can both be repeated without resetting assignments. No tables or existing fields are dropped.
 

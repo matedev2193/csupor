@@ -37,6 +37,8 @@ Egyetlen jelenlévő, alkalmas nyitó esetén a másnapi váltás nem teljesíth
 
 ## HR/CEO munkafolyamat
 
+Az alábbi szerepkörök az alapértelmezett hozzáféréseket írják le. A fejlesztő az Oldalhozzáférések oldalon külön állíthatja a Munkaidő-nyilvántartás, a Munkaidő-kezelés és a Csoportok hozzáférését. A személyes oldal továbbra is csak a saját adatokat mutatja, munkaszerződés szükséges hozzá. Mások beosztásához és exportjaihoz Munkaidő-kezelés jogosultság kell; a Csoportok hozzáférése ezt önmagában nem adja meg.
+
 A **Kezelés → Csoportok** önálló menüpont a `/groups` oldalra vezet. Felül a munkavégzési hely választható ki, alatta táblázat sorolja fel a csoportokat és a hozzájuk rendelt munkavállalókat, a hozzárendelések dátumaival. A táblázat blokkja tartalmazza a **Csoport hozzáadása** gombot; minden sorban **Szerkesztés** gomb található. A létrehozás a `/groups/new`, a szerkesztés a `/groups/<id>/edit` aloldalon történik. A Munkaidő-kezelés oldalról továbbra is elérhető a csoportlista. A régi `/worktime/groups` cím átirányít az új oldalra.
 
 A szerkesztőoldalon a csoport neve és érvényességi időszaka, valamint a munkavállalók dátumozott hozzárendelése kezelhető. Az érvényességi időszakok megtartják a korábbi beosztások adatait; a szerződésen vagy a csoport működési idején kívüli, illetve átfedő hozzárendelést a program elutasítja. Hibás mentéskor az űrlap kitöltött értékei megmaradnak.

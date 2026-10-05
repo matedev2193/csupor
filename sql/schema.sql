@@ -586,3 +586,22 @@ CREATE TABLE IF NOT EXISTS work_time_entries (
   CONSTRAINT work_entry_teaching CHECK (teaching_minutes >= 0 AND teaching_minutes <= work_minutes),
   CONSTRAINT work_entry_break CHECK (break_minutes IN (0, 20))
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS page_access_settings (
+  id INT NOT NULL,
+  revision VARCHAR(32) NOT NULL,
+  updated_at DATETIME NULL,
+  updated_by_id INT UNSIGNED NULL,
+  PRIMARY KEY (id),
+  CONSTRAINT single_page_access_settings CHECK (id = 1),
+  CONSTRAINT fk_page_access_settings_updated_by_id
+    FOREIGN KEY (updated_by_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS page_role_permissions (
+  page_key VARCHAR(64) NOT NULL,
+  `role` VARCHAR(20) NOT NULL,
+  allowed BOOLEAN NOT NULL DEFAULT FALSE,
+  PRIMARY KEY (page_key, `role`),
+  CONSTRAINT page_permission_role CHECK (`role` IN ('employee', 'hr', 'ceo', 'developer'))
+) ENGINE=InnoDB;

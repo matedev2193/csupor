@@ -1,19 +1,19 @@
 """Describe the existing approval permissions using distinct people's names."""
 from collections import Counter
-from datetime import date
 
 from flask_babel import _
 from sqlalchemy.orm import joinedload
 
 from . import db
 from .models import Contract, Leadership, LeadershipPosition, LeaveApprovalPolicy, User, UserPrivilege
-from .people import display_name
+from .people import display_name, local_today
+from .page_access import can_access_page
 
 
 def approval_description(contract, applicant, policy, today=None):
     if contract is None:
         return _("Select an active contract to see who needs to approve your leave.")
-    today = today or date.today()
+    today = today or local_today()
     directors = User.query.filter_by(privilege=UserPrivilege.ceo).options(joinedload(User.profile)).all()
     records = Leadership.query.filter(
         Leadership.legal_entity_id == contract.legal_entity_id,
@@ -23,9 +23,10 @@ def approval_description(contract, applicant, policy, today=None):
     # Match the approval endpoint: a deputy cannot approve their own application.
     leaders = {
         record.contract.user.id: record.contract.user for record in records
-        if record.contract.user.id != applicant.id or record.position == LeadershipPosition.principal
+        if (record.contract.user.id != applicant.id or record.position == LeadershipPosition.principal)
+        and can_access_page("manage_leaves", record.contract.user, day=today)
     }
-    directors = {person.id: person for person in directors}
+    directors = {person.id: person for person in directors if can_access_page("manage_leaves", person, day=today)}
     people = directors | leaders
     name_counts = Counter(display_name(person) for person in people.values())
 

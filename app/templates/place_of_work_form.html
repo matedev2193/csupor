@@ -13,6 +13,6 @@
     <div class="field"><label for="address">{{ _('Address *') }}</label><input id="address" name="address" maxlength="255" value="{{ request.form.get('address', place.address if place else '') }}" required></div>
     <div class="button-row field-full"><button type="submit">{{ _('Save changes') if place else _('Save place of work') }}</button><a class="button button-secondary" href="{{ url_for('manage_places_of_work') }}">{{ _('Cancel') }}</a></div>
   </form>
-  {% else %}<div class="empty-state">{{ _('Add a legal entity before creating a workplace.') }} <a class="text-link" href="{{ url_for('create_legal_entity') }}">{{ _('Add legal entity') }}</a></div>{% endif %}
+  {% else %}<div class="empty-state">{{ _('Add a legal entity before creating a workplace.') }} {% if can_access_endpoint('create_legal_entity') %}<a class="text-link" href="{{ url_for('create_legal_entity') }}">{{ _('Add legal entity') }}</a>{% endif %}</div>{% endif %}
 </section>
 {% endblock %}

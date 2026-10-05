@@ -64,7 +64,7 @@
       <span class="status-pill {{ 'status-rejected' if issue.severity == 'error' else 'status-pending-approval' }}">{{ _('Action required') if issue.severity == 'error' else _('Warning') }}</span>
       <div>{% if issue.date or issue.group_name or issue.user_name %}<div class="worktime-issue-meta">{% if issue.date %}<strong>{{ issue.date }}</strong>{% endif %}{% if issue.group_name %}<span>{{ issue.group_name }}</span>{% endif %}{% if issue.user_name %}<span>{{ issue.user_name }}</span>{% endif %}</div>{% endif %}<p>{{ issue.message }}</p></div>
     </li>{% endfor %}</ul>
-    {% if can_manage_worktime %}<div class="button-row"><a class="text-link" href="{{ url_for('worktime.groups', place_id=selected_place_id, year=selected_year, month=selected_month) }}">{{ _('Review groups and assignments') }} {{ icon('arrow') }}</a>{% if schedule and groups %}<a class="text-link" href="#worktime-merges">{{ _('Record a group merger') }} {{ icon('arrow') }}</a>{% endif %}</div>{% endif %}
+    {% if can_manage_worktime %}<div class="button-row">{% if can_access_endpoint('worktime.groups') %}<a class="text-link" href="{{ url_for('worktime.groups', place_id=selected_place_id, year=selected_year, month=selected_month) }}">{{ _('Review groups and assignments') }} {{ icon('arrow') }}</a>{% endif %}{% if schedule and groups %}<a class="text-link" href="#worktime-merges">{{ _('Record a group merger') }} {{ icon('arrow') }}</a>{% endif %}</div>{% endif %}
   </section>
   {% endif %}
 

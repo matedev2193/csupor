@@ -25,7 +25,7 @@ from sqlalchemy.orm.exc import StaleDataError
 from . import db
 from .mail_settings_models import MailServerSettings
 from .mail_key import MailKeyError, get_mail_secret, initialise_mail_secret, key_status
-from .models import UserPrivilege
+from .page_access import can_access_page
 
 
 mail_settings = Blueprint("mail_settings", __name__)
@@ -74,7 +74,7 @@ def _check_settings_csrf():
 @mail_settings.post("/settings/email-key")
 @login_required
 def initialise_key():
-    if current_user.privilege != UserPrivilege.developer:
+    if not can_access_page("mail_settings.settings"):
         abort(403)
     _check_settings_csrf()
     # A missing key must not silently replace the key of existing credentials.
@@ -176,7 +176,7 @@ def _validate_values(values, form):
 @mail_settings.route("/settings", methods=["GET", "POST"])
 @login_required
 def settings():
-    if current_user.privilege != UserPrivilege.developer:
+    if not can_access_page("mail_settings.settings"):
         abort(403)
     saved = get_mail_settings()
     status = 200
