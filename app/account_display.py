@@ -29,9 +29,11 @@ def account_display(user, day=None):
 
 
 def account_template_context():
+    from .page_access import can_access_page
+
     return {
         "current_account": account_display(current_user) if current_user.is_authenticated else None,
         # Former and future contracts also allow the employee to open their
         # own records and choose the appropriate month.
-        "can_view_own_worktime": bool(current_user.is_authenticated and current_user.contracts),
+        "can_view_own_worktime": can_access_page("worktime.index"),
     }

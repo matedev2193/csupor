@@ -10,7 +10,6 @@
   <aside class="hero-panel">
     <span class="eyebrow">{{ _('Current approval rule') }}</span>
     <h2>{{ leave_approval_policy_labels[settings.policy] }}</h2>
-    <p>{{ _('Only users with Director privilege can change this setting.') }}</p>
   </aside>
 </section>
 <section class="form-shell layout-stack">
@@ -37,7 +36,7 @@
     {% if settings.updated_by %}<p class="help-text">{{ _('Last changed by %(name)s', name=user_display_name(settings.updated_by)) }}{% if settings.updated_at %} · {{ settings.updated_at.strftime('%Y-%m-%d %H:%M') }} UTC{% endif %}</p>{% endif %}
     <div class="button-row">
       <button type="submit">{{ _('Save approval rule') }}</button>
-      <a class="button button-secondary" href="{{ url_for('manage_leaves') }}">{{ _('Open leave manager') }}</a>
+      {% if can_access_endpoint('manage_leaves') %}<a class="button button-secondary" href="{{ url_for('manage_leaves') }}">{{ _('Open leave manager') }}</a>{% endif %}
     </div>
   </form>
 </section>

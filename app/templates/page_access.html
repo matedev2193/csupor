@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Page access') }} · {{ _('CSUPOR Portal') }}{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/page-access.css') }}">
+<section class="section-heading">
+  <div><span class="eyebrow">{{ _('Developer') }}</span><h1>{{ _('Page access') }}</h1><p>{{ _('Choose which pages each privilege can open. Changes also apply to menus, dashboard links and direct URLs.') }}</p></div>
+</section>
+<form method="post" class="form-shell access-matrix-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <input type="hidden" name="revision" value="{{ settings.revision }}">
+  <div class="section-heading"><div><h2 id="access-matrix-heading">{{ _('Access by privilege') }}</h2><p id="access-matrix-help">{{ _('Checked: access allowed. Unchecked: access denied. Existing ownership and approval rules still apply.') }}</p></div></div>
+  <div class="access-matrix-scroll" tabindex="0" role="region" aria-labelledby="access-matrix-heading">
+    <table class="access-matrix" aria-describedby="access-matrix-help">
+      <thead><tr><th scope="col">{{ _('Page') }}</th>{% for role in roles %}<th scope="col">{{ role_labels[role] }}</th>{% endfor %}</tr></thead>
+      <tbody>
+      {% for page in pages %}
+        {% if loop.first or pages[loop.index0 - 1].section != page.section %}<tr class="access-section"><th colspan="5" scope="colgroup">{{ page.section }}</th></tr>{% endif %}
+        <tr{% if page.key == 'page_access.settings' %} class="access-locked-row"{% endif %}>
+          <th scope="row"><span>{{ page.label }}</span>{% if page.note %}<small>{{ page.note }}</small>{% endif %}</th>
+          {% for role in roles %}
+          <td><label class="access-cell" for="access-{{ page.key|replace('.', '-') }}-{{ role }}"><input type="checkbox" id="access-{{ page.key|replace('.', '-') }}-{{ role }}" name="permissions" value="{{ page.key }}:{{ role }}"{% if matrix[(page.key, role)] %} checked{% endif %}{% if page.key == 'page_access.settings' %} disabled{% endif %}><span class="sr-only">{{ page.label }} — {{ role_labels[role] }}{% if page.key == 'page_access.settings' %} · {{ _('Fixed permission') }}{% endif %}</span></label></td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="access-save-row"><p class="help-text">{{ _('Developers always keep access to this page, even if every other permission is removed.') }}</p><button type="submit">{{ _('Save page access') }}</button></div>
+</form>
+{% endblock %}

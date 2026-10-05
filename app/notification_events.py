@@ -21,6 +21,7 @@ from .models import (
     LeaveRequest,
 )
 from .people import display_name
+from .page_access import can_access_page
 from .notification_models import LeaveNotification
 
 
@@ -74,8 +75,11 @@ def user_has_leave_task(user, leave_request, *, now=None, policy=None):
         return False
     if leave_request.status not in (LeaveRequestStatus.pending_approval, LeaveRequestStatus.pending_cancellation):
         return False
+    day = _utc_now(now).astimezone(BUDAPEST).date()
+    if not can_access_page("manage_leaves", user, day=day):
+        return False
     ceo, leadership = _reviewer_parts(
-        user, leave_request, policy=policy or _policy(), day=_utc_now(now).astimezone(BUDAPEST).date(),
+        user, leave_request, policy=policy or _policy(), day=day,
     )
     if leave_request.status == LeaveRequestStatus.pending_cancellation:
         # Recorded original approvals do not decide the later cancellation.

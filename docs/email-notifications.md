@@ -3,7 +3,7 @@
 ## Configure delivery
 
 1. Install `requirements.txt`, including `cryptography`.
-2. Sign in with a **developer** account and open **Settings** (`/settings`). Other privileges cannot read or change this page.
+2. Sign in with a **developer** account and open **Settings** (`/settings`). This is the default access; developers can grant or revoke this page for each privilege through [Page access](page-access.md).
 3. If prompted, click **Create encryption key**. The application generates and privately stores a random key on the server. No terminal command, manual environment edit or application restart is needed. If a valid key is already configured, the page shows that encryption is ready and keeps that key unchanged.
 4. Enter the SMTP hostname, port, security mode, optional username/password, sender address/name and the application's canonical public URL. STARTTLS and SSL/TLS verify server certificates. The unencrypted option supports a trusted local mail relay.
 5. Enable notifications and save. Leaving the password empty preserves the stored password; use the explicit removal option to clear it.

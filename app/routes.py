@@ -14,6 +14,7 @@ from . import SUPPORTED_LOCALES, db, get_locale
 from .working_calendar import HungaryCalendar
 from .i18n import enum_label
 from .people import birthday_context, local_today
+from .page_access import can_access_endpoint, can_access_page, invalidate_access_cache, landing_url
 from .approval_display import approval_description
 from .leave_basis import leave_basis, age_supplement_days, eligible_children
 from .leave_approval import (
@@ -1048,9 +1049,7 @@ def _is_active_principal_for_entity(user: User, legal_entity_id: int, day: date 
 
 
 def _can_manage_leaves(user: User) -> bool:
-    return user.is_authenticated and (
-        user.privilege == UserPrivilege.ceo or bool(_active_leadership_for_user(user))
-    )
+    return can_access_page("manage_leaves", user)
 
 
 def _accessible_leave_legal_entity_ids(user: User) -> set[int] | None:
@@ -1069,15 +1068,16 @@ def _leave_request_query_for_manager(user: User):
     return query
 
 
-def _can_approve_ceo_part(user: User, leave_request: LeaveRequest) -> bool:
+def _can_approve_ceo_part(user: User, leave_request: LeaveRequest, *, automatic: bool = False) -> bool:
     return (
-        current_leave_approval_policy() != LeaveApprovalPolicy.leadership_only
+        (automatic or _can_manage_leaves(user))
+        and current_leave_approval_policy() != LeaveApprovalPolicy.leadership_only
         and user.privilege == UserPrivilege.ceo
     )
 
 
 def _can_approve_leadership_part(user: User, leave_request: LeaveRequest) -> bool:
-    if current_leave_approval_policy() == LeaveApprovalPolicy.ceo_only:
+    if not _can_manage_leaves(user) or current_leave_approval_policy() == LeaveApprovalPolicy.ceo_only:
         return False
     leadership_records = _active_leadership_for_user_entity(
         user,
@@ -1102,7 +1102,7 @@ def _wake_leave_notifications() -> None:
 
 def _apply_automatic_leave_approvals(leave_request: LeaveRequest) -> None:
     applicant = leave_request.user
-    if _can_approve_ceo_part(applicant, leave_request):
+    if _can_approve_ceo_part(applicant, leave_request, automatic=True):
         leave_request.ceo_approved_by_id = applicant.id
     if (
         current_leave_approval_policy() != LeaveApprovalPolicy.ceo_only
@@ -1135,6 +1135,8 @@ def _approve_leave_request(leave_request: LeaveRequest, approver: User) -> list[
 
 
 def _manager_review_leave_requests(user: User, limit: int | None = None) -> list[LeaveRequest]:
+    if not _can_manage_leaves(user):
+        return []
     query = (
         _leave_request_query_for_manager(user)
         .filter(
@@ -1223,18 +1225,18 @@ def _overlapping_leave_request(
 
 
 def _can_manage_privileges(user: User) -> bool:
-    return user.is_authenticated and user.privilege in {UserPrivilege.hr, UserPrivilege.ceo}
+    return can_access_page("manage_privileges", user)
 
 
 def _can_assign_privileges(user: User) -> bool:
-    return user.is_authenticated and user.privilege in {UserPrivilege.hr, UserPrivilege.ceo, UserPrivilege.developer}
+    return can_access_page("manage_privileges", user)
 
 
 def privilege_manager_required(view_func):
     @wraps(view_func)
     @login_required
     def wrapped_view(*args, **kwargs):
-        if not _can_manage_privileges(current_user):
+        if not can_access_endpoint(request.endpoint, current_user, **(request.view_args or {})):
             abort(403)
         return view_func(*args, **kwargs)
 
@@ -1247,7 +1249,7 @@ def privilege_assignment_required(view_func):
     @wraps(view_func)
     @login_required
     def wrapped_view(*args, **kwargs):
-        if not _can_assign_privileges(current_user):
+        if not can_access_endpoint(request.endpoint, current_user, **(request.view_args or {})):
             abort(403)
         return view_func(*args, **kwargs)
 
@@ -1287,7 +1289,7 @@ def init_routes(app):
     @app.route("/")
     def index():
         if current_user.is_authenticated:
-            return redirect(url_for("dashboard"))
+            return redirect(landing_url())
         return redirect(url_for("login"))
 
     @app.route("/register", methods=["GET", "POST"])
@@ -1316,7 +1318,7 @@ def init_routes(app):
 
             login_user(user)
             flash(_('Registration successful. Your privilege is set to employee until HR or the Director updates it.'), "success")
-            return redirect(url_for("edit_profile"))
+            return redirect(url_for("edit_profile") if can_access_page("edit_profile") else landing_url())
 
         return render_template("register.html")
 
@@ -1336,7 +1338,7 @@ def init_routes(app):
 
             login_user(user)
             flash(_("Logged in successfully."), "success")
-            return redirect(url_for("dashboard"))
+            return redirect(landing_url())
 
         return render_template("login.html")
 
@@ -1368,9 +1370,9 @@ def init_routes(app):
             "dashboard.html",
             can_manage_privileges=_can_manage_privileges(current_user),
             can_assign_privileges=_can_assign_privileges(current_user),
-            can_manage_user_profiles=_can_manage_privileges(current_user),
-            can_manage_leadership=_can_manage_privileges(current_user),
-            can_manage_leave_limits=_can_manage_privileges(current_user),
+            can_manage_user_profiles=can_access_page("manage_user_profiles"),
+            can_manage_leadership=can_access_page("manage_leadership"),
+            can_manage_leave_limits=can_access_page("manage_leave_limits"),
             can_manage_leaves=_can_manage_leaves(current_user),
             pending_leave_requests=_manager_review_leave_requests(current_user, limit=6)
             if _can_manage_leaves(current_user)
@@ -1635,13 +1637,20 @@ def init_routes(app):
                 flash(_("That privilege cannot be assigned here."), "error")
                 return redirect(url_for("manage_privileges"))
 
+            # Keep the developer's recovery path to the access matrix intact,
+            # including a crafted role-change submission for their own account.
+            if user.id == current_user.id and current_user.privilege == UserPrivilege.developer and privilege != UserPrivilege.developer:
+                flash(_("You cannot remove your own developer privilege."), "error")
+                return redirect(url_for("manage_privileges"))
+
             previous_tasks = snapshot_pending_leave_tasks()
             user.privilege = privilege
+            invalidate_access_cache()
             record_reviewer_changes(previous_tasks, current_user)
             db.session.commit()
             _wake_leave_notifications()
             flash(_("Updated %(username)s to %(privilege)s privilege.", username=user.username, privilege=enum_label(privilege)), "success")
-            return redirect(url_for("manage_privileges"))
+            return redirect(url_for("manage_privileges") if can_access_page("manage_privileges") else landing_url())
 
         users = User.query.order_by(User.id.asc()).all()
         return render_template(
@@ -1674,7 +1683,7 @@ def init_routes(app):
             db.session.add(current_user)
             db.session.commit()
             flash(_("Password updated successfully."), "success")
-            return redirect(url_for("dashboard"))
+            return redirect(landing_url())
 
         return render_template("change_password.html")
 
@@ -1692,7 +1701,7 @@ def init_routes(app):
             db.session.add(profile)
             db.session.commit()
             flash(_("Profile updated."), "success")
-            return redirect(url_for("dashboard"))
+            return redirect(landing_url())
 
         return _render_profile_editor(profile, current_user)
 
@@ -1904,7 +1913,7 @@ def init_routes(app):
                 db.session.add(qualification)
                 db.session.commit()
                 flash(_("Educational qualification updated.") if editing else _("Educational qualification added."), "success")
-                return redirect(url_for("dashboard"))
+                return redirect(landing_url())
 
         return render_template(
             "qualification_form.html", qualification=qualification, form_values=form_values,
@@ -2139,7 +2148,7 @@ def init_routes(app):
     @app.route("/leaves/approval-settings", methods=["GET", "POST"])
     @login_required
     def leave_approval_settings():
-        if current_user.privilege != UserPrivilege.ceo:
+        if not can_access_page("leave_approval_settings"):
             abort(403)
 
         if request.method == "POST":
@@ -2220,7 +2229,7 @@ def init_routes(app):
             )
             if leave_request is None:
                 flash(_("Leave request not found or not available to you."), "error")
-                return redirect(url_for("dashboard" if return_to == "dashboard" else "manage_leaves"))
+                return redirect(landing_url() if return_to == "dashboard" else url_for("manage_leaves"))
 
             before = snapshot_leave_request(leave_request)
             if action == "approve":
@@ -2256,13 +2265,13 @@ def init_routes(app):
                     flash(_("Only approved or pending cancellation leave requests can be cancelled."), "error")
             else:
                 flash(_("Invalid leave action."), "error")
-                return redirect(url_for("dashboard" if return_to == "dashboard" else "manage_leaves"))
+                return redirect(landing_url() if return_to == "dashboard" else url_for("manage_leaves"))
 
             record_leave_change(leave_request, before, current_user, action=action)
             db.session.commit()
             _wake_leave_notifications()
             if return_to == "dashboard":
-                return redirect(url_for("dashboard"))
+                return redirect(landing_url())
             return redirect(
                 url_for(
                     "manage_leaves",
@@ -2727,6 +2736,7 @@ def init_routes(app):
 
             db.session.add(leadership)
             db.session.flush()
+            invalidate_access_cache()
             record_reviewer_changes(previous_tasks, current_user)
             db.session.commit()
             _wake_leave_notifications()
@@ -2790,7 +2800,7 @@ def init_routes(app):
                     db.session.delete(exam)
                     db.session.commit()
                 flash(_("Professional exam removed."), "success")
-                return redirect(url_for("dashboard"))
+                return redirect(landing_url())
 
             obtained, date_error = _validate_date_obtained(values["date_obtained"], today)
             if date_error:
@@ -2803,7 +2813,7 @@ def init_routes(app):
                 db.session.add(exam)
                 db.session.commit()
                 flash(_("Professional exam saved."), "success")
-                return redirect(url_for("dashboard"))
+                return redirect(landing_url())
 
         return render_template(
             "professional_exam_form.html", exam=exam, form_values=form_values,

@@ -55,7 +55,7 @@
       </div>
       <div class="button-row">
         <button type="submit">{{ _('Save qualification') }}</button>
-        <a class="button button-secondary" href="{{ url_for('dashboard') }}">{{ _("Back to dashboard") }}</a>
+        {% if can_access_endpoint('dashboard') %}<a class="button button-secondary" href="{{ url_for('dashboard') }}">{{ _("Back to dashboard") }}</a>{% endif %}
       </div>
     </form>
   </section>

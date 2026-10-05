@@ -202,7 +202,7 @@
       </div>
       <div class="button-row">
         <button type="submit">{{ _('Save profile') }}</button>
-        <a class="button button-secondary" href="{{ url_for('manage_user_profiles') if manager_mode else url_for('dashboard') }}">{{ _("Cancel") }}</a>
+        <a class="button button-secondary" href="{{ url_for('manage_user_profiles') if manager_mode else landing_url() }}">{{ _("Cancel") }}</a>
       </div>
     </form>
   </section>

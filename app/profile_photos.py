@@ -18,7 +18,7 @@ from sqlalchemy.orm import undefer
 from werkzeug.exceptions import RequestEntityTooLarge
 
 from . import db
-from .models import ProfilePhoto, ProfilePhotoSource, User, UserPrivilege
+from .models import ProfilePhoto, ProfilePhotoSource, User
 
 
 profile_photos = Blueprint("profile_photos", __name__)
@@ -168,8 +168,10 @@ def _editor_metadata(photo, source):
 
 
 def _can_view_photo(user_id: int) -> bool:
+    from .page_access import can_access_page
+
     return current_user.is_authenticated and (
-        current_user.id == user_id or current_user.privilege in {UserPrivilege.hr, UserPrivilege.ceo}
+        current_user.id == user_id or can_access_page("manage_user_profiles")
     )
 
 

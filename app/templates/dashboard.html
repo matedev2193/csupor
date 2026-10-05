@@ -6,10 +6,12 @@
     <span class="eyebrow">{{ icon('home') }} {{ _('My workspace') }}</span>
     <h1>{{ _('Welcome back, %(name)s.', name=current_user.profile.full_name if current_user.profile and current_user.profile.full_name else current_user.username) }}</h1>
     <p>{{ _('Everything you need for your working day: your details, your records and your next time away.') }}</p>
+    {% if has_access_to_any(['leaves', 'edit_profile']) %}
     <div class="hero-actions">
-      <a class="button button-primary" href="{{ url_for('leaves') }}">{{ icon('calendar') }} {{ _('Open leave calendar') }}</a>
-      <a class="button button-secondary" href="{{ url_for('edit_profile') }}">{{ _('Update profile') }} {{ icon('arrow') }}</a>
+      {% if can_access_endpoint('leaves') %}<a class="button button-primary" href="{{ url_for('leaves') }}">{{ icon('calendar') }} {{ _('Open leave calendar') }}</a>{% endif %}
+      {% if can_access_endpoint('edit_profile') %}<a class="button button-secondary" href="{{ url_for('edit_profile') }}">{{ _('Update profile') }} {{ icon('arrow') }}</a>{% endif %}
     </div>
+    {% endif %}
   </div>
   <aside class="hero-panel account-summary">
     <span class="avatar">{{ (current_user.profile.full_name if current_user.profile and current_user.profile.full_name else current_user.username)[:1]|upper }}</span>
@@ -49,25 +51,33 @@
 {% endif %}
 
 <section class="layout-stack">
+  {% if has_access_to_any(['edit_profile', 'manage_dependents', 'add_qualification']) %}
   <div class="stats-grid">
+    {% if can_access_endpoint('edit_profile') %}
     <a class="stat-card" href="{{ url_for('edit_profile') }}">
       <div class="stat-top"><span class="stat-icon">{{ icon('user') }}</span>{{ icon('arrow') }}</div>
       <div class="stat-copy"><div><span>{{ _('Profile status') }}</span><strong>{{ profile_completion_percentage }}%</strong></div><span class="stat-caption">{{ profile_status_label }}</span></div>
       <progress value="{{ profile_completion_percentage }}" max="100" aria-label="{{ _('Profile status') }}">{{ profile_completion_percentage }}%</progress>
     </a>
+    {% endif %}
+    {% if can_access_endpoint('manage_dependents') %}
     <a class="stat-card" href="{{ url_for('manage_dependents') }}">
       <div class="stat-top"><span class="stat-icon">{{ icon('users') }}</span>{{ icon('arrow') }}</div>
       <div class="stat-copy"><div><span>{{ _('Dependents') }}</span><strong>{{ current_user.dependents|length }}</strong></div><span class="stat-caption">{{ _('Personal records') }}</span></div>
       <div class="stat-foot">{{ _('View dependents') }} →</div>
     </a>
+    {% endif %}
+    {% if can_access_endpoint('add_qualification') %}
     <a class="stat-card" href="{{ url_for('add_qualification') }}">
       <div class="stat-top"><span class="stat-icon">{{ icon('graduate') }}</span>{{ icon('arrow') }}</div>
       <div class="stat-copy"><div><span>{{ _('Qualifications') }}</span><strong>{{ current_user.qualifications|length }}</strong></div><span class="stat-caption">{{ _('Professional records') }}</span></div>
       <div class="stat-foot">{{ _('Add qualification') }} →</div>
     </a>
+    {% endif %}
   </div>
+  {% endif %}
 
-  {% if can_manage_leaves %}
+  {% if can_access_endpoint('manage_leaves') and can_manage_leaves %}
   <section class="card">
     <div class="section-heading"><div><h2 class="heading-icon">{{ icon('check') }} {{ _('Pending leave approvals') }}</h2><p>{{ _('Current approval rule') }}: {{ leave_approval_policy_labels[leave_approval_policy] }}. {{ leave_approval_policy_descriptions[leave_approval_policy] }}</p></div><a class="text-link" href="{{ url_for('manage_leaves') }}">{{ _('Open leave manager') }} {{ icon('arrow') }}</a></div>
     {% if pending_leave_requests %}
@@ -87,7 +97,9 @@
   </section>
   {% endif %}
 
+  {% if has_access_to_any(['edit_profile', 'leaves', 'manage_dependents', 'add_qualification', 'professional_exam']) %}
   <div class="dashboard-grid">
+    {% if can_access_endpoint('edit_profile') %}
     <section class="card span-7">
       <div class="section-heading"><div><h2 class="heading-icon">{{ icon('user') }} {{ _('Profile overview') }}</h2><p>{{ _('Your personal and contact details.') }}</p></div><a class="text-link" href="{{ url_for('edit_profile') }}">{{ _('Edit profile') }} {{ icon('arrow') }}</a></div>
       {% if current_user.profile and current_user.profile.full_name %}
@@ -101,7 +113,9 @@
       </dl>
       {% else %}<div class="empty-state">{{ icon('user') }}{{ _('Your profile has not been completed yet. Add your personal and contact information to make the portal more useful.') }}</div>{% endif %}
     </section>
+    {% endif %}
 
+    {% if can_access_endpoint('leaves') %}
     <section class="card span-5">
       <div class="section-heading"><div><h2 class="heading-icon">{{ icon('calendar') }} {{ _('Leave calendar') }}</h2><p>{{ _('Your time away, at a glance.') }}</p></div><a class="text-link" href="{{ url_for('leaves') }}" aria-label="{{ _('Open leave calendar') }}">{{ icon('arrow') }}</a></div>
       {% if dashboard_leave_contract %}
@@ -115,7 +129,9 @@
       </div>
       {% else %}<div class="empty-state">{{ icon('calendar') }}<strong>{{ _('No active contract found') }}</strong><p>{{ _('You can apply for leave once HR records an active contract for your account.') }}</p></div>{% endif %}
     </section>
+    {% endif %}
 
+    {% if can_access_endpoint('manage_dependents') %}
     <section class="table-card span-7">
       <div class="section-heading"><div><h2 class="heading-icon">{{ icon('users') }} {{ _('Dependents') }}</h2><p>{{ _('Family details for your employee records.') }}</p></div><a class="button button-secondary" href="{{ url_for('add_dependent') }}">{{ icon('plus') }} {{ _('Add dependent') }}</a></div>
       {% if current_user.dependents %}
@@ -124,7 +140,9 @@
       </tbody></table></div>
       {% else %}<div class="empty-state">{{ icon('users') }}{{ _('No dependents have been added yet. Add one to keep benefit-related records complete.') }}</div>{% endif %}
     </section>
+    {% endif %}
 
+    {% if can_access_endpoint('add_qualification') %}
     <section class="card span-5">
       <div class="section-heading"><div><h2 class="heading-icon">{{ icon('graduate') }} {{ _('Qualifications') }}</h2><p>{{ _('Your education and certificates.') }}</p></div><a class="text-link" href="{{ url_for('add_qualification') }}">{{ icon('plus') }} {{ _('Add qualification') }}</a></div>
       {% if current_user.qualifications %}
@@ -145,7 +163,9 @@
       {% endfor %}</div>
       {% else %}<div class="empty-state">{{ icon('graduate') }}{{ _('No educational qualifications are listed yet. Add your latest degree or certification to get started.') }}</div>{% endif %}
     </section>
+    {% endif %}
 
+    {% if can_access_endpoint('professional_exam') %}
     <section class="card span-12">
       <div class="section-heading"><div><h2 class="heading-icon">{{ icon('award') }} {{ _('Professional exam') }}</h2><p>{{ _('Optional teaching certification or professional exam details.') }}</p></div><a class="button button-secondary" href="{{ url_for('professional_exam') }}">{{ _('Manage exam') }} {{ icon('arrow') }}</a></div>
       {% if current_user.professional_exam %}
@@ -160,21 +180,34 @@
       </dl>
       {% else %}<div class="empty-state">{{ _('No professional exam is recorded yet. Use the dedicated form to add it now or come back later.') }}</div>{% endif %}
     </section>
+    {% endif %}
   </div>
+  {% endif %}
 
-  {% if can_manage_user_profiles or can_manage_privileges or can_assign_privileges or can_manage_leaves %}
+  {% set management_shortcuts = [
+    ('manage_user_profiles', _('User profiles'), 'users'),
+    ('manage_contracts', _('Contracts'), 'briefcase'),
+    ('worktime.groups', _('Groups'), 'users'),
+    ('worktime.management', _('Working-time management'), 'calendar'),
+    ('manage_working_days', _('Working days'), 'calendar'),
+    ('manage_leave_limits', _('Leave limits'), 'calendar'),
+    ('manage_leaves', _('Leave approvals'), 'check'),
+    ('gyap.manage_forms', _('GYÁP forms'), 'briefcase'),
+    ('leave_approval_settings', _('Approval settings'), 'lock'),
+    ('manage_leadership', _('Leadership'), 'award'),
+    ('manage_legal_entities', _('Legal entities'), 'building'),
+    ('manage_places_of_work', _('Workplaces'), 'building'),
+    ('manage_privileges', _('Privileges'), 'lock'),
+    ('mail_settings.settings', _('Settings'), 'settings'),
+    ('page_access.settings', _('Page access'), 'lock'),
+  ] %}
+  {% if has_access_to_any(management_shortcuts|map(attribute=0)|list) %}
   <section class="card">
     <div class="section-heading"><div><h2 class="heading-icon">{{ icon('briefcase') }} {{ _('Management') }}</h2><p>{{ _('Quick access to your administrative tools.') }}</p></div></div>
     <div class="management-shortcuts">
-      {% if can_manage_user_profiles %}<a class="management-shortcut" href="{{ url_for('manage_user_profiles') }}">{{ icon('users') }}{{ _('User profiles') }}{{ icon('arrow') }}</a>{% endif %}
-      {% if can_manage_privileges %}<a class="management-shortcut" href="{{ url_for('manage_contracts') }}">{{ icon('briefcase') }}{{ _('Contracts') }}{{ icon('arrow') }}</a>{% endif %}
-      {% if can_manage_leave_limits %}<a class="management-shortcut" href="{{ url_for('manage_leave_limits') }}">{{ icon('calendar') }}{{ _('Leave limits') }}{{ icon('arrow') }}</a>{% endif %}
-      {% if can_manage_leaves %}<a class="management-shortcut" href="{{ url_for('manage_leaves') }}">{{ icon('check') }}{{ _('Leave approvals') }}{{ icon('arrow') }}</a>{% endif %}
-      {% if current_user.privilege.value == 'ceo' %}<a class="management-shortcut" href="{{ url_for('leave_approval_settings') }}">{{ icon('lock') }}{{ _('Approval settings') }}{{ icon('arrow') }}</a>{% endif %}
-      {% if can_manage_privileges %}<a class="management-shortcut" href="{{ url_for('manage_working_days') }}">{{ icon('calendar') }}{{ _('Working days') }}{{ icon('arrow') }}</a>{% endif %}
-      {% if can_manage_leadership %}<a class="management-shortcut" href="{{ url_for('manage_leadership') }}">{{ icon('award') }}{{ _('Leadership') }}{{ icon('arrow') }}</a>{% endif %}
-      {% if can_manage_privileges %}<a class="management-shortcut" href="{{ url_for('manage_legal_entities') }}">{{ icon('building') }}{{ _('Legal entities') }}{{ icon('arrow') }}</a><a class="management-shortcut" href="{{ url_for('manage_places_of_work') }}">{{ icon('building') }}{{ _('Workplaces') }}{{ icon('arrow') }}</a>{% endif %}
-      {% if can_assign_privileges %}<a class="management-shortcut" href="{{ url_for('manage_privileges') }}">{{ icon('lock') }}{{ _('Privileges') }}{{ icon('arrow') }}</a>{% endif %}
+      {% for endpoint, label, symbol in management_shortcuts %}
+      {% if can_access_endpoint(endpoint) %}<a class="management-shortcut" href="{{ url_for(endpoint) }}">{{ icon(symbol) }}{{ label }}{{ icon('arrow') }}</a>{% endif %}
+      {% endfor %}
     </div>
   </section>
   {% endif %}

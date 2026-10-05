@@ -13,8 +13,9 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.exceptions import default_exceptions
 
 from . import db
-from .models import Contract, PlaceOfWork, User, UserPrivilege
+from .models import Contract, PlaceOfWork, User
 from .people import local_today
+from .page_access import can_access_endpoint, can_access_page
 from .worktime_models import WorkAssignment, WorkGroup, WorkGroupMerge, WorkSchedule, WorkTimeEntry
 from .worktime_service import (
     WorktimeError, active_on, build_payload, current_absences, display_rows, entry_dict,
@@ -26,14 +27,14 @@ worktime = Blueprint("worktime", __name__)
 
 
 def can_manage():
-    return current_user.privilege in {UserPrivilege.hr, UserPrivilege.ceo}
+    return can_access_page("worktime.management")
 
 
 def manager_required(view):
     @wraps(view)
     @login_required
     def wrapper(*args, **kwargs):
-        if not can_manage():
+        if not can_access_endpoint(request.endpoint, **(request.view_args or {})):
             abort(403)
         return view(*args, **kwargs)
     return wrapper

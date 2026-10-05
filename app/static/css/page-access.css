@@ -1,0 +1,23 @@
+.access-matrix-form { padding: 0; overflow: hidden; }
+.access-matrix-form > .section-heading, .access-save-row { padding: 1.5rem; }
+.access-matrix-scroll { overflow-x: auto; overscroll-behavior-x: contain; }
+.access-matrix { width: 100%; min-width: 640px; border-collapse: collapse; }
+.access-matrix th, .access-matrix td { padding: .55rem .8rem; border-bottom: 1px solid var(--border, #e5e3de); }
+.access-matrix thead th { background: #f6f5f1; text-align: center; font-size: .85rem; }
+.access-matrix thead th:first-child { text-align: left; }
+.access-matrix tbody th[scope="row"] { text-align: left; width: 52%; font-size: .9rem; font-weight: 600; text-transform: none; letter-spacing: normal; }
+.access-matrix th small { display: block; max-width: 42rem; margin-top: .3rem; font-weight: 400; line-height: 1.5; color: #62635d; }
+.access-matrix td { text-align: center; }
+.access-cell { position: relative; display: flex; align-items: center; justify-content: center; min-height: 42px; min-width: 44px; cursor: pointer; }
+.access-cell input[type="checkbox"] { width: 19px; height: 19px; margin: 0; accent-color: #365e47; }
+.access-section th { background: #e9eee7; color: #365043; text-align: left; font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; }
+.access-locked-row { background: #faf8ee; }
+.access-locked-row .access-cell { cursor: default; }
+.access-locked-row input:disabled { opacity: .8; }
+.access-save-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.access-save-row .help-text { margin: 0; max-width: 42rem; }
+.access-save-row button { flex-shrink: 0; }
+@media (max-width: 680px) {
+  .access-matrix-form > .section-heading, .access-save-row { padding: 1rem; }
+  .access-save-row { align-items: stretch; flex-direction: column; }
+}
