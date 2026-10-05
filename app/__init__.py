@@ -103,24 +103,16 @@ def create_app() -> Flask:
 
     app.context_processor(account_template_context)
 
-    from .page_access import init_page_access, initialise_page_access_settings
+    from .page_access import init_page_access
 
     init_page_access(app)
 
     with app.app_context():
-        from .schema import (
-            create_missing_tables,
-            ensure_qualification_date_columns,
-            ensure_work_assignment_flexible_shift_column,
-        )
+        from .bootstrap import initialise_database
 
-        create_missing_tables(db.engine, db.metadata)
-        ensure_qualification_date_columns(db.engine)
-        ensure_work_assignment_flexible_shift_column(db.engine)
-        from .leave_approval import initialise_leave_approval_settings
-
-        initialise_leave_approval_settings()
-        initialise_page_access_settings()
+        # Prepare the complete structure before serving the first request or
+        # starting any background worker, including on a fresh installation.
+        initialise_database()
 
     from .notification_delivery import init_notifications
 

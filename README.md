@@ -36,8 +36,8 @@ See [personal records, named approvals and legal entitlements](docs/design/peopl
 
 ## SQL schema file
 
-An explicit MySQL schema script is available at `sql/schema.sql`.
-You can run it directly, for example:
+The application builds its database structure automatically on first startup; importing SQL is not required for a new deployment. An explicit MySQL schema script is also available at `sql/schema.sql` for manual installations. It includes a legacy administrator seed, so it is not run by the application bootstrap.
+For a manual installation only:
 
 ```bash
 mysql -u root -p < sql/schema.sql
@@ -45,15 +45,11 @@ mysql -u root -p < sql/schema.sql
 
 ## Setup
 
-1. Create database schema:
-   ```sql
-   CREATE DATABASE csupor;
-   ```
-2. Install dependencies:
+1. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
-3. Configure environment:
+2. Configure environment:
    ```bash
    cp .env.example .env
    # edit values as needed
@@ -61,12 +57,14 @@ mysql -u root -p < sql/schema.sql
    source .env
    set +a
    ```
-4. Run app:
+3. Run app:
    ```bash
    python run.py
    ```
 
-Missing tables are created automatically on startup. On MySQL/MariaDB, new integer foreign keys inherit the actual referenced column type, supporting both SQL-script installations with unsigned user IDs and older ORM-created installations with signed IDs. Startup also adds missing qualification-date columns and the optional flexible-shift flag, preserving existing values. Other column changes require the applicable scripts in `sql/migrations/`. The flexible-shift update is also available as an explicit, repeatable SQL migration.
+On a hosting platform, set the same environment variables in its configuration panel and start the application from the repository. Before serving its first page, CSUPOR connects to the configured database and creates all missing tables, indexes, foreign keys and required default settings. If the MySQL/MariaDB database itself is missing, it also attempts to create that exact configured database using the supplied account, with `utf8mb4` encoding. No terminal command or SQL import is needed for the structure. If the provider does not permit applications to create databases, create an empty database in its hosting panel and supply those connection details. The application account must be allowed to create tables.
+
+Concurrent MySQL/MariaDB workers serialise their initialisation using a database-specific lock. Repeated startup preserves existing records and settings; an interrupted first setup can resume creating the remaining missing tables and default settings. New integer foreign keys inherit the actual referenced column type, supporting both SQL-script installations with unsigned user IDs and older ORM-created installations with signed IDs. Startup also adds missing qualification-date columns and the optional flexible-shift flag, preserving existing values; these upgrades require `ALTER` permission. Other column changes require the applicable scripts in `sql/migrations/`. See [automatic database initialisation](docs/database-initialisation.md) for behaviour and hosting requirements.
 
 ## Interface
 
