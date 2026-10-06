@@ -4596,3 +4596,93 @@ msgstr "Állítsd be a jelszó-visszaállításhoz és a távolléti értesíté
 
 msgid "Password reset emails are sent immediately when email delivery is enabled."
 msgstr "Bekapcsolt levélküldés esetén a jelszó-visszaállító leveleket azonnal elküldjük."
+
+msgid "A recovery email was requested for this address less than a minute ago."
+msgstr "Ehhez a címhez kevesebb mint egy perce már kértek jelszó-visszaállító levelet."
+
+msgid "Accepted by the email server"
+msgstr "A levelezőszerver átvette"
+
+msgid "Accepted by the email server means that the server accepted the message; it does not confirm arrival in the inbox. Check the spam folder too."
+msgstr "A levelezőszerver átvette állapot azt jelenti, hogy a kiszolgáló elfogadta a levelet. Ez még nem igazolja, hogy megérkezett a beérkező levelek közé. Érdemes a levélszemét mappát is ellenőrizni."
+
+msgid "An unexpected error prevented email delivery."
+msgstr "Váratlan hiba akadályozta meg a levél elküldését."
+
+msgid "Attempts"
+msgstr "Küldési próbálkozások"
+
+msgid "Check the email settings and encryption key."
+msgstr "Ellenőrizd az e-mail-beállításokat és a titkosítási kulcsot."
+
+msgid "Could not connect to the email server."
+msgstr "Nem sikerült kapcsolódni az e-mail-kiszolgálóhoz."
+
+msgid "Could not send"
+msgstr "Sikertelen küldés"
+
+msgid "Details"
+msgstr "Részletek"
+
+msgid "Email configuration needs attention"
+msgstr "Ellenőrizni kell az e-mail-beállításokat"
+
+msgid "Email delivery is disabled"
+msgstr "A levélküldés ki van kapcsolva"
+
+msgid "Email delivery is disabled."
+msgstr "A levélküldés ki van kapcsolva."
+
+msgid "Email worker is unavailable"
+msgstr "A háttérbeli levélküldés nem érhető el"
+
+msgid "Enter a valid application URL in Email settings."
+msgstr "Adj meg érvényes alkalmazáscímet az E-mail-beállításokban."
+
+msgid "More than one account uses this email address."
+msgstr "Ez az e-mail-cím több fiókhoz is tartozik."
+
+msgid "No account has this email address."
+msgstr "Egyetlen fiókhoz sem tartozik ez az e-mail-cím."
+
+msgid "No matching account"
+msgstr "Nincs egyező fiók"
+
+msgid "No password reset requests have been recorded yet."
+msgstr "Még nincs rögzített jelszó-visszaállítási kérés."
+
+msgid "Recent password reset emails"
+msgstr "Legutóbbi jelszó-visszaállító levelek"
+
+msgid "Request limit reached"
+msgstr "Elérte a kéréskorlátot"
+
+msgid "The email queue is full. Try again shortly."
+msgstr "A levélküldési várólista megtelt. Rövidesen próbáld újra."
+
+msgid "The email server did not accept the message."
+msgstr "Az e-mail-kiszolgáló nem fogadta el a levelet."
+
+msgid "The email server rejected authentication."
+msgstr "Az e-mail-kiszolgáló elutasította a hitelesítést."
+
+msgid "The email worker could not start. Try again shortly."
+msgstr "Nem sikerült elindítani a háttérbeli levélküldést. Rövidesen próbáld újra."
+
+msgid "The hourly recovery limit for this email address was reached."
+msgstr "Ehhez az e-mail-címhez elérte az óránkénti jelszó-visszaállítási korlátot."
+
+msgid "The latest 20 requests from the last seven days are shown. Times use Europe/Budapest."
+msgstr "Az elmúlt hét nap legutóbbi 20 kérése látható, budapesti idő szerint."
+
+msgid "The recovery request could not be saved."
+msgstr "Nem sikerült elmenteni a jelszó-visszaállítási kérést."
+
+msgid "Time"
+msgstr "Időpont"
+
+msgid "Too many recovery requests from this connection. Try again later."
+msgstr "Túl sok jelszó-visszaállítási kérés érkezett erről a kapcsolatról. Később próbáld újra."
+
+msgid "Waiting to send"
+msgstr "Küldésre vár"

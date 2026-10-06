@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 from hmac import compare_digest, new as hmac_new
 import json
+import os
 import re
 from secrets import token_urlsafe
 from threading import BoundedSemaphore
@@ -19,6 +20,7 @@ from . import db, get_locale
 from .mail_settings import MailDeliveryError, _valid_base_url, _valid_email, get_mail_settings, send_email
 from .models import User
 from .password_reset_models import PasswordResetThrottle, PasswordResetToken
+from .password_reset_delivery import record_reset_delivery, update_reset_delivery
 
 
 password_reset = Blueprint("password_reset", __name__)
@@ -26,6 +28,17 @@ TOKEN_LIFETIME = timedelta(minutes=30)
 _TOKEN_PATTERN = re.compile(r"[A-Za-z0-9_-]{43}\Z")
 _delivery_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="csupor-password-reset")
 _delivery_capacity = BoundedSemaphore(16)
+
+
+def _reset_executor_after_fork():
+    """A preloaded child must not inherit dead executor threads or capacity."""
+    global _delivery_pool, _delivery_capacity
+    _delivery_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="csupor-password-reset")
+    _delivery_capacity = BoundedSemaphore(16)
+
+
+if hasattr(os, "register_at_fork"):
+    os.register_at_fork(after_in_child=_reset_executor_after_fork)
 
 
 def _now():
@@ -81,33 +94,56 @@ def _take_limit(kind, value, maximum, duration, now):
     return claimed.rowcount == 1
 
 
-def _allow_request(email, requester):
+def _request_allowance(email, requester):
     now = _now()
     # IP limits use the server's remote address, never a user-supplied forwarded
     # header. Email limits apply equally to existing and unknown addresses.
-    permitted = _take_limit("requester", requester, 20, timedelta(hours=1), now)
+    # Hosting proxies can share one observed peer address across many users.
+    # Keep a generous aggregate bound alongside the strict per-email limits.
+    permitted = _take_limit("requester-v2", requester, 120, timedelta(hours=1), now)
+    reason = "requester_limit" if not permitted else None
     if permitted:
-        permitted = _take_limit("email-hour", email, 3, timedelta(hours=1), now)
-    if permitted:
-        permitted = _take_limit("email-minute", email, 1, timedelta(minutes=1), now)
+        # A minute-blocked double-click must not spend an hourly allowance.
+        # Both email buckets are claimed together, or neither is changed.
+        email_claim = db.session.begin_nested()
+        permitted = _take_limit("email-hour-v2", email, 3, timedelta(hours=1), now)
+        if not permitted:
+            reason = "email_hour"
+        else:
+            permitted = _take_limit("email-minute-v2", email, 1, timedelta(minutes=1), now)
+            if not permitted:
+                reason = "email_minute"
+        if permitted:
+            email_claim.commit()
+        else:
+            email_claim.rollback()
     # Expired buckets and token hashes have no long-term purpose.
     db.session.execute(delete(PasswordResetThrottle).where(PasswordResetThrottle.expires_at < now - timedelta(days=1)))
     db.session.execute(delete(PasswordResetToken).where(PasswordResetToken.expires_at < now - timedelta(days=1)))
     db.session.commit()
-    return permitted
+    return permitted, reason
 
 
-def _deliver_reset(app, email, locale):
+def _allow_request(email, requester):
+    return _request_allowance(email, requester)[0]
+
+
+def _deliver_reset(app, email, locale, attempt_id=None):
     """Resolve the account and contact SMTP outside the HTTP response path."""
     with app.app_context(), force_locale(locale):
         token_hash = None
         try:
             settings = get_mail_settings()
-            if not settings.enabled or not _valid_base_url(settings.base_url):
+            if not settings.enabled:
+                update_reset_delivery(attempt_id, "disabled", error_code="disabled")
+                return
+            if not _valid_base_url(settings.base_url):
+                update_reset_delivery(attempt_id, "configuration", error_code="application_url")
                 return
             # Refuse ambiguous case-only duplicate accounts on older databases.
             users = db.session.scalars(db.select(User).where(func.lower(User.email) == email).limit(2)).all()
             if len(users) != 1:
+                update_reset_delivery(attempt_id, "not_found", error_code="account_missing" if not users else "account_ambiguous")
                 return
             user = users[0]
             token = token_urlsafe(32)
@@ -129,8 +165,24 @@ def _deliver_reset(app, email, locale):
             # Mail runs without an HTTP request. Do not invoke page context
             # processors, which require the browser's session/current user.
             html_body = app.jinja_env.get_template("password_reset_email.html").render(reset_url=reset_url, _=_)
-            send_email(recipient, subject, text_body, html_body)
-        except (MailDeliveryError, SQLAlchemyError):
+            # Retry a transient connection/delivery failure once. A stable
+            # Message-ID identifies the same email if the provider accepted it
+            # just before a connection was lost.
+            message_id = f"<csupor-reset-{token_hash[:32]}@{settings.sender_email.rsplit('@', 1)[-1]}>"
+            for attempt in (1, 2):
+                update_reset_delivery(attempt_id, "queued", attempts=attempt)
+                try:
+                    send_email(recipient, subject, text_body, html_body, message_id=message_id)
+                    break
+                except MailDeliveryError as error:
+                    if error.code not in {"connection", "delivery"} or attempt == 2:
+                        raise
+            update_reset_delivery(attempt_id, "sent")
+        except Exception as error:
+            # Futures have no HTTP caller to receive their exceptions. Handle
+            # unexpected rendering/worker errors here too, without logging raw
+            # details that might include an address, credential or reset link.
+            code = error.code if isinstance(error, MailDeliveryError) else "database" if isinstance(error, SQLAlchemyError) else "internal"
             db.session.rollback()
             if token_hash:
                 try:
@@ -139,26 +191,32 @@ def _deliver_reset(app, email, locale):
                 except SQLAlchemyError:
                     db.session.rollback()
             # Do not attach exception/provider details, addresses or secrets.
-            app.logger.warning("Password reset email could not be delivered.")
+            update_reset_delivery(attempt_id, "failed", error_code=code)
+            app.logger.error("Password reset email could not be delivered (%s).", code)
         finally:
             db.session.remove()
 
 
-def _dispatch_reset(app, email, locale):
+def _dispatch_reset(app, email, locale, attempt_id=None):
     """Bound background work; a busy or restarting server permits a later retry."""
-    if not _delivery_capacity.acquire(blocking=False):
+    capacity = _delivery_capacity
+    if not capacity.acquire(blocking=False):
+        update_reset_delivery(attempt_id, "worker_unavailable", error_code="queue_full")
+        app.logger.warning("Password reset background queue is full.")
         return
 
     def run():
         try:
-            _deliver_reset(app, email, locale)
+            _deliver_reset(app, email, locale, attempt_id)
         finally:
-            _delivery_capacity.release()
+            capacity.release()
 
     try:
         _delivery_pool.submit(run)
-    except RuntimeError:
-        _delivery_capacity.release()
+    except Exception:
+        capacity.release()
+        update_reset_delivery(attempt_id, "worker_unavailable", error_code="worker_start")
+        app.logger.error("Password reset background worker could not be started.")
 
 
 @password_reset.after_request
@@ -177,13 +235,24 @@ def request_reset():
         # syntactically invalid address or a disabled/misconfigured mail server.
         if len(email) <= 120 and _valid_email(email):
             try:
-                allowed = _allow_request(email, request.remote_addr or "unknown")
+                allowed, reason = _request_allowance(email, request.remote_addr or "unknown")
             except SQLAlchemyError:
                 db.session.rollback()
                 allowed = False
+                reason = "database"
                 current_app.logger.warning("Password reset request could not be processed.")
+            # Do not allow callers already over the aggregate request limit to
+            # flood the diagnostics table with arbitrary email addresses.
+            attempt_id = None
+            if reason != "requester_limit":
+                attempt_id = record_reset_delivery(
+                    email, status="queued" if allowed else "failed" if reason == "database" else "rate_limited",
+                    error_code=reason,
+                )
+            else:
+                current_app.logger.warning("Password reset requester limit reached.")
             if allowed:
-                _dispatch_reset(current_app._get_current_object(), email, str(get_locale()))
+                _dispatch_reset(current_app._get_current_object(), email, str(get_locale()), attempt_id)
         flash(_("If this email address belongs to an account and email delivery is available, a password reset link will arrive shortly. If needed, try again in a few minutes."), "success")
         return redirect(url_for("password_reset.request_reset"))
     return render_template("forgot_password.html", csrf_token=_csrf_token())

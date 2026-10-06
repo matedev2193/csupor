@@ -53,4 +53,26 @@
     </div>
   </section>
 </form>
+<section class="table-card" aria-labelledby="password-reset-delivery-heading">
+  <div class="section-heading"><div><h2 id="password-reset-delivery-heading">{{ _('Recent password reset emails') }}</h2><p>{{ _('The latest 20 requests from the last seven days are shown. Times use Europe/Budapest.') }}</p></div></div>
+  <p class="help-text">{{ _('Accepted by the email server means that the server accepted the message; it does not confirm arrival in the inbox. Check the spam folder too.') }}</p>
+  {% if reset_deliveries %}
+  <div class="table-wrap" tabindex="0" role="region" aria-label="{{ _('Recent password reset emails') }}">
+    <table>
+      <thead><tr><th scope="col">{{ _('Time') }}</th><th scope="col">{{ _('Email address') }}</th><th scope="col">{{ _('Status') }}</th><th scope="col">{{ _('Attempts') }}</th><th scope="col">{{ _('Details') }}</th></tr></thead>
+      <tbody>
+      {% for delivery in reset_deliveries %}
+        <tr>
+          <td><time datetime="{{ delivery.local_created_at.isoformat() }}">{{ delivery.local_created_at.strftime('%Y.%m.%d. %H:%M:%S') }}</time></td>
+          <td>{{ delivery.recipient_email }}</td>
+          <td>{{ reset_status_labels.get(delivery.status, reset_status_labels['failed']) }}</td>
+          <td>{{ delivery.attempts }}</td>
+          <td>{{ reset_error_labels.get(delivery.safe_error_code, '') }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<div class="empty-state">{{ _('No password reset requests have been recorded yet.') }}</div>{% endif %}
+</section>
 {% endblock %}
