@@ -245,10 +245,11 @@ class BootstrapOrderingTests(unittest.TestCase):
                 ("app.bootstrap.ensure_work_assignment_flexible_shift_column", "shifts"),
                 ("app.leave_approval.initialise_leave_approval_settings", "approvals"),
                 ("app.page_access.initialise_page_access_settings", "access"),
+                ("app.initial_admin.initialise_initial_admin", "admin"),
             ):
                 stack.enter_context(patch(target, side_effect=lambda *args, label=label: events.append(label)))
             initialise_database()
-        self.assertEqual(events, ["database", "acquire", "tables", "dates", "shifts", "approvals", "access", "release"])
+        self.assertEqual(events, ["database", "acquire", "tables", "dates", "shifts", "approvals", "access", "admin", "release"])
 
     def test_sqlite_uses_schema_helpers_without_mysql_creation_or_named_locks(self):
         engine, _ = engine_fixture()
@@ -263,6 +264,7 @@ class BootstrapOrderingTests(unittest.TestCase):
                 "app.bootstrap.ensure_work_assignment_flexible_shift_column",
                 "app.leave_approval.initialise_leave_approval_settings",
                 "app.page_access.initialise_page_access_settings",
+                "app.initial_admin.initialise_initial_admin",
             )]
             initialise_database()
         create.assert_not_called()

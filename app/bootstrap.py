@@ -132,6 +132,7 @@ def initialise_database():
     )
     from .leave_approval import initialise_leave_approval_settings
     from .page_access import initialise_page_access_settings
+    from .initial_admin import initialise_initial_admin
 
     engine = db.engine
     is_mysql = engine.dialect.name in MYSQL_DIALECTS
@@ -143,3 +144,4 @@ def initialise_database():
         ensure_work_assignment_flexible_shift_column(engine)
         initialise_leave_approval_settings()
         initialise_page_access_settings()
+        initialise_initial_admin()
