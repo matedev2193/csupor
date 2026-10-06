@@ -9,6 +9,7 @@ Flask-based login and personnel data management system backed by MySQL schema `c
 - User privileges can later be assigned through the Privileges page (HR, director and developer access by default).
 - User privilege enum: `employee`, `hr`, `ceo`, `developer`.
 - Developer-managed page access matrix, shared by navigation, dashboard and server-side route checks.
+- Optional first administrator setup through hosting environment variables, without SQL or a terminal.
 - Numeric ascending user ID using MySQL auto-increment primary key.
 - Additional personnel profile data after registration.
 - Dependents management.
@@ -65,6 +66,8 @@ mysql -u root -p < sql/schema.sql
 On a hosting platform, set the same environment variables in its configuration panel and start the application from the repository. Before serving its first page, CSUPOR connects to the configured database and creates all missing tables, indexes, foreign keys and required default settings. If the MySQL/MariaDB database itself is missing, it also attempts to create that exact configured database using the supplied account, with `utf8mb4` encoding. No terminal command or SQL import is needed for the structure. If the provider does not permit applications to create databases, create an empty database in its hosting panel and supply those connection details. The application account must be allowed to create tables.
 
 Concurrent MySQL/MariaDB workers serialise their initialisation using a database-specific lock. Repeated startup preserves existing records and settings; an interrupted first setup can resume creating the remaining missing tables and default settings. New integer foreign keys inherit the actual referenced column type, supporting both SQL-script installations with unsigned user IDs and older ORM-created installations with signed IDs. Startup also adds missing qualification-date columns and the optional flexible-shift flag, preserving existing values; these upgrades require `ALTER` permission. Other column changes require the applicable scripts in `sql/migrations/`. See [automatic database initialisation](docs/database-initialisation.md) for behaviour and hosting requirements.
+
+To create your first administrator without a terminal, set `INITIAL_ADMIN_USERNAME`, `INITIAL_ADMIN_EMAIL` and `INITIAL_ADMIN_PASSWORD` in the hosting platform's environment settings, then redeploy. Mark the password as encrypted/secret. If there is no developer account yet, startup creates the requested account with developer privilege, which can manage page access and user privileges. Ordinary registration continues to create employee accounts. After a successful administrator login, remove these three initialisation variables. See [first administrator setup](docs/initial-administrator.md), including how to use an account you have already registered.
 
 ## Interface
 
