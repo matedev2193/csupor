@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
-{% block title %}{{ _('Settings') }} · {{ _('CSUPOR Portal') }}{% endblock %}
+{% block title %}{{ _('Email settings') }} · {{ _('CSUPOR Portal') }}{% endblock %}
 {% block content %}
 <section class="section-heading">
-  <div><span class="eyebrow">{{ _('Settings') }}</span><h1>{{ _('Settings') }}</h1><p>{{ _('Configure the email server used for leave notifications.') }}</p></div>
+  <div><span class="eyebrow">{{ _('Settings') }}</span><h1>{{ _('Email settings') }}</h1><p>{{ _('Configure the email server used for password recovery and leave notifications.') }}</p></div>
 </section>
 <section class="form-shell" aria-labelledby="mail-encryption-heading">
   <div class="section-heading"><div><h2 id="mail-encryption-heading">{{ _('Email password protection') }}</h2>
@@ -30,6 +30,7 @@
     <div class="section-heading"><div><h2>{{ _('Email notifications') }}</h2><p>{{ _('Changes are collected into one email per recipient each day at 20:00, Europe/Budapest time. Changes to leave starting within 24 hours, or already started, are sent immediately.') }}</p></div></div>
     <label class="checkbox-field" for="mail-enabled"><input id="mail-enabled" type="checkbox" name="enabled" value="1"{% if values.enabled %} checked{% endif %}> {{ _('Enable email notifications') }}</label>
     <p class="help-text">{{ _('Emails are sent to the email address saved in each user account.') }}</p>
+    <p class="help-text">{{ _('Password reset emails are sent immediately when email delivery is enabled.') }}</p>
   </section>
   <section class="form-shell">
     <div class="section-heading"><div><h2>{{ _('Email server') }}</h2></div></div>

@@ -65,7 +65,7 @@ class LeaveApprovalTests(unittest.TestCase):
 
     def login(self, key):
         with self.client.session_transaction() as session:
-            session["_user_id"] = str(self.users[key].id)
+            session["_user_id"] = self.users[key].get_id()
             session["_fresh"] = True
         # The tests hold an app context; real requests have fresh contexts.
         g.pop("_login_user", None)

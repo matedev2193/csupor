@@ -43,6 +43,25 @@
     </div>
 
     {% if not manager_mode %}
+    <form id="account-email-form" action="{{ url_for('change_account_email') }}" method="post" aria-labelledby="account-email-heading">
+      <input type="hidden" name="csrf_token" value="{{ profile_email_csrf_token }}">
+      <div class="form-grid">
+        <h3 class="form-divider" id="account-email-heading">{{ _('Account email address') }}</h3>
+        <p class="field-full help-text" id="account-email-help">{{ _('Password reset links and notifications will be sent to this address. Confirm your current password to change it.') }}</p>
+        <div class="field">
+          <label for="account-email">{{ _('Email address') }}</label>
+          <input id="account-email" type="email" name="email" autocomplete="email" maxlength="120" value="{{ current_user.email }}" aria-describedby="account-email-help" required>
+        </div>
+        <div class="field">
+          <label for="account-email-password">{{ _('Current password') }}</label>
+          <input id="account-email-password" type="password" name="current_password" autocomplete="current-password" required>
+        </div>
+      </div>
+      <div class="button-row">
+        <button type="submit" class="button button-secondary">{{ _('Save email address') }}</button>
+      </div>
+    </form>
+
     <section class="profile-photo-section" aria-labelledby="profile-photo-heading">
       {% set own_photo_url = profile_photo_url(current_user) %}
       <span class="avatar profile-photo-preview" aria-hidden="true">

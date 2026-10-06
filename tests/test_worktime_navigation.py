@@ -12,6 +12,8 @@ from flask import g, url_for
 
 from app import create_app, db
 from app.models import Contract, ContractType, LegalEntity, PlaceOfWork, User, UserPrivilege, UserProfile
+from app.page_access import invalidate_access_cache
+from app.page_access_models import PageRolePermission
 from app.worktime_models import WorkSchedule, WorkTimeEntry
 from app.worktime_service import build_payload
 
@@ -88,7 +90,7 @@ class WorktimeNavigationTests(unittest.TestCase):
 
     def login(self, name):
         with self.client.session_transaction() as session:
-            session["_user_id"] = str(self.users[name].id)
+            session["_user_id"] = self.users[name].get_id()
             session["_fresh"] = True
             session["locale"] = "en"
             session["worktime_csrf_token"] = "navigation-csrf"
@@ -97,6 +99,15 @@ class WorktimeNavigationTests(unittest.TestCase):
     def path(self, endpoint):
         with self.app.test_request_context():
             return url_for(endpoint)
+
+    def rule(self, key, role, allowed):
+        row = db.session.get(PageRolePermission, (key, role))
+        if row is None:
+            row = PageRolePermission(page_key=key, role=role)
+            db.session.add(row)
+        row.allowed = allowed
+        db.session.commit()
+        invalidate_access_cache()
 
     def sidebar(self, path="/profile"):
         response = self.client.get(path)
@@ -150,6 +161,64 @@ class WorktimeNavigationTests(unittest.TestCase):
                 self.assertFalse(nav.matching(self.path("worktime.index")))
                 self.assertEqual(self.client.get("/worktime?year=2026&month=10").status_code, 403)
                 self.assertEqual(bool(nav.matching(self.path("worktime.management"))), name == "hr_no_contract")
+
+    def test_any_contract_exposes_leave_calendar_but_does_not_override_denied_permission(self):
+        for name in ("employee", "historical", "future", "hr", "ceo", "developer"):
+            with self.subTest(account=name):
+                self.login(name)
+                self.assertEqual(len(self.sidebar().matching("/leaves")), 1)
+                self.assertEqual(self.client.get("/leaves").status_code, 200)
+                dashboard = self.client.get("/dashboard").get_data(as_text=True)
+                self.assertIn("Your time away, at a glance.", dashboard)
+        self.rule("leaves", "employee", False)
+        for name in ("employee", "historical", "future"):
+            with self.subTest(denied_account=name):
+                self.login(name)
+                self.assertFalse(self.sidebar().matching("/leaves"))
+                self.assertEqual(self.client.get("/leaves").status_code, 403)
+                self.assertEqual(self.client.post("/leaves").status_code, 403)
+
+    def test_settings_menu_groups_only_allowed_settings_and_tracks_active_page(self):
+        endpoints = ("manage_privileges", "page_access.settings", "mail_settings.settings")
+        self.login("developer")
+        for active in endpoints:
+            response = self.client.get(self.path(active))
+            self.assertEqual(response.status_code, 200)
+            html = response.get_data(as_text=True)
+            nav = SidebarLinks(html)
+            self.assertNotIn("management-menu", nav.ids)
+            self.assertIn('<span class="breadcrumb-root">Settings</span>', html)
+            self.assertIn('<details class="nav-group has-current" open>\n          <summary class="nav-group-trigger" id="settings-trigger"', html)
+            settings = [urlsplit(link["href"]).path for link in nav.links if "settings-menu" in link["ancestors"]]
+            self.assertEqual(settings, [self.path(endpoint) for endpoint in endpoints])
+            for endpoint in endpoints:
+                links = nav.matching(self.path(endpoint))
+                self.assertEqual(len(links), 1)
+                self.assertEqual(links[0].get("aria-current") == "page", endpoint == active)
+        self.login("hr")
+        nav = self.sidebar()
+        self.assertIn("settings-menu", nav.ids)
+        self.assertIn("settings-menu", nav.matching(self.path("manage_privileges"))[0]["ancestors"])
+        self.assertFalse(nav.matching(self.path("page_access.settings")))
+        self.assertFalse(nav.matching(self.path("mail_settings.settings")))
+        self.rule("manage_privileges", "hr", False)
+        self.assertNotIn("settings-menu", self.sidebar().ids)
+
+    def test_settings_menu_appears_for_custom_grant_and_disappears_after_revocation(self):
+        self.login("employee")
+        self.assertNotIn("settings-menu", self.sidebar().ids)
+        self.rule("mail_settings.settings", "employee", True)
+        nav = self.sidebar()
+        self.assertNotIn("management-menu", nav.ids)
+        self.assertEqual(len(nav.matching(self.path("mail_settings.settings"))), 1)
+        self.assertIn("settings-menu", nav.matching(self.path("mail_settings.settings"))[0]["ancestors"])
+        dashboard = self.client.get("/dashboard").get_data(as_text=True)
+        self.assertIn('href="/settings"', dashboard)
+        self.assertIn("Email settings", dashboard)
+        self.rule("mail_settings.settings", "employee", False)
+        self.assertNotIn("settings-menu", self.sidebar().ids)
+        dashboard = self.client.get("/dashboard").get_data(as_text=True)
+        self.assertNotIn('href="/settings"', dashboard)
 
     def test_hr_personal_page_renders_only_own_rows_and_no_management_forms(self):
         self.seed_register()

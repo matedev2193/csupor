@@ -85,7 +85,7 @@ class GyapFormTests(unittest.TestCase):
 
     def login(self, name):
         with self.client.session_transaction() as session:
-            session["_user_id"] = str(self.users[name].id)
+            session["_user_id"] = self.users[name].get_id()
             session["_fresh"] = True
             session["locale"] = "en"
         g.pop("_login_user", None)
@@ -120,7 +120,7 @@ class GyapFormTests(unittest.TestCase):
         self.assertEqual(self.upload(csrf="invalid").status_code, 302)
         self.assertEqual(self.client.get("/gyap-forms/2026/download").status_code, 302)
 
-    def test_exact_safe_download_for_all_authenticated_roles(self):
+    def test_exact_safe_download_for_contract_holders_and_form_managers(self):
         self.login("hr")
         response = self.upload(filename="../../gyermekapolas.pdf")
         self.assertEqual(response.status_code, 302)
@@ -133,12 +133,17 @@ class GyapFormTests(unittest.TestCase):
         for name in self.users:
             self.login(name)
             download = self.client.get("/gyap-forms/2026/download")
+            if name == "developer":
+                # No contract or approval/form-management grant in this fixture.
+                self.assertEqual(download.status_code, 403)
+                continue
             self.assertEqual(download.status_code, 200)
             self.assertEqual(download.data, PDF)
             self.assertEqual(download.mimetype, "application/pdf")
             self.assertIn('attachment; filename=gyermekapolas.pdf', download.headers["Content-Disposition"])
             self.assertEqual(download.headers["X-Content-Type-Options"], "nosniff")
             self.assertEqual(download.headers["Cache-Control"], "private, no-store")
+        self.login("employee")
         self.assertEqual(self.client.get("/gyap-forms/2027/download").status_code, 404)
 
     def test_upload_all_formats_and_replace_only_matching_year(self):
@@ -286,7 +291,7 @@ class GyapFormTests(unittest.TestCase):
             with restarted.app_context():
                 new_client = restarted.test_client()
                 with new_client.session_transaction() as session:
-                    session["_user_id"] = str(employee_id)
+                    session["_user_id"] = db.session.get(User, employee_id).get_id()
                     session["_fresh"] = True
                 response = new_client.get("/gyap-forms/2027/download")
                 self.assertEqual(response.status_code, 200)

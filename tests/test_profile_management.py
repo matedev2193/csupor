@@ -19,6 +19,7 @@ from app.models import (
     ProfessionalExam, ProfilePhoto, User, UserPrivilege, UserProfile,
 )
 from app.routes import PROFILE_COMPLETION_FIELDS, _profile_completion_percentage, _profile_completion_state
+from app.password_reset_models import PasswordResetToken
 
 
 PASSWORDS = {key: f"{key}-own-password" for key in ("hr", "ceo", "employee", "developer", "target", "other")}
@@ -59,7 +60,7 @@ class ProfileManagementTests(unittest.TestCase):
 
     def login(self, key):
         with self.client.session_transaction() as session:
-            session["_user_id"] = str(self.users[key].id)
+            session["_user_id"] = self.users[key].get_id()
             session["_fresh"] = True
             session["locale"] = "en"
         g.pop("_login_user", None)
@@ -241,9 +242,15 @@ class ProfileManagementTests(unittest.TestCase):
     def test_delete_cascades_owned_records_and_preserves_other_users_and_shared_forms(self):
         contract_id, other_contract_id, other_request_id = self.seed_owned_and_shared_records()
         target_id = self.users["target"].id
+        db.session.add(PasswordResetToken(
+            token_hash="a" * 64, user_id=target_id, credentials_hash="b" * 64,
+            created_at=datetime.now(), expires_at=datetime.now() + timedelta(minutes=30),
+        ))
+        db.session.commit()
         response = self.delete()
         self.assertEqual(response.status_code, 302)
         self.assertIsNone(db.session.get(User, target_id))
+        self.assertEqual(PasswordResetToken.query.filter_by(user_id=target_id).count(), 0)
         for model in (UserProfile, Dependent, EducationalQualification, ProfessionalExam, ProfilePhoto):
             self.assertEqual(model.query.filter_by(user_id=target_id).count(), 0)
         self.assertIsNone(db.session.get(Contract, contract_id))

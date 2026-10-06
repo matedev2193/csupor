@@ -12,7 +12,7 @@ from sqlalchemy import event
 from werkzeug.datastructures import MultiDict
 
 from app import create_app, db
-from app.models import User, UserPrivilege
+from app.models import LeaveRequest, User, UserPrivilege
 from app.page_access import (
     ALL_ROLES, PAGE_DEFINITIONS, SPECIAL_ENDPOINTS, UTILITY_ENDPOINTS,
     can_access_endpoint, can_access_page, invalidate_access_cache,
@@ -51,7 +51,7 @@ class PageAccessTests(unittest.TestCase):
 
     def login(self, role="developer"):
         with self.client.session_transaction() as session:
-            session["_user_id"] = str(self.users[role].id)
+            session["_user_id"] = self.users[role].get_id()
             session["_fresh"] = True
             session["locale"] = "en"
         g.pop("_login_user", None)
@@ -91,7 +91,7 @@ class PageAccessTests(unittest.TestCase):
         for page in PAGE_DEFINITIONS:
             for role, user in self.users.items():
                 expected = role in page["default_roles"]
-                if page["key"] == "worktime.index":
+                if page["key"] in {"leaves", "worktime.index"}:
                     expected = False
                 if page["key"] == "manage_leaves":
                     expected = role == "ceo"
@@ -218,12 +218,37 @@ class PageAccessTests(unittest.TestCase):
         self.assertTrue(can_access_endpoint("profile_photos.show_photo", employee, user_id=other.id))
 
     def test_gyap_download_requires_one_of_its_parent_pages(self):
-        employee = self.users["employee"]
+        employee = SimpleNamespace(
+            is_authenticated=True, privilege=UserPrivilege.employee,
+            contracts=[SimpleNamespace(leadership_positions=[])],
+        )
         self.assertTrue(can_access_endpoint("gyap.download_form", employee))
         self.rule("leaves", "employee", False)
         self.assertFalse(can_access_endpoint("gyap.download_form", employee))
         self.rule("gyap.manage_forms", "employee", True)
         self.assertTrue(can_access_endpoint("gyap.download_form", employee))
+
+    def test_accounts_without_contract_cannot_open_or_submit_own_leave_calendar(self):
+        for role, user in self.users.items():
+            self.rule("leaves", role, True)
+            self.login(role)
+            with self.subTest(role=role):
+                self.assertFalse(can_access_page("leaves", user))
+                self.assertEqual(self.client.get("/leaves").status_code, 403)
+                self.assertEqual(self.client.post("/leaves", data={"action": "create"}).status_code, 403)
+                dashboard = self.client.get("/dashboard")
+                self.assertEqual(dashboard.status_code, 200)
+                self.assertNotIn(b'href="/leaves"', dashboard.data)
+                self.assertNotIn(b"Your time away, at a glance.", dashboard.data)
+        self.assertEqual(LeaveRequest.query.count(), 0)
+        self.login("ceo")
+        self.assertEqual(self.client.get("/leaves/manage").status_code, 200)
+
+    def test_uncontracted_gyap_download_needs_an_independent_management_grant(self):
+        user = self.users["employee"]
+        self.assertFalse(can_access_endpoint("gyap.download_form", user))
+        self.rule("gyap.manage_forms", "employee", True)
+        self.assertTrue(can_access_endpoint("gyap.download_form", user))
 
     def test_leadership_applicability_honours_inclusive_explicit_day(self):
         appointment = SimpleNamespace(start_date=date(2030, 1, 2), end_date=date(2030, 1, 3))
