@@ -210,18 +210,51 @@ class PasswordResetTests(unittest.TestCase):
             with patch.object(recovery, "_now", return_value=now + timedelta(minutes=2)):
                 self.assertTrue(recovery._allow_request("recover@example.invalid", "ip-two"))
             with patch.object(recovery, "_now", return_value=now + timedelta(minutes=4)):
-                # The repeated minute-blocked attempt also spent hourly capacity.
-                self.assertFalse(recovery._allow_request("recover@example.invalid", "ip-three"))
+                # The repeated minute-blocked attempt did not spend hourly capacity.
+                self.assertTrue(recovery._allow_request("recover@example.invalid", "ip-three"))
+            with patch.object(recovery, "_now", return_value=now + timedelta(minutes=6)):
+                self.assertFalse(recovery._allow_request("recover@example.invalid", "ip-four"))
             keys = [row.key_hash for row in PasswordResetThrottle.query.all()]
             self.assertTrue(all(re.fullmatch("[a-f0-9]{64}", key) for key in keys))
         restarted = create_app()
         with restarted.app_context():
             with patch.object(recovery, "_now", return_value=now + timedelta(hours=2)):
-                for index in range(20):
+                for index in range(120):
                     self.assertTrue(recovery._allow_request(f"other{index}@example.invalid", "shared-ip"))
                 self.assertFalse(recovery._allow_request("over-limit@example.invalid", "shared-ip"))
             db.session.remove()
             db.engine.dispose()
+
+    def test_repeated_clicks_do_not_spend_the_hourly_email_allowance(self):
+        with self.app.app_context():
+            now = recovery._now()
+            with patch.object(recovery, "_now", return_value=now):
+                self.assertEqual(recovery._request_allowance("recover@example.invalid", "same-peer"), (True, None))
+                for _ in range(10):
+                    self.assertEqual(recovery._request_allowance("recover@example.invalid", "same-peer"), (False, "email_minute"))
+            with patch.object(recovery, "_now", return_value=now + timedelta(minutes=1)):
+                self.assertEqual(recovery._request_allowance("recover@example.invalid", "same-peer"), (True, None))
+            with patch.object(recovery, "_now", return_value=now + timedelta(minutes=2)):
+                self.assertEqual(recovery._request_allowance("recover@example.invalid", "same-peer"), (True, None))
+            with patch.object(recovery, "_now", return_value=now + timedelta(minutes=3)):
+                self.assertEqual(recovery._request_allowance("recover@example.invalid", "same-peer"), (False, "email_hour"))
+
+    def test_transient_delivery_failure_retries_same_message_once(self):
+        self.send.side_effect = [MailDeliveryError("connection"), None]
+        recovery._deliver_reset(self.app, "recover@example.invalid", "en")
+        self.assertEqual(self.send.call_count, 2)
+        self.assertEqual(self.send.call_args_list[0], self.send.call_args_list[1])
+        with self.app.app_context():
+            self.assertEqual(PasswordResetToken.query.count(), 1)
+
+    def test_repeated_delivery_failure_is_bounded_and_removes_token(self):
+        self.send.side_effect = MailDeliveryError("delivery")
+        with self.assertLogs(self.app.logger, level="ERROR") as logs:
+            recovery._deliver_reset(self.app, "recover@example.invalid", "en")
+        self.assertEqual(self.send.call_count, 2)
+        self.assertIn("(delivery)", " ".join(logs.output))
+        with self.app.app_context():
+            self.assertEqual(PasswordResetToken.query.count(), 0)
 
     def test_concurrent_credential_change_wins_over_recovery(self):
         token = self.delivered_token()

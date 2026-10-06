@@ -128,6 +128,7 @@ def initialise_database():
         models,
         notification_models,
         page_access_models,
+        password_reset_delivery_models,
         password_reset_models,
         worktime_models,
     )

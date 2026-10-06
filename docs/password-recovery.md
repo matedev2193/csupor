@@ -17,11 +17,17 @@ background executor so HTTP response times do not reveal account existence.
 Each process permits two concurrent deliveries and sixteen pending/running tasks.
 An application restart can interrupt an unsent request; the user can request
 another link after one minute. There is no persistent outbound queue for password
-recovery. Delivery errors are logged without provider responses, addresses or
-secrets.
+recovery. Transient connection and delivery failures are retried once using the
+same Message-ID; authentication/configuration failures are not retried. Delivery
+errors, including unexpected background exceptions, are logged as fixed reason
+codes without provider responses, addresses or secrets. Forked workers initialise
+their own executor and capacity instead of inheriting another process's threads.
 
 Shared database limits allow one request per email per minute, three per email
-per hour and twenty per server-observed requester address per hour. Email
+per hour and 120 per server-observed requester address per hour. Only accepted
+requests spend an email's hourly allowance; minute-blocked repeated clicks do
+not. The larger aggregate allowance accommodates hosting proxies shared by
+multiple users while retaining strict per-email limits. Email
 identities are compared without case; rate-limit keys are HMACs, not plain email
 or IP addresses. Forwarded headers are not trusted for these limits. Deployments
 whose proxy exposes one shared remote address also share that requester limit.
@@ -54,7 +60,22 @@ first deployment of this change requires previously signed-in users to log in
 again. A normal password change preserves the confirming browser's session and
 revokes earlier sessions elsewhere; recovery requires a fresh login everywhere.
 
-Application startup automatically adds `password_reset_tokens` and
-`password_reset_throttles`. The optional additive SQL migration is
+Authorised users can inspect **Settings → Email settings → Recent password reset
+emails** without a terminal. The last 20 requests show their status, attempt
+count and a fixed reason such as a rate limit, unmatched account, invalid
+application URL, authentication failure or unavailable worker. Times use
+Europe/Budapest. **Accepted by the email server** means SMTP accepted the message,
+not that it reached the inbox. Recipient addresses are visible only through the
+protected settings page. No tokens, passwords, message bodies or raw provider
+responses are retained. At most 1000 diagnostics are kept; records older than
+seven days are hidden and pruned when new requests are recorded. Diagnostic
+storage failures do not prevent delivery. Unfinished queued entries can indicate
+a process restart; the user can request a new link.
+
+Application startup automatically adds `password_reset_tokens`,
+`password_reset_throttles` and `password_reset_deliveries`. The optional additive
+SQL migration for tokens and throttles is
 `sql/migrations/2026-10-06-add-password-reset.sql`; it preserves existing records
 and matches the deployed `users.id` integer type and signedness.
+Delivery diagnostics have their own additive migration:
+`sql/migrations/2026-10-06-add-password-reset-delivery-diagnostics.sql`.
