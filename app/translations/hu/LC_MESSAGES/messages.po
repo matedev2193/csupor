@@ -4686,3 +4686,15 @@ msgstr "Túl sok jelszó-visszaállítási kérés érkezett erről a kapcsolatr
 
 msgid "Waiting to send"
 msgstr "Küldésre vár"
+
+msgid "Password reset links and notifications will be sent to this address."
+msgstr "Erre az e-mail-címre küldjük a jelszó-visszaállító hivatkozásokat és az értesítéseket."
+
+msgid "Confirm email address change"
+msgstr "E-mail-cím módosításának megerősítése"
+
+msgid "Enter your current password to save your profile with the new email address."
+msgstr "A profil és az új e-mail-cím mentéséhez add meg a jelenlegi jelszavad."
+
+msgid "Confirm and save"
+msgstr "Megerősítés és mentés"

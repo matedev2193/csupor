@@ -47,11 +47,14 @@ unchanged credentials in a single transaction; competing uses and competing link
 cannot both change the password. Previously authenticated sessions are invalidated
 by the new password. Merely opening an email link does not consume it.
 
-In **My profile**, the account owner can update their email address in a separate
-form by confirming their current password. Addresses are normalised, validated
-and checked for case-insensitive uniqueness. The change leaves the personal
-profile and password unchanged; future notifications and recovery emails use
-the new address. Administrative profile editing does not expose this form.
+In **My profile**, the email field appears under **Address and other details**.
+**Save profile** opens a password-confirmation dialog only when the email address
+has changed. The profile and email are saved together after confirmation; a
+failed or cancelled confirmation saves neither and preserves the entered details.
+Unchanged email addresses do not require a password. Addresses are normalised,
+validated and checked for case-insensitive uniqueness. Future notifications and
+recovery emails use the new address. Administrative profile editing does not
+expose the account email field.
 Both email and signed-in password changes use conditional writes, so an
 in-flight request cannot overwrite a concurrent recovery or account edit.
 

@@ -14,6 +14,7 @@ from app import create_app, db
 from app.models import User, UserPrivilege, UserProfile
 from app.page_access import invalidate_access_cache
 from app.page_access_models import PageRolePermission
+from app.routes import _render_profile_editor
 
 
 class ProfileEmailTests(unittest.TestCase):
@@ -63,6 +64,14 @@ class ProfileEmailTests(unittest.TestCase):
         form.update(extra)
         return self.client.post("/profile/email", data=form)
 
+    def save_profile(self, email="new@example.invalid", password="current-password-123", **extra):
+        form = {
+            "email": email, "current_password": password, "csrf_token": self.token(),
+            "full_name": "Updated personal name", "phone_number": "updated-phone",
+        }
+        form.update(extra)
+        return self.client.post("/profile", data=form)
+
     def account(self, name="employee"):
         db.session.expire_all()
         return db.session.get(User, self.ids[name])
@@ -79,15 +88,143 @@ class ProfileEmailTests(unittest.TestCase):
         self.login()
         self.assertEqual(self.client.get("/profile/email").status_code, 405)
 
-    def test_own_profile_displays_a_separate_current_email_and_password_form(self):
+    def test_own_profile_displays_email_in_the_combined_profile_form(self):
         self.login()
         response = self.client.get("/profile")
         html = response.get_data(as_text=True)
-        self.assertIn('id="account-email-form" action="/profile/email" method="post"', html)
+        self.assertIn('id="profile-form"', html)
+        self.assertNotIn('id="account-email-form"', html)
+        self.assertNotIn('action="/profile/email"', html)
         self.assertIn('value="employee@example.invalid"', html)
         self.assertIn('id="account-email-password" type="password"', html)
+        self.assertIn('form="profile-form"', html)
         self.assertIn('maxlength="120"', html)
         self.assertIn(self.token(), html)
+
+    def test_profile_and_normalised_email_are_saved_together_for_the_signed_in_user(self):
+        self.login()
+        old_hash = self.account().password_hash
+        response = self.save_profile(
+            "  NEW.Address+test@Example.Invalid  ",
+            user_id=str(self.ids["hr"]), target_user_id=str(self.ids["hr"]), privilege="developer",
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.account().email, "new.address+test@example.invalid")
+        self.assertEqual(self.account().password_hash, old_hash)
+        self.assertEqual(self.account().profile.full_name, "Updated personal name")
+        self.assertEqual(self.account().profile.phone_number, "updated-phone")
+        self.assertEqual(self.account().privilege, UserPrivilege.employee)
+        self.assertEqual(self.account("hr").email, "hr@example.invalid")
+        self.assertEqual(self.account("hr").profile.full_name, "Saved hr")
+
+    def test_unchanged_normalised_email_needs_no_password_confirmation(self):
+        self.login()
+        for password in ("", "not-the-password"):
+            with self.subTest(password=password):
+                response = self.save_profile(" EMPLOYEE@EXAMPLE.INVALID ", password=password)
+                self.assertEqual(response.status_code, 302)
+                self.assertEqual(self.account().email, "employee@example.invalid")
+                self.assertEqual(self.account().profile.full_name, "Updated personal name")
+
+    def test_legacy_profile_only_submit_keeps_account_email_unchanged(self):
+        self.login()
+        response = self.client.post("/profile", data={"full_name": "Profile-only change"})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.account().email, "employee@example.invalid")
+        self.assertEqual(self.account().profile.full_name, "Profile-only change")
+
+    def test_missing_or_wrong_password_reopens_confirmation_without_saving_anything(self):
+        self.login()
+        for password in ("", "private-incorrect-password"):
+            with self.subTest(password=password), patch(
+                "app.routes._render_profile_editor", wraps=_render_profile_editor,
+            ) as render:
+                response = self.save_profile(password=password)
+                self.assertEqual(response.status_code, 200)
+                self.assertTrue(render.call_args.kwargs["email_confirmation_required"])
+                self.assertEqual(
+                    render.call_args.kwargs["email_confirmation_error"],
+                    "Current password is incorrect." if password else None,
+                )
+                self.assertEqual(self.account().email, "employee@example.invalid")
+                self.assertEqual(self.account().profile.full_name, "Saved employee")
+                self.assertEqual(self.account().profile.phone_number, "saved-phone")
+                html = response.get_data(as_text=True)
+                self.assertIn('value="new@example.invalid"', html)
+                self.assertIn('value="Updated personal name"', html)
+                self.assertIn('value="updated-phone"', html)
+                self.assertNotIn('value="private-incorrect-password"', html)
+
+    def test_combined_submit_requires_valid_csrf_even_for_unchanged_email(self):
+        self.login()
+        for email in ("new@example.invalid", "employee@example.invalid"):
+            for csrf in ("", "forged-token", "árvíztűrő"):
+                with self.subTest(email=email, csrf=csrf):
+                    response = self.save_profile(email, csrf_token=csrf)
+                    self.assertEqual(response.status_code, 400)
+                    self.assertEqual(self.account().email, "employee@example.invalid")
+                    self.assertEqual(self.account().profile.full_name, "Saved employee")
+
+    def test_invalid_or_duplicate_email_does_not_save_personal_details(self):
+        self.users["hr"].email = "Existing@Example.Invalid"
+        db.session.commit()
+        self.login()
+        for email in ("not-an-email", "name@example.invalid\r\nBcc: other@example.invalid", "EXISTING@example.invalid"):
+            with self.subTest(email=email):
+                response = self.save_profile(email)
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(self.account().email, "employee@example.invalid")
+                self.assertEqual(self.account().profile.full_name, "Saved employee")
+                self.assertIn('value="Updated personal name"', response.get_data(as_text=True))
+
+    def test_invalid_personal_details_do_not_save_verified_email(self):
+        self.login()
+        response = self.save_profile(social_security_number="invalid-number")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.account().email, "employee@example.invalid")
+        self.assertEqual(self.account().profile.full_name, "Saved employee")
+        html = response.get_data(as_text=True)
+        self.assertIn('value="new@example.invalid"', html)
+        self.assertIn('value="Updated personal name"', html)
+        self.assertIn('value="invalid-number"', html)
+
+    def test_first_profile_is_created_only_after_successful_email_confirmation(self):
+        db.session.delete(self.users["employee"].profile)
+        db.session.commit()
+        db.session.expire_all()
+        self.login()
+        self.assertEqual(self.save_profile(password="").status_code, 200)
+        self.assertIsNone(self.account().profile)
+        self.assertEqual(self.account().email, "employee@example.invalid")
+        self.assertEqual(self.save_profile().status_code, 302)
+        self.assertEqual(self.account().email, "new@example.invalid")
+        self.assertEqual(self.account().profile.full_name, "Updated personal name")
+
+    def test_commit_collision_rolls_back_combined_email_and_profile_save(self):
+        self.login()
+        token = self.token()
+        with patch.object(db.session, "commit", side_effect=IntegrityError(
+            "UPDATE users SET email=:email", {"email": "private-address@example.invalid"}, Exception("duplicate"),
+        )):
+            response = self.client.post("/profile", data={
+                "csrf_token": token, "email": "new@example.invalid", "current_password": "current-password-123",
+                "full_name": "Unsaved personal name", "phone_number": "unsaved-phone",
+            })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.account().email, "employee@example.invalid")
+        self.assertEqual(self.account().profile.full_name, "Saved employee")
+        self.assertEqual(self.account().profile.phone_number, "saved-phone")
+        self.assertIn("already used by another account", response.get_data(as_text=True))
+        self.assertNotIn("private-address@example.invalid", response.get_data(as_text=True))
+
+    def test_combined_profile_save_requires_login(self):
+        response = self.client.post("/profile", data={
+            "email": "new@example.invalid", "full_name": "Unsigned edit", "current_password": "current-password-123",
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/login", response.location)
+        self.assertEqual(self.account().email, "employee@example.invalid")
+        self.assertEqual(self.account().profile.full_name, "Saved employee")
 
     def test_normalised_email_persists_without_changing_password_or_profile(self):
         self.login()
@@ -198,7 +335,7 @@ class ProfileEmailTests(unittest.TestCase):
         self.assertNotIn("sensitive@example.invalid", self.flashes())
         self.assertEqual(self.client.get("/profile").status_code, 200)
 
-    def _change_after_concurrent_account_update(self, values):
+    def _change_after_concurrent_account_update(self, values, *, combined=False):
         self.login()
         token = self.token()
         raced = False
@@ -214,15 +351,19 @@ class ProfileEmailTests(unittest.TestCase):
 
         event.listen(db.engine, "before_cursor_execute", update_before_email_write)
         try:
-            response = self.client.post("/profile/email", data={
+            response = self.client.post("/profile" if combined else "/profile/email", data={
                 "csrf_token": token, "email": "stale-change@example.invalid", "current_password": "current-password-123",
+                "full_name": "Unsaved concurrent edit", "phone_number": "unsaved-phone",
             })
         finally:
             event.remove(db.engine, "before_cursor_execute", update_before_email_write)
         self.assertTrue(raced)
-        self.assertEqual(response.status_code, 302)
-        self.assertIn("Your account changed while saving.", self.flashes())
+        self.assertEqual(response.status_code, 200 if combined else 302)
+        messages = response.get_data(as_text=True) if combined else self.flashes()
+        self.assertIn("Your account changed while saving.", messages)
         self.assertNotEqual(self.account().email, "stale-change@example.invalid")
+        self.assertEqual(self.account().profile.full_name, "Saved employee")
+        self.assertEqual(self.account().profile.phone_number, "saved-phone")
 
     def test_concurrent_password_reset_prevents_email_change_using_old_password(self):
         new_hash = generate_password_hash("secure-reset-password")
@@ -232,6 +373,16 @@ class ProfileEmailTests(unittest.TestCase):
 
     def test_concurrent_email_change_is_not_overwritten(self):
         self._change_after_concurrent_account_update({"email": "already-changed@example.invalid"})
+        self.assertEqual(self.account().email, "already-changed@example.invalid")
+
+    def test_concurrent_password_reset_rolls_back_combined_profile_and_email_change(self):
+        new_hash = generate_password_hash("secure-reset-password")
+        self._change_after_concurrent_account_update({"password_hash": new_hash}, combined=True)
+        self.assertEqual(self.account().password_hash, new_hash)
+        self.assertEqual(self.account().email, "employee@example.invalid")
+
+    def test_concurrent_email_change_rolls_back_combined_profile_save(self):
+        self._change_after_concurrent_account_update({"email": "already-changed@example.invalid"}, combined=True)
         self.assertEqual(self.account().email, "already-changed@example.invalid")
 
     def test_revoking_own_profile_permission_also_blocks_email_post(self):
@@ -245,6 +396,13 @@ class ProfileEmailTests(unittest.TestCase):
         })
         self.assertEqual(response.status_code, 403)
         self.assertEqual(self.account().email, "employee@example.invalid")
+        response = self.client.post("/profile", data={
+            "csrf_token": token, "email": "new@example.invalid", "current_password": "current-password-123",
+            "full_name": "Forbidden edit",
+        })
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(self.account().email, "employee@example.invalid")
+        self.assertEqual(self.account().profile.full_name, "Saved employee")
 
     def test_updated_email_can_be_used_to_log_in(self):
         self.login()
