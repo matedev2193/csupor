@@ -12,7 +12,7 @@ from sqlalchemy.dialects import mysql
 from sqlalchemy.exc import IntegrityError
 
 from app import create_app, db
-from app.models import ProfilePhoto, ProfilePhotoSource
+from app.models import ProfilePhoto, ProfilePhotoSource, User
 from app.profile_photos import _avatar
 from app.schema import create_missing_tables
 from tests import test_profile_photos as photo_fixtures
@@ -298,7 +298,7 @@ class ProfilePhotoEditorTests(unittest.TestCase):
         with restarted.app_context():
             client = restarted.test_client()
             with client.session_transaction() as session:
-                session["_user_id"] = str(user_id)
+                session["_user_id"] = db.session.get(User, user_id).get_id()
                 session["_fresh"] = True
             self.assertEqual(client.get("/profile/photo/editor").json, result.json["editor"])
             self.assertEqual(client.get(result.json["editor"]["image_url"]).data, before[4])

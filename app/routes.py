@@ -7,7 +7,8 @@ from flask import abort, current_app, flash, redirect, render_template, request,
 from flask_babel import _
 from flask_login import current_user, login_required, login_user, logout_user
 from sqlalchemy.orm import joinedload
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from werkzeug.security import generate_password_hash
 
 from . import SUPPORTED_LOCALES, db, get_locale
 
@@ -227,6 +228,8 @@ def _save_profile_from_form(profile: UserProfile) -> list[str]:
 
 
 def _render_profile_editor(profile: UserProfile, target_user: User, *, manager_mode: bool = False):
+    if not manager_mode:
+        session.setdefault("profile_email_csrf_token", token_urlsafe(32))
     return render_template(
         "profile.html",
         profile=profile,
@@ -234,6 +237,7 @@ def _render_profile_editor(profile: UserProfile, target_user: User, *, manager_m
         marital_statuses=MaritalStatus,
         manager_mode=manager_mode,
         target_user=target_user,
+        profile_email_csrf_token=session.get("profile_email_csrf_token", "") if not manager_mode else "",
     )
 
 
@@ -1662,10 +1666,14 @@ def init_routes(app):
     @app.route("/password", methods=["GET", "POST"])
     @login_required
     def change_password():
+        session.setdefault("change_password_csrf_token", token_urlsafe(32))
         if request.method == "POST":
+            if not compare_digest(session["change_password_csrf_token"].encode(), request.form.get("csrf_token", "").encode()):
+                abort(400)
             current_password = request.form.get("current_password", "")
             new_password = request.form.get("new_password", "")
             new_password_confirm = request.form.get("new_password_confirm", "")
+            old_hash, old_email = current_user.password_hash, current_user.email
 
             if not current_user.check_password(current_password):
                 flash(_("Current password is incorrect."), "error")
@@ -1679,9 +1687,20 @@ def init_routes(app):
                 flash(_("New password and confirmation do not match."), "error")
                 return render_template("change_password.html")
 
-            current_user.set_password(new_password)
-            db.session.add(current_user)
+            changed = db.session.execute(db.update(User).where(
+                User.id == current_user.id,
+                User.password_hash == old_hash,
+                User.email == old_email,
+            ).values(password_hash=generate_password_hash(new_password)).execution_options(synchronize_session=False))
+            if changed.rowcount != 1:
+                db.session.rollback()
+                logout_user()
+                flash(_("Your account details changed. Log in again before retrying."), "error")
+                return redirect(url_for("login"))
             db.session.commit()
+            # Keep this re-authenticated session; other sessions carry the old
+            # password-bound identity and must sign in again.
+            login_user(current_user._get_current_object())
             flash(_("Password updated successfully."), "success")
             return redirect(landing_url())
 
@@ -1704,6 +1723,58 @@ def init_routes(app):
             return redirect(landing_url())
 
         return _render_profile_editor(profile, current_user)
+
+    @app.post("/profile/email")
+    @login_required
+    def change_account_email():
+        from .mail_settings import _has_control, _valid_email
+
+        csrf_token = session.get("profile_email_csrf_token", "")
+        if not csrf_token or not compare_digest(csrf_token.encode(), request.form.get("csrf_token", "").encode()):
+            abort(400)
+
+        raw_email = request.form.get("email", "")
+        email = raw_email.strip().lower()
+        if _has_control(raw_email) or len(email) > 120 or not _valid_email(email):
+            flash(_("Enter a valid email address of at most 120 characters."), "error")
+            return redirect(url_for("edit_profile"))
+        observed_email = current_user.email
+        observed_password_hash = current_user.password_hash
+        if not current_user.check_password(request.form.get("current_password", "")):
+            flash(_("Current password is incorrect."), "error")
+            return redirect(url_for("edit_profile"))
+
+        # The account comes only from the authenticated session. Form-supplied
+        # user ids and personal-profile fields cannot edit another account.
+        existing = db.session.execute(
+            db.select(User.id).where(db.func.lower(User.email) == email, User.id != current_user.id).limit(1)
+        ).scalar_one_or_none()
+        if existing is not None:
+            flash(_("This email address is already used by another account."), "error")
+            return redirect(url_for("edit_profile"))
+
+        try:
+            # A password reset or a different email change may finish between
+            # reauthentication and this write. Only update the verified state.
+            changed = db.session.execute(
+                db.update(User).where(
+                    User.id == current_user.id,
+                    User.email == observed_email,
+                    User.password_hash == observed_password_hash,
+                ).values(email=email).execution_options(synchronize_session=False)
+            )
+            if changed.rowcount != 1:
+                db.session.rollback()
+                flash(_("Your account changed while saving. Refresh the page and try again."), "error")
+                return redirect(url_for("edit_profile"))
+            db.session.commit()
+        except IntegrityError:
+            # Another request may claim the address after the duplicate check.
+            db.session.rollback()
+            flash(_("This email address is already used by another account."), "error")
+            return redirect(url_for("edit_profile"))
+        flash(_("Account email address updated. Future emails will be sent to this address."), "success")
+        return redirect(url_for("edit_profile"))
 
     @app.route("/users/profiles")
     @privilege_manager_required

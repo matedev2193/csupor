@@ -1,6 +1,6 @@
 # Page access
 
-Developers can open **Page access** (**Oldalhozzáférések** in Hungarian) at `/page-access`. The table has one row per application page and one column per stored privilege: employee, HR, director (`ceo`) and developer. Tick a cell to allow the page, clear it to deny the page, then save. Settings apply to all users with that privilege on their next request, including already signed-in sessions.
+Developers can open **Page access** (**Oldalhozzáférések** in Hungarian) under **Settings → Page access**, at `/page-access`. The Settings menu also contains **Privileges** and **Email settings**, showing only the pages the current user can access. The table has one row per application page and one column per stored privilege: employee, HR, director (`ceo`) and developer. Tick a cell to allow the page, clear it to deny the page, then save. Settings apply to all users with that privilege on their next request, including already signed-in sessions.
 
 The editor's own row is fixed: developers always have access and other privileges never do. Both the form and server enforce this rule, independently of saved permission rows. A developer also cannot remove their own developer privilege on the privileges page. Other pages, including email settings, can be granted or revoked through the matrix.
 
@@ -10,12 +10,12 @@ The same policy controls sidebar items, dashboard sections and links, direct URL
 
 Page access does not replace record ownership or business rules:
 
-- Personal records still belong to the signed-in user. Viewing one's own working-time register requires a contract, including a historical or future contract. Managing other employees' schedules requires Working-time management; access to Groups alone does not grant schedule access or exports.
+- Personal records still belong to the signed-in user. Viewing one's own leave calendar or working-time register also requires at least one contract, including an inactive, historical or future contract. This applies to every privilege, even developers, and cannot be bypassed by a page grant. Accounts that have never had a contract have neither sidebar links nor dashboard cards for those pages, and direct GET/POST requests return HTTP 403. Managing other employees' schedules requires Working-time management; access to Groups alone does not grant schedule access or exports.
 - Leave approvals also require director privilege or an active nursery leadership appointment. Approval mode, legal-entity scope, assignment dates and restrictions on approving one's own requests still apply. The matrix can remove an eligible reviewer's access; a tick alone does not appoint a reviewer. This conditional row is enabled for all four privileges by default so existing nursery heads retain access.
 - Account deletion still requires the acting user's password and retains the self-deletion and final-director protections. Owning an avatar permits displaying it in the account area even if profile editing is disabled; other users' avatars require access to User profiles. Photo uploads, editing and original image retrieval require My profile access and ownership.
 - GYÁP downloads require access to Leave calendar, Leave approvals or GYÁP forms. The existing filename/year checks remain in place.
 
-Login, logout and language switching remain available. After login or a successful personal-record save, the application chooses an allowed landing page if the dashboard is disabled. Accounts with no available page see an explanatory screen with logout. Empty menu groups and dashboard sections are hidden. Authenticated responses disallow browser caching while retaining existing privacy directives.
+Login, logout, password reset and language switching remain available. Changing one's own account email inherits My profile access. After login or a successful personal-record save, the application chooses an allowed landing page if the dashboard is disabled. Accounts with no available page see an explanatory screen with logout. Empty menu groups and dashboard sections are hidden. Authenticated responses disallow browser caching while retaining existing privacy directives.
 
 Reviewer notification eligibility follows the same page policy. Revoked reviewers' outstanding task emails are filtered before delivery. Granting access to a newly eligible reviewer queues their outstanding tasks in the same transaction as the permission update. Applicant status notifications and the configured daily/urgent timing remain unchanged.
 

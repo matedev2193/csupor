@@ -99,6 +99,10 @@ def create_app() -> Flask:
 
     app.register_blueprint(mail_settings)
 
+    from .password_reset import password_reset
+
+    app.register_blueprint(password_reset)
+
     from .account_display import account_template_context
 
     app.context_processor(account_template_context)

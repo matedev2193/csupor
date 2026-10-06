@@ -36,7 +36,7 @@ class LeaveYearBoundaryTests(unittest.TestCase):
         db.session.add_all([self.user, self.contract, LeaveYear(year=2026, is_open=True)])
         db.session.commit()
         with self.client.session_transaction() as session:
-            session["_user_id"] = str(self.user.id)
+            session["_user_id"] = self.user.get_id()
             session["_fresh"] = True
             session["locale"] = "en"
 

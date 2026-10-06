@@ -42,7 +42,7 @@ PAGE_DEFINITIONS = (
     _page("add_qualification", lazy_gettext("Qualifications"), lazy_gettext("My workspace")),
     _page("professional_exam", lazy_gettext("Professional exam"), lazy_gettext("My workspace")),
     _page("change_password", lazy_gettext("Change password"), lazy_gettext("My workspace")),
-    _page("leaves", lazy_gettext("Leave calendar"), lazy_gettext("Records")),
+    _page("leaves", lazy_gettext("Leave calendar"), lazy_gettext("Records"), note=lazy_gettext("An employment contract is also required.")),
     _page("worktime.index", lazy_gettext("Working-time register"), lazy_gettext("Records"), note=lazy_gettext("An employment contract is also required.")),
     _page("manage_user_profiles", lazy_gettext("User profiles"), lazy_gettext("Management"), MANAGER_ROLES),
     _page("manage_contracts", lazy_gettext("Contracts"), lazy_gettext("Management"), MANAGER_ROLES),
@@ -56,14 +56,14 @@ PAGE_DEFINITIONS = (
     _page("manage_leadership", lazy_gettext("Leadership"), lazy_gettext("Management"), MANAGER_ROLES),
     _page("manage_legal_entities", lazy_gettext("Legal entities"), lazy_gettext("Management"), MANAGER_ROLES),
     _page("manage_places_of_work", lazy_gettext("Workplaces"), lazy_gettext("Management"), MANAGER_ROLES),
-    _page("manage_privileges", lazy_gettext("Privileges"), lazy_gettext("Management"), ("hr", "ceo", "developer")),
-    _page("mail_settings.settings", lazy_gettext("Email settings"), lazy_gettext("Settings"), ("developer",)),
+    _page("manage_privileges", lazy_gettext("Privileges"), lazy_gettext("Settings"), ("hr", "ceo", "developer")),
     _page("page_access.settings", lazy_gettext("Page access"), lazy_gettext("Settings"), ("developer",), lazy_gettext("Developers always have access to this page. Access cannot be granted to other roles.")),
+    _page("mail_settings.settings", lazy_gettext("Email settings"), lazy_gettext("Settings"), ("developer",)),
 )
 _PAGES = {row["key"]: row for row in PAGE_DEFINITIONS}
 _ENDPOINT_PAGES = {key: key for key in _PAGES}
 for _parent, _children in {
-    "edit_profile": ("profile_photos.upload_photo", "profile_photos.photo_editor", "profile_photos.photo_source"),
+    "edit_profile": ("change_account_email", "profile_photos.upload_photo", "profile_photos.photo_editor", "profile_photos.photo_source"),
     "manage_user_profiles": ("edit_user_profile", "delete_user_profile"),
     "manage_dependents": ("add_dependent", "edit_dependent"),
     "add_qualification": ("edit_qualification",),
@@ -78,7 +78,10 @@ for _parent, _children in {
 
 # These pages do not reveal protected application data. They must remain usable
 # when every configurable page is denied, so login/logout never form a loop.
-UTILITY_ENDPOINTS = frozenset({"static", "index", "login", "logout", "register", "set_language", "page_access.unavailable"})
+UTILITY_ENDPOINTS = frozenset({
+    "static", "index", "login", "logout", "register", "set_language", "page_access.unavailable",
+    "password_reset.request_reset", "password_reset.reset_password",
+})
 SPECIAL_ENDPOINTS = frozenset({"profile_photos.show_photo", "gyap.download_form", "worktime.export"})
 
 
@@ -119,7 +122,7 @@ def can_access_page(page_key, user=None, *, day=None):
     allowed = _permission_rules().get((page_key, role), role in _PAGES[page_key]["default_roles"])
     if not allowed:
         return False
-    if page_key == "worktime.index":
+    if page_key in {"leaves", "worktime.index"}:
         return bool(user.contracts)
     if page_key == "manage_leaves" and role != "ceo":
         today = day or datetime.now(timezone.utc).astimezone(ZoneInfo("Europe/Budapest")).date()

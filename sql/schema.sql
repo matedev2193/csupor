@@ -605,3 +605,24 @@ CREATE TABLE IF NOT EXISTS page_role_permissions (
   PRIMARY KEY (page_key, `role`),
   CONSTRAINT page_permission_role CHECK (`role` IN ('employee', 'hr', 'ceo', 'developer'))
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  token_hash VARCHAR(64) NOT NULL,
+  user_id INT UNSIGNED NOT NULL,
+  credentials_hash VARCHAR(64) NOT NULL,
+  created_at DATETIME NOT NULL,
+  expires_at DATETIME NOT NULL,
+  consumed_at DATETIME NULL,
+  PRIMARY KEY (token_hash),
+  KEY ix_password_reset_tokens_user_id (user_id),
+  KEY ix_password_reset_tokens_expires_at (expires_at),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS password_reset_throttles (
+  key_hash VARCHAR(64) NOT NULL,
+  expires_at DATETIME NOT NULL,
+  request_count INT NOT NULL,
+  PRIMARY KEY (key_hash),
+  KEY ix_password_reset_throttles_expires_at (expires_at)
+) ENGINE=InnoDB;

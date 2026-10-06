@@ -4,6 +4,7 @@ from . import db
 from .models import Contract, GyapForm, LeaveApprovalSettings, LeaveRequest, LeaveYear
 from .mail_settings_models import MailServerSettings
 from .page_access_models import PageAccessSettings
+from .password_reset_models import PasswordResetToken
 from .worktime_models import WorkGroupMerge, WorkSchedule, WorkTimeEntry
 
 
@@ -42,6 +43,8 @@ def delete_user_account(user):
         (WorkSchedule, WorkSchedule.confirmed_by_id),
     ):
         model.query.filter(column == user.id).update({column: None}, synchronize_session="fetch")
+
+    PasswordResetToken.query.filter_by(user_id=user.id).delete(synchronize_session="fetch")
 
     # Explicit model cascades include profile/photo, dependents, qualifications,
     # professional exam, own leave requests, contracts, limits and leadership.

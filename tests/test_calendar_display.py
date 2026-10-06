@@ -54,7 +54,7 @@ class CalendarDisplayTests(unittest.TestCase):
         ):
             with self.subTest(locale=locale):
                 with self.client.session_transaction() as session:
-                    session.update(_user_id=str(self.user_id), _fresh=True, locale=locale)
+                    session.update(_user_id=db.session.get(User, self.user_id).get_id(), _fresh=True, locale=locale)
                 for key in ("_login_user", "_flask_babel", "leave_approval_policy"):
                     g.pop(key, None)
                 response = self.client.get(

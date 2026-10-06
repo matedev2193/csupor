@@ -48,7 +48,7 @@ class MailSettingsTests(unittest.TestCase):
 
     def login(self, role="developer"):
         with self.client.session_transaction() as session:
-            session["_user_id"] = str(self.users[role].id)
+            session["_user_id"] = self.users[role].get_id()
             session["_fresh"] = True
             session["locale"] = "en"
         g.pop("_login_user", None)

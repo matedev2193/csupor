@@ -59,7 +59,7 @@ class PeopleContextTests(unittest.TestCase):
 
     def login(self, role, locale="en"):
         with self.client.session_transaction() as session:
-            session["_user_id"] = str(self.users[role].id);session["_fresh"] = True;session["locale"] = locale
+            session["_user_id"] = self.users[role].get_id();session["_fresh"] = True;session["locale"] = locale
         for key in ("_login_user", "_flask_babel", "leave_approval_policy"):
             g.pop(key, None)
 

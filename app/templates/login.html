@@ -27,7 +27,7 @@
             <button type="button" class="icon-button password-toggle" data-password-toggle="password" aria-controls="password" aria-pressed="false" aria-label="{{ _('Show password') }}" data-show-label="{{ _('Show password') }}" data-hide-label="{{ _('Hide password') }}">{{ icon('eye') }}</button>
           </div>
         </div>
-        <div class="button-row"><button type="submit">{{ _('Login') }} {{ icon('arrow') }}</button></div>
+        <div class="button-row"><button type="submit">{{ _('Login') }} {{ icon('arrow') }}</button><a class="button button-secondary" href="{{ url_for('password_reset.request_reset') }}">{{ _('Forgot your password?') }}</a></div>
       </form>
       <p class="auth-switch">{{ _('New to CSUPOR?') }} <a href="{{ url_for('register') }}">{{ _('Create an account') }}</a></p>
     </section>
