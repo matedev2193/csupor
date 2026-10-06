@@ -88,7 +88,30 @@ body.photo-editor-open { overflow: hidden; }
 .photo-editor-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
 .photo-editor button:disabled, .photo-editor input:disabled { opacity: .5; cursor: default; }
 
+.email-confirmation {
+  width: min(460px, calc(100vw - 32px));
+  max-width: none;
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 26px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text);
+  background: #fff;
+  box-shadow: 0 24px 90px rgb(20 29 45 / 24%);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.email-confirmation::backdrop { background: rgb(20 29 45 / 52%); }
+.email-confirmation h2 { margin: 0; font-size: 1.35rem; }
+.email-confirmation > .help-text { margin: 14px 0 20px; line-height: 1.6; }
+.email-confirmation .field { display: grid; gap: 8px; }
+.email-confirmation-error { margin: 0 0 16px; color: #a73528; font-size: 13px; line-height: 1.5; }
+.email-confirmation-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+
 @media (max-width: 600px) {
+  .email-confirmation { padding: 20px; border-radius: 16px; }
+  .email-confirmation-actions .button { flex: 1; }
   .profile-photo-section { flex-direction: column; gap: 15px; }
   .profile-photo-form { width: 100%; }
   .photo-editor { width: calc(100vw - 20px); max-height: calc(100dvh - 20px); padding: 18px; border-radius: 16px; }

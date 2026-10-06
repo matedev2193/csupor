@@ -61,7 +61,7 @@ class WorktimeRoutesTests(unittest.TestCase):
 
     def login(self, name):
         with self.client.session_transaction() as session:
-            session["_user_id"] = str(self.users[name].id)
+            session["_user_id"] = self.users[name].get_id()
             session["_fresh"] = True
             session["locale"] = "en"
             session["worktime_csrf_token"] = "test-worktime-csrf"

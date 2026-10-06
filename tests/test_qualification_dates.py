@@ -39,7 +39,7 @@ class QualificationDateTests(unittest.TestCase):
 
     def login(self, key="employee"):
         with self.client.session_transaction() as session:
-            session["_user_id"] = str(self.users[key].id)
+            session["_user_id"] = self.users[key].get_id()
             session["_fresh"] = True
             session["locale"] = "en"
         g.pop("_login_user", None)

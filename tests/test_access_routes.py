@@ -213,7 +213,11 @@ class PageAccessRouteTests(unittest.TestCase):
         self.users["employee"].set_password("Before-change")
         db.session.commit()
         self.login("employee")
+        self.assertEqual(self.client.get("/password").status_code, 200)
+        with self.client.session_transaction() as session:
+            csrf = session["change_password_csrf_token"]
         response = self.client.post("/password", data={
+            "csrf_token": csrf,
             "current_password": "Before-change", "new_password": "After-change", "new_password_confirm": "After-change",
         })
         self.assertEqual(response.status_code, 302)

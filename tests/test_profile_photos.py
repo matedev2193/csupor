@@ -61,7 +61,7 @@ class ProfilePhotoTests(unittest.TestCase):
 
     def login(self, name):
         with self.client.session_transaction() as session:
-            session["_user_id"] = str(self.users[name].id)
+            session["_user_id"] = self.users[name].get_id()
             session["_fresh"] = True
             session["locale"] = "en"
         g.pop("_login_user", None)
@@ -307,7 +307,7 @@ class ProfilePhotoTests(unittest.TestCase):
         with restarted.app_context():
             new_client = restarted.test_client()
             with new_client.session_transaction() as session:
-                session["_user_id"] = str(user_id)
+                session["_user_id"] = db.session.get(User, user_id).get_id()
                 session["_fresh"] = True
             response = new_client.get(f"/users/{user_id}/photo")
             self.assertEqual(response.status_code, 200)

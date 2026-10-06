@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 import enum
+import hashlib
+import hmac
+import re
 from datetime import date
 
+from flask import current_app
 from flask_login import UserMixin
 from sqlalchemy.dialects.mysql import MEDIUMBLOB
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -177,6 +181,15 @@ class User(UserMixin, db.Model):
 
     def check_password(self, raw_password: str) -> bool:
         return check_password_hash(self.password_hash, raw_password)
+
+    def get_id(self) -> str:
+        """Bind every login session to the current password without exposing its hash."""
+        key = current_app.config["SECRET_KEY"]
+        if isinstance(key, str):
+            key = key.encode("utf-8")
+        message = f"csupor:login:v1:{self.id}:{self.password_hash}".encode("utf-8")
+        fingerprint = hmac.new(key, message, hashlib.sha256).hexdigest()
+        return f"{self.id}:{fingerprint}"
 
 
 class ProfilePhoto(db.Model):
@@ -436,8 +449,18 @@ class Leadership(db.Model):
 
 
 @login_manager.user_loader
-def load_user(user_id: str):
-    return db.session.get(User, int(user_id))
+def load_user(identity: str):
+    # Numeric identities issued before password-bound sessions deliberately
+    # require a fresh login. Never accept malformed or oversized SQL IDs.
+    if not isinstance(identity, str) or not re.fullmatch(r"[1-9][0-9]{0,18}:[0-9a-f]{64}", identity):
+        return None
+    user_id = int(identity.split(":", 1)[0])
+    if user_id > 9223372036854775807:
+        return None
+    user = db.session.get(User, user_id)
+    if user is None or not hmac.compare_digest(identity, user.get_id()):
+        return None
+    return user
 
 
 def parse_iso_date(value: str | None) -> date | None:

@@ -25,7 +25,8 @@
   </head>
   <body class="{{ 'portal-page' if current_user.is_authenticated else 'public-page' }}">
     {% set workspace_pages = ['dashboard', 'edit_profile', 'manage_dependents', 'add_dependent', 'edit_dependent', 'add_qualification', 'edit_qualification', 'professional_exam'] %}
-    {% set management_pages = ['manage_user_profiles', 'edit_user_profile', 'manage_privileges', 'manage_contracts', 'create_contract', 'edit_contract', 'manage_legal_entities', 'create_legal_entity', 'edit_legal_entity', 'manage_places_of_work', 'create_place_of_work', 'edit_place_of_work', 'select_contract_employee', 'manage_leadership', 'manage_leave_limits', 'manage_working_days', 'manage_leaves', 'leave_approval_settings', 'gyap.manage_forms', 'worktime.management', 'worktime.groups', 'worktime.group_new', 'worktime.group_edit'] %}
+    {% set management_pages = ['manage_user_profiles', 'edit_user_profile', 'manage_contracts', 'create_contract', 'edit_contract', 'manage_legal_entities', 'create_legal_entity', 'edit_legal_entity', 'manage_places_of_work', 'create_place_of_work', 'edit_place_of_work', 'select_contract_employee', 'manage_leadership', 'manage_leave_limits', 'manage_working_days', 'manage_leaves', 'leave_approval_settings', 'gyap.manage_forms', 'worktime.management', 'worktime.groups', 'worktime.group_new', 'worktime.group_edit'] %}
+    {% set settings_pages = ['manage_privileges', 'page_access.settings', 'mail_settings.settings', 'mail_settings.initialise_key'] %}
     <a class="skip-link" href="#main-content">{{ _('Skip to content') }}</a>
     {% if current_user.is_authenticated %}
     <aside class="sidebar" id="main-navigation" aria-label="{{ _('Main navigation') }}">
@@ -54,7 +55,7 @@
         {% endif %}
         {{ nav_item('leaves', _('Leave calendar'), 'calendar') }}
         {{ nav_item('worktime.index', _('Working-time register'), 'calendar') }}
-        {% if has_access_to_any(['manage_user_profiles', 'manage_contracts', 'worktime.groups', 'worktime.management', 'manage_working_days', 'manage_leave_limits', 'manage_leaves', 'gyap.manage_forms', 'leave_approval_settings', 'manage_leadership', 'manage_legal_entities', 'manage_places_of_work', 'manage_privileges']) %}
+        {% if has_access_to_any(['manage_user_profiles', 'manage_contracts', 'worktime.groups', 'worktime.management', 'manage_working_days', 'manage_leave_limits', 'manage_leaves', 'gyap.manage_forms', 'leave_approval_settings', 'manage_leadership', 'manage_legal_entities', 'manage_places_of_work']) %}
         <details class="nav-group{% if request.endpoint in management_pages %} has-current{% endif %}"{% if request.endpoint in management_pages %} open{% endif %}>
           <summary class="nav-group-trigger" id="management-trigger" aria-controls="management-menu">
             {{ icon('briefcase', 'nav-group-icon') }}<span>{{ _('Management') }}</span>{{ icon('chevron', 'nav-group-chevron') }}
@@ -72,12 +73,21 @@
             {{ nav_item('manage_leadership', _('Leadership'), 'award') }}
             {{ nav_item('manage_legal_entities', _('Legal entities'), 'building', ['create_legal_entity', 'edit_legal_entity']) }}
             {{ nav_item('manage_places_of_work', _('Workplaces'), 'building', ['create_place_of_work', 'edit_place_of_work']) }}
-            {{ nav_item('manage_privileges', _('Privileges'), 'lock') }}
           </div>
         </details>
         {% endif %}
-        {{ nav_item('mail_settings.settings', _('Settings'), 'settings') }}
-        {{ nav_item('page_access.settings', _('Page access'), 'lock') }}
+        {% if has_access_to_any(['manage_privileges', 'page_access.settings', 'mail_settings.settings']) %}
+        <details class="nav-group{% if request.endpoint in settings_pages %} has-current{% endif %}"{% if request.endpoint in settings_pages %} open{% endif %}>
+          <summary class="nav-group-trigger" id="settings-trigger" aria-controls="settings-menu">
+            {{ icon('settings', 'nav-group-icon') }}<span>{{ _('Settings') }}</span>{{ icon('chevron', 'nav-group-chevron') }}
+          </summary>
+          <div class="nav-group-menu" id="settings-menu" aria-labelledby="settings-trigger">
+            {{ nav_item('manage_privileges', _('Privileges'), 'lock') }}
+            {{ nav_item('page_access.settings', _('Page access'), 'lock') }}
+            {{ nav_item('mail_settings.settings', _('Email settings'), 'settings', ['mail_settings.initialise_key']) }}
+          </div>
+        </details>
+        {% endif %}
       </nav>
       <div class="sidebar-footer">
         {{ nav_item('change_password', _('Change password'), 'lock') }}
@@ -101,7 +111,7 @@
         {% if current_user.is_authenticated %}
         <div class="topbar-location">
           <button class="icon-button menu-toggle" type="button" aria-controls="main-navigation" aria-expanded="false" aria-label="{{ _('Open menu') }}">{{ icon('menu') }}</button>
-          <span class="breadcrumb-root">{{ _('Management') if request.endpoint in management_pages else _('My workspace') if request.endpoint in workspace_pages or request.endpoint == 'change_password' else 'CSUPOR' }}</span>{{ icon('chevron', 'breadcrumb-chevron') }}
+          <span class="breadcrumb-root">{{ _('Settings') if request.endpoint in settings_pages else _('Management') if request.endpoint in management_pages else _('My workspace') if request.endpoint in workspace_pages or request.endpoint == 'change_password' else 'CSUPOR' }}</span>{{ icon('chevron', 'breadcrumb-chevron') }}
           <span class="breadcrumb-current">{{ self.title().split(' · ')[0] }}</span>
         </div>
         {% else %}

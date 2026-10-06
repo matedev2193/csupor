@@ -197,15 +197,27 @@
     ('manage_leadership', _('Leadership'), 'award'),
     ('manage_legal_entities', _('Legal entities'), 'building'),
     ('manage_places_of_work', _('Workplaces'), 'building'),
-    ('manage_privileges', _('Privileges'), 'lock'),
-    ('mail_settings.settings', _('Settings'), 'settings'),
-    ('page_access.settings', _('Page access'), 'lock'),
   ] %}
   {% if has_access_to_any(management_shortcuts|map(attribute=0)|list) %}
   <section class="card">
     <div class="section-heading"><div><h2 class="heading-icon">{{ icon('briefcase') }} {{ _('Management') }}</h2><p>{{ _('Quick access to your administrative tools.') }}</p></div></div>
     <div class="management-shortcuts">
       {% for endpoint, label, symbol in management_shortcuts %}
+      {% if can_access_endpoint(endpoint) %}<a class="management-shortcut" href="{{ url_for(endpoint) }}">{{ icon(symbol) }}{{ label }}{{ icon('arrow') }}</a>{% endif %}
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+  {% set settings_shortcuts = [
+    ('manage_privileges', _('Privileges'), 'lock'),
+    ('page_access.settings', _('Page access'), 'lock'),
+    ('mail_settings.settings', _('Email settings'), 'settings'),
+  ] %}
+  {% if has_access_to_any(settings_shortcuts|map(attribute=0)|list) %}
+  <section class="card">
+    <div class="section-heading"><div><h2 class="heading-icon">{{ icon('settings') }} {{ _('Settings') }}</h2><p>{{ _('Quick access to your administrative tools.') }}</p></div></div>
+    <div class="management-shortcuts">
+      {% for endpoint, label, symbol in settings_shortcuts %}
       {% if can_access_endpoint(endpoint) %}<a class="management-shortcut" href="{{ url_for(endpoint) }}">{{ icon(symbol) }}{{ label }}{{ icon('arrow') }}</a>{% endif %}
       {% endfor %}
     </div>

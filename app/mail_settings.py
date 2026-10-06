@@ -234,10 +234,14 @@ def settings():
             flash(_("Email settings saved."), "success")
             return redirect(url_for("mail_settings.settings"))
     session.setdefault("mail_settings_csrf_token", token_urlsafe(32))
+    from .password_reset_delivery import ERROR_LABELS, STATUS_LABELS, recent_reset_deliveries
+
     response = current_app.make_response((render_template(
         "mail_settings.html", values=values, revision=saved.revision,
         password_saved=bool(saved.encrypted_password), csrf_token=session["mail_settings_csrf_token"],
         encryption_status=key_status(),
+        reset_deliveries=recent_reset_deliveries(),
+        reset_status_labels=STATUS_LABELS, reset_error_labels=ERROR_LABELS,
     ), status))
     response.headers["Cache-Control"] = "no-store"
     return response

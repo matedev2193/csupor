@@ -111,7 +111,7 @@ with app.app_context():
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue(self.database_path.is_file())
         created_tables = set(json.loads(result.stdout))
-        self.assertEqual(len(INSTALLATION_TABLES), 27)
+        self.assertEqual(len(INSTALLATION_TABLES), 30)
         self.assertEqual(created_tables, INSTALLATION_TABLES)
 
     def test_first_startup_creates_constraints_foreign_keys_and_dispatch_indexes(self):

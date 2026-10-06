@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
-{% block title %}{{ _('Settings') }} · {{ _('CSUPOR Portal') }}{% endblock %}
+{% block title %}{{ _('Email settings') }} · {{ _('CSUPOR Portal') }}{% endblock %}
 {% block content %}
 <section class="section-heading">
-  <div><span class="eyebrow">{{ _('Settings') }}</span><h1>{{ _('Settings') }}</h1><p>{{ _('Configure the email server used for leave notifications.') }}</p></div>
+  <div><span class="eyebrow">{{ _('Settings') }}</span><h1>{{ _('Email settings') }}</h1><p>{{ _('Configure the email server used for password recovery and leave notifications.') }}</p></div>
 </section>
 <section class="form-shell" aria-labelledby="mail-encryption-heading">
   <div class="section-heading"><div><h2 id="mail-encryption-heading">{{ _('Email password protection') }}</h2>
@@ -30,6 +30,7 @@
     <div class="section-heading"><div><h2>{{ _('Email notifications') }}</h2><p>{{ _('Changes are collected into one email per recipient each day at 20:00, Europe/Budapest time. Changes to leave starting within 24 hours, or already started, are sent immediately.') }}</p></div></div>
     <label class="checkbox-field" for="mail-enabled"><input id="mail-enabled" type="checkbox" name="enabled" value="1"{% if values.enabled %} checked{% endif %}> {{ _('Enable email notifications') }}</label>
     <p class="help-text">{{ _('Emails are sent to the email address saved in each user account.') }}</p>
+    <p class="help-text">{{ _('Password reset emails are sent immediately when email delivery is enabled.') }}</p>
   </section>
   <section class="form-shell">
     <div class="section-heading"><div><h2>{{ _('Email server') }}</h2></div></div>
@@ -52,4 +53,26 @@
     </div>
   </section>
 </form>
+<section class="table-card" aria-labelledby="password-reset-delivery-heading">
+  <div class="section-heading"><div><h2 id="password-reset-delivery-heading">{{ _('Recent password reset emails') }}</h2><p>{{ _('The latest 20 requests from the last seven days are shown. Times use Europe/Budapest.') }}</p></div></div>
+  <p class="help-text">{{ _('Accepted by the email server means that the server accepted the message; it does not confirm arrival in the inbox. Check the spam folder too.') }}</p>
+  {% if reset_deliveries %}
+  <div class="table-wrap" tabindex="0" role="region" aria-label="{{ _('Recent password reset emails') }}">
+    <table>
+      <thead><tr><th scope="col">{{ _('Time') }}</th><th scope="col">{{ _('Email address') }}</th><th scope="col">{{ _('Status') }}</th><th scope="col">{{ _('Attempts') }}</th><th scope="col">{{ _('Details') }}</th></tr></thead>
+      <tbody>
+      {% for delivery in reset_deliveries %}
+        <tr>
+          <td><time datetime="{{ delivery.local_created_at.isoformat() }}">{{ delivery.local_created_at.strftime('%Y.%m.%d. %H:%M:%S') }}</time></td>
+          <td>{{ delivery.recipient_email }}</td>
+          <td>{{ reset_status_labels.get(delivery.status, reset_status_labels['failed']) }}</td>
+          <td>{{ delivery.attempts }}</td>
+          <td>{{ reset_error_labels.get(delivery.safe_error_code, '') }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<div class="empty-state">{{ _('No password reset requests have been recorded yet.') }}</div>{% endif %}
+</section>
 {% endblock %}

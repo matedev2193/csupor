@@ -5,6 +5,8 @@ Flask-based login and personnel data management system backed by MySQL schema `c
 ## Features
 
 - Login using **e-mail or username + password**.
+- Email password recovery with a single-use link, sent immediately through the configured mail server.
+- Account email changes in My profile, confirmed with the current password.
 - Registration using **e-mail, username, password** with the default `employee` privilege.
 - User privileges can later be assigned through the Privileges page (HR, director and developer access by default).
 - User privilege enum: `employee`, `hr`, `ceo`, `developer`.
@@ -78,6 +80,10 @@ See [compact leave limits and grouped navigation](docs/design/compact-limits-nav
 See [year boundaries and annual GYÁP forms](docs/design/year-boundaries-gyap.md) for leave requests spanning calendar years and HR-managed childcare sickness benefit documents.
 
 Developers can open **Page access** (`/page-access`) to configure access to each page for employee, HR, director and developer privileges. Their access to this editor is permanently enabled. Denied pages are hidden from menus and the dashboard and reject direct requests, including child forms and actions. Existing ownership and leave-approval rules still apply. The role descriptions below are the initial defaults; see [page access and its repeatable migration](docs/page-access.md) for configuration and scope.
+
+**Settings** groups **Privileges**, **Page access** and **Email settings**, with each entry visible only when permitted. The personal leave calendar additionally requires at least one employment contract, including an inactive or future contract. Users with no contract cannot open it, even when their role has page access.
+
+The login page links to **Forgot your password?**. Recovery links expire after 30 minutes and work once. **My profile** has a separate account email form requiring the current password. See [email password recovery](docs/password-recovery.md) for hosting, delivery and security details. This update replaces legacy login sessions, so users must sign in again once after deployment; later password changes revoke earlier sessions automatically.
 
 ## Profile administration and account display
 
