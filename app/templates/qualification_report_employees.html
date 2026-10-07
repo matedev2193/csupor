@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Employee qualifications') }} · {{ _('CSUPOR Portal') }}{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/qualification_reports.css') }}">
+<div class="qualification-workspace">
+  <header class="qualification-page-heading"><span class="eyebrow">{{ _('Management') }}</span><h1>{{ _('Qualifications and exams') }}</h1><p>{{ _('Choose an employee to review their recorded qualifications and professional exam.') }}</p></header>
+  <nav class="qualification-tabs" aria-label="{{ _('Qualification report views') }}">
+    <a class="qualification-tab" href="{{ url_for('qualification_reports.index') }}">{{ icon('graduate') }}{{ _('Overview') }}</a>
+    <a class="qualification-tab active" href="{{ url_for('qualification_reports.employees') }}" aria-current="page">{{ icon('users') }}{{ _('Employees') }}</a>
+  </nav>
+  <section class="table-card" aria-labelledby="employee-records-title">
+    <div class="section-heading"><div><h2 id="employee-records-title">{{ _('Employee records') }}</h2><p>{{ _('Counts include every recorded year. Users without recorded qualifications are also listed.') }}</p></div></div>
+    <form method="get" action="{{ url_for('qualification_reports.employees') }}" class="qualification-directory-search">
+      <div class="field"><label for="employee-search">{{ _('Search employees') }}</label><input id="employee-search" name="q" type="search" maxlength="200" value="{{ q }}" placeholder="{{ _('Name or username') }}"></div>
+      <div class="button-row"><button type="submit">{{ _('Search') }}</button><a class="button button-secondary" href="{{ url_for('qualification_reports.employees') }}">{{ _('Reset') }}</a></div>
+    </form>
+    <p class="qualification-count-note muted" role="status">{{ _('%(count)s users match the selected filters.', count=users|length) }}</p>
+    {% if users %}
+    <div class="table-wrap" tabindex="0" role="region" aria-label="{{ _('Employee records') }}"><table class="qualification-directory-table">
+      <thead><tr><th scope="col">{{ _('Employee') }}</th><th scope="col">{{ _('Qualifications') }}</th><th scope="col">{{ _('Professional exams') }}</th><th scope="col">{{ _('Actions') }}</th></tr></thead>
+      <tbody>{% for employee in users %}<tr data-user-id="{{ employee.id }}">
+        <td><strong>{{ employee.name }}</strong><small class="qualification-cell-note">{{ employee.username }}</small>{% if employee.unknown_count %}<small class="qualification-cell-note">{{ _('%(count)s records have no exact date.', count=employee.unknown_count) }}</small>{% endif %}</td>
+        <td class="qualification-number">{{ employee.qualification_count }}</td><td class="qualification-number">{{ employee.exam_count }}</td>
+        <td><a class="button button-secondary" href="{{ url_for('qualification_reports.employee', user_id=employee.id) }}">{{ _('View records') }} {{ icon('arrow') }}</a></td>
+      </tr>{% endfor %}</tbody>
+    </table></div>
+    {% else %}<div class="empty-state"><strong>{{ _('No users match the selected filters.') }}</strong><p>{{ _('Try another name or username.') }}</p></div>{% endif %}
+  </section>
+</div>
+{% endblock %}

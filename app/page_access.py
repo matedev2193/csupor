@@ -45,6 +45,7 @@ PAGE_DEFINITIONS = (
     _page("leaves", lazy_gettext("Leave calendar"), lazy_gettext("Records"), note=lazy_gettext("An employment contract is also required.")),
     _page("worktime.index", lazy_gettext("Working-time register"), lazy_gettext("Records"), note=lazy_gettext("An employment contract is also required.")),
     _page("manage_user_profiles", lazy_gettext("User profiles"), lazy_gettext("Management"), MANAGER_ROLES),
+    _page("qualification_reports.index", lazy_gettext("Qualifications and exams"), lazy_gettext("Management"), MANAGER_ROLES),
     _page("manage_contracts", lazy_gettext("Contracts"), lazy_gettext("Management"), MANAGER_ROLES),
     _page("worktime.groups", lazy_gettext("Groups"), lazy_gettext("Management"), MANAGER_ROLES),
     _page("worktime.management", lazy_gettext("Working-time management"), lazy_gettext("Management"), MANAGER_ROLES),
@@ -65,6 +66,7 @@ _ENDPOINT_PAGES = {key: key for key in _PAGES}
 for _parent, _children in {
     "edit_profile": ("change_account_email", "profile_photos.upload_photo", "profile_photos.photo_editor", "profile_photos.photo_source"),
     "manage_user_profiles": ("edit_user_profile", "delete_user_profile"),
+    "qualification_reports.index": ("qualification_reports.employees", "qualification_reports.employee"),
     "manage_dependents": ("add_dependent", "edit_dependent"),
     "add_qualification": ("edit_qualification",),
     "manage_contracts": ("select_contract_employee", "create_contract", "edit_contract"),
