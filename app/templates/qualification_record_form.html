@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}{{ _('Edit qualification') if record else _('Add qualification') }} · {{ _('CSUPOR Portal') }}{% endblock %}
-{% macro select_field(name, label, options) -%}
-  <div class="field"><label for="{{ name }}">{{ label }}</label><select id="{{ name }}" name="{{ name }}"><option value="">{{ _('Not specified') }}</option>{% for value, option_label in options.items() %}<option value="{{ value }}"{% if form.get(name, '') == value %} selected{% endif %}>{{ option_label }}</option>{% endfor %}</select></div>
+{% macro select_field(name, label, options, assessment_inapplicable=false) -%}
+  <div class="field"{% if assessment_inapplicable %} data-assessment-inapplicable{% endif %}><label for="{{ name }}">{{ label }}</label><select id="{{ name }}" name="{{ name }}"><option value="">{{ _('Not specified') }}</option>{% for value, option_label in options.items() %}<option value="{{ value }}"{% if form.get(name, '') == value %} selected{% endif %}>{{ option_label }}</option>{% endfor %}</select></div>
 {%- endmacro %}
 {% macro category_checkboxes(name, options, selected) -%}
   <div class="qualification-checkbox-grid">{% for value, label in options.items() %}<label class="checkbox-field" for="{{ name }}-{{ value }}"><input id="{{ name }}-{{ value }}" name="{{ name }}" type="checkbox" value="{{ value }}"{% if value in selected %} checked{% endif %}><span>{{ label }}</span></label>{% endfor %}</div>
@@ -28,17 +28,18 @@
         {% if not record %}<div class="field field-full"><label for="user_id">{{ _('Employee') }}</label><select id="user_id" name="user_id" required><option value="">{{ _('Choose an employee') }}</option>{% for person in employees %}<option value="{{ person.id }}"{% if form.get('user_id', '')|string == person.id|string %} selected{% endif %}>{{ person.profile.full_name if person.profile and person.profile.full_name else person.username }} ({{ person.username }})</option>{% endfor %}</select></div>{% endif %}
         {{ select_field('kind', _('Record type'), kinds) }}
         {{ select_field('completion_state', _('Study or completion status'), completion_states) }}
-        <div class="field field-full"><label for="qualification_name">{{ _('Qualification or training name') }}</label><input id="qualification_name" name="qualification_name" maxlength="255" value="{{ form.get('qualification_name', '') }}"></div>
+        <p class="help-text field-full qualification-inline-note" id="teacher-assessment-help" data-assessment-only{% if form.get('kind') != 'teacher_assessment' %} hidden{% endif %}>{{ _('For a teacher assessment, enter the grade as the record name, for example Pedagógus I. fokozat, and the date shown on the assessment document. KSH qualification and training categories do not apply. Edit the employment classification separately in the employee’s contract.') }}</p>
+        <div class="field field-full"><label for="qualification_name">{{ _('Record name') }}</label><input id="qualification_name" name="qualification_name" maxlength="255" value="{{ form.get('qualification_name', '') }}"></div>
         <div class="field"><label for="level_or_type">{{ _('Level or type') }}</label><input id="level_or_type" name="level_or_type" maxlength="120" value="{{ form.get('level_or_type', '') }}" placeholder="{{ _('Bachelor, Master, Certificate...') }}"></div>
         <div class="field"><label for="institution_name">{{ _('Institution or training provider') }}</label><input id="institution_name" name="institution_name" maxlength="255" value="{{ form.get('institution_name', '') }}"></div>
         <div class="field field-full"><label for="degree_number">{{ _('Document number') }}</label><input id="degree_number" name="degree_number" maxlength="120" value="{{ form.get('degree_number', '') }}"></div>
         <div class="field"><label for="year_obtained">{{ _('Year obtained') }}</label><input id="year_obtained" name="year_obtained" type="number" min="1900" max="{{ current_year }}" step="1" value="{{ form.get('year_obtained', '') }}" aria-describedby="qualification-year-help"></div>
         <div class="field"><label for="date_obtained">{{ _('Exact date obtained (optional)') }}</label><input id="date_obtained" name="date_obtained" type="date" min="1900-01-01" max="{{ latest_date }}" value="{{ form.get('date_obtained', '') }}" aria-describedby="qualification-year-help"></div>
         <p id="qualification-year-help" class="help-text field-full qualification-inline-note">{{ _('Enter the year if the exact date is unknown. A year alone is kept without assigning it to a month or a September–August school year.') }}</p>
-        <label class="checkbox-field field-full" for="highest"><input id="highest" name="highest" type="checkbox" value="1"{% if form.get('highest', false) %} checked{% endif %}><span>{{ _('Mark as the employee’s highest qualification') }}</span></label>
+        <label class="checkbox-field field-full" for="highest" data-assessment-inapplicable><input id="highest" name="highest" type="checkbox" value="1"{% if form.get('highest', false) %} checked{% endif %}><span>{{ _('Mark as the employee’s highest qualification') }}</span></label>
       </div>
     </section>
-    <details class="form-shell qualification-editor-section"{% if selected_studies or form.get('study_start_date') or form.get('study_end_date') or form.get('completion_state') == 'in_progress' %} open{% endif %}>
+    <details class="form-shell qualification-editor-section" data-assessment-inapplicable{% if selected_studies or form.get('study_start_date') or form.get('study_end_date') or form.get('completion_state') == 'in_progress' %} open{% endif %}>
       <summary><span>{{ _('Studies and participation') }}</span>{{ icon('chevron') }}</summary>
       <div class="qualification-section-body">
         <p class="help-text">{{ _('Record the study period to show participation in the relevant school years, including studies that are still in progress.') }}</p>
@@ -49,11 +50,11 @@
         <fieldset class="qualification-category-group"><legend>{{ _('Participation categories') }}</legend><p class="help-text">{{ _('Select every applicable category. These describe participation, separately from qualifications obtained.') }}</p>{{ category_checkboxes('study_categories', study_categories, selected_studies) }}</fieldset>
       </div>
     </details>
-    <details class="form-shell qualification-editor-section"{% if selected_awards %} open{% endif %}>
+    <details class="form-shell qualification-editor-section" data-assessment-inapplicable{% if selected_awards %} open{% endif %}>
       <summary><span>{{ _('Qualifications obtained — statistical categories') }}</span>{{ icon('chevron') }}</summary>
       <div class="qualification-section-body"><p class="help-text">{{ _('Select every applicable category from the document. More than one category may apply to the same qualification.') }}</p><fieldset class="qualification-category-group"><legend class="sr-only">{{ _('Qualifications obtained — statistical categories') }}</legend>{{ category_checkboxes('award_categories', award_categories, selected_awards) }}</fieldset></div>
     </details>
-    <details class="form-shell qualification-editor-section"{% if form.get('kind') in ['teacher_training', 'other_course'] or form.get('training_topic') or form.get('organiser_type') or form.get('attendance_mode') or form.get('duration_hours') or form.get('credits') or form.get('digital_pedagogy') %} open{% endif %}>
+    <details class="form-shell qualification-editor-section" data-assessment-inapplicable{% if form.get('kind') in ['teacher_training', 'other_course'] or form.get('training_topic') or form.get('organiser_type') or form.get('attendance_mode') or form.get('duration_hours') or form.get('credits') or form.get('digital_pedagogy') %} open{% endif %}>
       <summary><span>{{ _('Continuing professional development and courses') }}</span>{{ icon('chevron') }}</summary>
       <div class="qualification-section-body"><p class="help-text">{{ _('Enter the relevant training details. Duration may be any number of hours, including 30, 60, 90 or 120 hours.') }}</p><div class="form-grid">
         {{ select_field('training_topic', _('Training topic'), training_topics) }}
@@ -65,10 +66,11 @@
       </div></div>
     </details>
     <section class="form-shell" aria-labelledby="qualification-funding-heading">
-      <div class="section-heading"><div><h2 id="qualification-funding-heading">{{ _('Funding and notes') }}</h2></div></div>
-      <div class="form-grid">{{ select_field('funding_type', _('Funding'), funding_types) }}<div class="field field-full"><label for="notes">{{ _('Notes') }}</label><textarea id="notes" name="notes" maxlength="10000" rows="4">{{ form.get('notes', '') }}</textarea></div></div>
+      <div class="section-heading"><div><h2 id="qualification-funding-heading"><span data-assessment-inapplicable>{{ _('Funding and notes') }}</span><span data-assessment-only hidden>{{ _('Notes') }}</span></h2></div></div>
+      <div class="form-grid">{{ select_field('funding_type', _('Funding'), funding_types, assessment_inapplicable=true) }}<div class="field field-full"><label for="notes">{{ _('Notes') }}</label><textarea id="notes" name="notes" maxlength="10000" rows="4">{{ form.get('notes', '') }}</textarea></div></div>
     </section>
     <div class="card qualification-editor-actions"><div><strong>{{ _('Processing status') }}</strong><p class="help-text">{{ _('Changes keep this record in Processed status.') if record and record.status == 'processed' else _('Saving a draft keeps the record in Uploaded status. Marking it as processed makes its recorded details available in reports.') }}</p></div><div class="button-row">{% if not record or record.status != 'processed' %}<button type="submit" name="action" value="save_draft" class="button button-secondary">{{ _('Save draft') }}</button>{% endif %}<button type="submit" name="action" value="process">{{ _('Save changes') if record and record.status == 'processed' else _('Save as processed') }}</button></div></div>
   </form>
 </div>
+<script src="{{ url_for('static', filename='js/qualification_record_form.js') }}" defer></script>
 {% endblock %}

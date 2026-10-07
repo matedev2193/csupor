@@ -5606,3 +5606,36 @@ msgstr "Még nincs feltöltött képesítési dokumentum"
 #: app/templates/qualifications.html:29
 msgid "Choose a file above to send your first document for processing."
 msgstr "Válassz egy fájlt a fenti mezőben az első dokumentum feltöltéséhez."
+
+msgid "Teacher assessment"
+msgstr "Pedagógusminősítés"
+
+msgid "Teacher assessments"
+msgstr "Pedagógusminősítések"
+
+msgid "Teacher assessments cannot have study or course details, KSH categories or a highest-qualification marker."
+msgstr "Pedagógusminősítéshez nem adhatók meg tanulmányi vagy tanfolyami adatok, KSH-kategóriák, és nem jelölhető legmagasabb végzettségként."
+
+msgid "For a teacher assessment, enter the grade as the record name, for example Pedagógus I. fokozat, and the date shown on the assessment document. KSH qualification and training categories do not apply. Edit the employment classification separately in the employee’s contract."
+msgstr "Pedagógusminősítésnél a fokozatot add meg megnevezésként, például: Pedagógus I. fokozat. A dátumhoz a minősítési dokumentumon szereplő dátumot írd. Ehhez a típushoz nem tartoznak KSH-képesítési vagy képzési kategóriák. A munkaviszonyhoz tartozó besorolást külön, a munkavállaló szerződésénél módosíthatod."
+
+msgid "Record name"
+msgstr "Megnevezés"
+
+msgid "All qualification, exam, course and teacher assessment records are shown, including documents awaiting processing and studies in progress."
+msgstr "Itt minden képesítés, szakvizsga, tanfolyam és pedagógusminősítés megjelenik, a feldolgozásra váró dokumentumokkal és a folyamatban lévő tanulmányokkal együtt."
+
+msgid "Choose an employee to review all their qualification, exam, course and teacher assessment records."
+msgstr "Válassz munkavállalót a képesítései, szakvizsgái, tanfolyamai és pedagógusminősítései áttekintéséhez."
+
+msgid "Compare completed qualifications, professional exams, courses and teacher assessments, and review study participation."
+msgstr "Tekintsd át a megszerzett képesítéseket, szakvizsgákat, elvégzett tanfolyamokat, pedagógusminősítéseket és a tanulmányi részvételt."
+
+msgid "By record name"
+msgstr "Megnevezés szerint"
+
+msgid "Teacher assessments are counted separately and excluded from KSH qualification and training statistics."
+msgstr "A pedagógusminősítéseket külön számoljuk; a KSH képesítési és képzési statisztikáiba nem kerülnek bele."
+
+msgid "Open an employee to see their qualifications, exams, courses, teacher assessments and documents awaiting processing."
+msgstr "Nyisd meg a munkavállaló adatlapját a képesítései, szakvizsgái, tanfolyamai, pedagógusminősítései és feldolgozásra váró dokumentumai megtekintéséhez."
