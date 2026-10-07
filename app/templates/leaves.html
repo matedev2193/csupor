@@ -176,11 +176,11 @@
       <div class="date-pair" id="leave-date-fields">
         <div>
           <label for="start_date">{{ _("Start date *") }}</label>
-          <input id="start_date" name="start_date" type="date" required>
+          <input id="start_date" name="start_date" type="date" max="9999-12-31" required>
         </div>
         <div>
           <label for="end_date">{{ _("End date") }} <span id="end-date-required-label">*</span></label>
-          <input id="end_date" name="end_date" type="date">
+          <input id="end_date" name="end_date" type="date" max="9999-12-31">
           <small id="end-date-help" class="help-text">{{ _("Required for paid leave. Optional for all other leave types.") }}</small>
         </div>
       </div>

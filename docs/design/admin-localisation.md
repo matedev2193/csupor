@@ -4,6 +4,7 @@ The Hungarian interface now uses informal second-person wording consistently. La
 
 ## Behaviour
 
+- New browser sessions use Hungarian even when the browser prefers another language. The header selector still offers English, and an explicit session preference survives login and logout.
 - `/profile` has compact, two-line address fields and the requested **Fogyatékosság, tartós betegség** / **Disability, long-term illness** label. **Pedagógusigazolvány** is written as one word. The original change showed the model's 64-character capacity in the label; [the subsequent update](people-context.md) removes that count while retaining input and server validation.
 - `/legal-entities` and `/places-of-work` are list pages. Their add buttons open `/new`, and each row links to `/<id>/edit`. Existing `?edit=<id>` links redirect to the corresponding editor. Workplaces no longer show a display-format column.
 - `/contracts` lists one row per contract and initially shows contracts active today, including either date boundary. Tabs expose upcoming, ended and all contracts, with counts calculated after search/employer filtering. In the all-contracts view, active contracts come first and ended contracts last.
