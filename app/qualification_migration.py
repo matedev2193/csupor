@@ -21,6 +21,10 @@ def migrate_legacy_qualifications(engine):
             (EducationalQualification.__table__, "qualification"),
             (ProfessionalExam.__table__, "exam"),
         ):
+            # Table.name is SQLAlchemy's quoted_name; mysql.connector rejects
+            # that str subclass as a bound value. Keep identifiers unchanged
+            # and use plain text wherever the source name is stored or compared.
+            source_name = str(source.name)
             values = {
                 "user_id": source.c.user_id,
                 "status": literal("processed"),
@@ -33,7 +37,7 @@ def migrate_legacy_qualifications(engine):
                 "created_at": literal(now),
                 "updated_at": literal(now),
                 "processed_at": literal(now),
-                "legacy_source": literal(source.name),
+                "legacy_source": literal(source_name),
                 "legacy_id": source.c.id,
             }
             if kind == "qualification":
@@ -48,7 +52,7 @@ def migrate_legacy_qualifications(engine):
             # but rejects it in a NOT EXISTS subquery (error 1093).
             imported = target.alias("imported")
             pending = select(*values.values()).select_from(source.outerjoin(imported, and_(
-                imported.c.legacy_source == source.name,
+                imported.c.legacy_source == source_name,
                 imported.c.legacy_id == source.c.id,
             ))).where(imported.c.id.is_(None))
             connection.execute(insert(target).from_select(list(values), pending))

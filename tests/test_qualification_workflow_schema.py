@@ -7,8 +7,10 @@ import unittest
 from datetime import date
 from unittest.mock import MagicMock, Mock, patch
 
+from mysql.connector.conversion import MySQLConverter
 from sqlalchemy import create_mock_engine, event, inspect, text
 from sqlalchemy.dialects import mysql
+from sqlalchemy.dialects.mysql.mysqlconnector import dialect as mysqlconnector_dialect
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import StaleDataError
@@ -224,6 +226,29 @@ class QualificationWorkflowMigrationTests(unittest.TestCase):
 
 
 class QualificationWorkflowMySQLSchemaTests(unittest.TestCase):
+    def test_import_parameters_are_accepted_by_mysql_connector(self):
+        # SQL compilation and SQLite both accept quoted_name, but the deployed
+        # MySQL connector rejects this str subclass when it is a bound value.
+        engine = MagicMock()
+        migrate_legacy_qualifications(engine)
+        calls = engine.begin.return_value.__enter__.return_value.execute.call_args_list
+        self.assertEqual(len(calls), 2)
+        converter = MySQLConverter()
+        for call, source_name in zip(calls, ("educational_qualifications", "professional_exams")):
+            with self.subTest(source=source_name):
+                compiled = call.args[0].compile(dialect=mysqlconnector_dialect())
+                # Apply the same dialect bind processors as execution would,
+                # including JSON serialisation, before the real DBAPI converter.
+                parameters = {
+                    key: compiled._bind_processors[key](value)
+                    if key in compiled._bind_processors else value
+                    for key, value in compiled.params.items()
+                }
+                converted = [converter.to_mysql(value) for value in parameters.values()]
+                # Both the inserted legacy_source and the duplicate guard must
+                # keep their original value while becoming driver-compatible.
+                self.assertEqual(converted.count(source_name.encode("utf-8")), 2)
+
     def test_import_avoids_mysql_target_table_subquery_restriction(self):
         # MySQL permits self INSERT ... SELECT joins, but rejects selecting the
         # INSERT target inside a NOT EXISTS subquery with error 1093.
