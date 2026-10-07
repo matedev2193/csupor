@@ -51,7 +51,7 @@
 {% endif %}
 
 <section class="layout-stack">
-  {% if has_access_to_any(['edit_profile', 'manage_dependents', 'add_qualification']) %}
+  {% if has_access_to_any(['edit_profile', 'manage_dependents', 'qualifications.index']) %}
   <div class="stats-grid">
     {% if can_access_endpoint('edit_profile') %}
     <a class="stat-card" href="{{ url_for('edit_profile') }}">
@@ -67,11 +67,11 @@
       <div class="stat-foot">{{ _('View dependents') }} →</div>
     </a>
     {% endif %}
-    {% if can_access_endpoint('add_qualification') %}
-    <a class="stat-card" href="{{ url_for('add_qualification') }}">
+    {% if can_access_endpoint('qualifications.index') %}
+    <a class="stat-card" href="{{ url_for('qualifications.index') }}">
       <div class="stat-top"><span class="stat-icon">{{ icon('graduate') }}</span>{{ icon('arrow') }}</div>
-      <div class="stat-copy"><div><span>{{ _('Qualifications') }}</span><strong>{{ current_user.qualifications|length }}</strong></div><span class="stat-caption">{{ _('Professional records') }}</span></div>
-      <div class="stat-foot">{{ _('Add qualification') }} →</div>
+      <div class="stat-copy"><div><span>{{ _('Qualifications') }}</span><strong>{{ current_user.qualification_records|length }}</strong></div><span class="stat-caption">{{ _('Professional records') }}</span></div>
+      <div class="stat-foot">{{ _('Upload document') }} →</div>
     </a>
     {% endif %}
   </div>
@@ -97,7 +97,7 @@
   </section>
   {% endif %}
 
-  {% if has_access_to_any(['edit_profile', 'leaves', 'manage_dependents', 'add_qualification', 'professional_exam']) %}
+  {% if has_access_to_any(['edit_profile', 'leaves', 'manage_dependents', 'qualifications.index']) %}
   <div class="dashboard-grid">
     {% if can_access_endpoint('edit_profile') %}
     <section class="card span-7">
@@ -142,43 +142,18 @@
     </section>
     {% endif %}
 
-    {% if can_access_endpoint('add_qualification') %}
+    {% if can_access_endpoint('qualifications.index') %}
     <section class="card span-5">
-      <div class="section-heading"><div><h2 class="heading-icon">{{ icon('graduate') }} {{ _('Qualifications') }}</h2><p>{{ _('Your education and certificates.') }}</p></div><a class="text-link" href="{{ url_for('add_qualification') }}">{{ icon('plus') }} {{ _('Add qualification') }}</a></div>
-      {% if current_user.qualifications %}
-      <div class="record-list">{% for q in current_user.qualifications %}
+      <div class="section-heading"><div><h2 class="heading-icon">{{ icon('graduate') }} {{ _('Qualifications') }}</h2><p>{{ _('Your qualifications, professional exams and training documents in one place.') }}</p></div><a class="text-link" href="{{ url_for('qualifications.index') }}">{{ icon('plus') }} {{ _('Upload document') }}</a></div>
+      {% if current_user.qualification_records %}
+      <div class="record-list">{% for qualification in current_user.qualification_records|sort(attribute='id', reverse=true) %}{% if loop.index <= 4 %}
       <article class="record-item">
-        <div class="record-item-header">
-          <div><h3>{{ q.qualification_name }}</h3><p>{{ q.institution_name }}</p></div>
-          <a class="button button-secondary" href="{{ url_for('edit_qualification', qualification_id=q.id) }}" aria-label="{{ _('Edit qualification') }}: {{ q.qualification_name }}">{{ _('Edit') }}</a>
-        </div>
-        <div class="record-meta">
-          {% if q.highest %}<span class="pill">{{ _('Highest') }}</span>{% endif %}
-          <span class="badge">{{ q.level_or_type }}</span>
-          <span class="badge">{{ _('Document #') }} {{ q.degree_number }}</span>
-          <span class="badge">{% if q.date_obtained %}<time datetime="{{ q.date_obtained.isoformat() }}">{{ q.date_obtained|dateformat('y. MM. dd.' if current_locale == 'hu' else 'd MMM y') }}</time>{% else %}{{ q.year_obtained }}{% endif %}</span>
-        </div>
-        {% if not q.date_obtained %}<p class="help-text">{{ _('Exact date not recorded') }}</p>{% endif %}
+        <div class="record-item-header"><div><h3>{{ qualification.qualification_name or (qualification.documents[0].filename if qualification.documents else _('Qualification document')) }}</h3>{% if qualification.institution_name %}<p>{{ qualification.institution_name }}</p>{% endif %}</div><span class="status-pill {{ 'status-approved' if qualification.status == 'processed' else 'status-pending-approval' }}">{{ _('Processed') if qualification.status == 'processed' else pgettext('qualification_status', 'Uploaded') }}</span></div>
+        <div class="record-meta">{% if qualification.highest %}<span class="pill">{{ _('Highest') }}</span>{% endif %}{% if qualification.date_obtained %}<span class="badge">{{ qualification.date_obtained|dateformat('y. MM. dd.' if current_locale == 'hu' else 'd MMM y') }}</span>{% elif qualification.year_obtained %}<span class="badge">{{ qualification.year_obtained }}</span>{% endif %}</div>
       </article>
-      {% endfor %}</div>
-      {% else %}<div class="empty-state">{{ icon('graduate') }}{{ _('No educational qualifications are listed yet. Add your latest degree or certification to get started.') }}</div>{% endif %}
-    </section>
-    {% endif %}
-
-    {% if can_access_endpoint('professional_exam') %}
-    <section class="card span-12">
-      <div class="section-heading"><div><h2 class="heading-icon">{{ icon('award') }} {{ _('Professional exam') }}</h2><p>{{ _('Optional teaching certification or professional exam details.') }}</p></div><a class="button button-secondary" href="{{ url_for('professional_exam') }}">{{ _('Manage exam') }} {{ icon('arrow') }}</a></div>
-      {% if current_user.professional_exam %}
-      {% set exam = current_user.professional_exam %}
-      <dl class="data-list">
-        <div><dt>{{ _('Qualification') }}</dt><dd>{{ exam.qualification_name }}</dd></div>
-        <div>
-          <dt>{{ _('Date obtained') }}</dt>
-          <dd>{% if exam.date_obtained %}<time datetime="{{ exam.date_obtained.isoformat() }}">{{ exam.date_obtained|dateformat('y. MM. dd.' if current_locale == 'hu' else 'd MMM y') }}</time>{% else %}{{ exam.year_obtained }}<br><small class="help-text">{{ _('Exact date not recorded') }}</small>{% endif %}</dd>
-        </div>
-        <div><dt>{{ _('Document number') }}</dt><dd>{{ exam.degree_number }}</dd></div>
-      </dl>
-      {% else %}<div class="empty-state">{{ _('No professional exam is recorded yet. Use the dedicated form to add it now or come back later.') }}</div>{% endif %}
+      {% endif %}{% endfor %}</div>
+      <div class="button-row"><a class="button button-secondary" href="{{ url_for('qualifications.index') }}">{{ _('View all qualifications') }} {{ icon('arrow') }}</a></div>
+      {% else %}<div class="empty-state">{{ icon('graduate') }}{{ _('Upload a diploma, certificate or professional exam document. HR will record its details.') }}</div>{% endif %}
     </section>
     {% endif %}
   </div>
@@ -186,7 +161,8 @@
 
   {% set management_shortcuts = [
     ('manage_user_profiles', _('User profiles'), 'users'),
-    ('qualification_reports.index', _('Qualifications and exams'), 'graduate'),
+    ('qualifications.manage', _('Qualification processing'), 'graduate'),
+    ('qualification_reports.index', _('Qualification reports'), 'graduate'),
     ('manage_contracts', _('Contracts'), 'briefcase'),
     ('worktime.groups', _('Groups'), 'users'),
     ('worktime.management', _('Working-time management'), 'calendar'),

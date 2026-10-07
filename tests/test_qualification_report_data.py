@@ -32,7 +32,10 @@ class QualificationReportDataTests(unittest.TestCase):
         self.next_id += 1
         values = dict(id=self.next_id, user_id=user, level_or_type="Certificate", qualification_name="First aid",
                       institution_name="Example College", degree_number="CERT-123", date_obtained=completed,
-                      year_obtained=completed.year if completed else 2026, highest=False)
+                      year_obtained=completed.year if completed else 2026, highest=False, kind=kind,
+                      status="processed", completion_state="completed", study_start_date=None, study_end_date=None,
+                      study_categories=[], award_categories=[], training_topic=None, organiser_type=None,
+                      funding_type=None, attendance_mode=None, duration_hours=None, credits=None, digital_pedagogy=False)
         values.update(overrides)
         return _record(SimpleNamespace(**values), self.users[user - 1], kind)
 
@@ -84,7 +87,7 @@ class QualificationReportDataTests(unittest.TestCase):
 
     def test_each_group_counts_distinct_people_separately_from_completions(self):
         report = self.report([self.record(), self.record(), self.record(user=2), self.record(kind="exam")])
-        self.assertEqual(report["totals"], {"employees": 2, "total": 4, "qualifications": 3, "exams": 1})
+        self.assertEqual(report["totals"], {"employees": 2, "total": 4, "qualifications": 3, "exams": 1, "teacher_training": 0, "other_courses": 0})
         self.assertEqual(report["by_month"][0]["employees"], 2)
         self.assertEqual(report["by_month"][0]["total"], 4)
         certificate = next(row for row in report["by_type"] if row["value"] == "qualification:certificate")
@@ -136,6 +139,72 @@ class QualificationReportDataTests(unittest.TestCase):
         report = build_report(records, filters, self.today)
         self.assertEqual(report["totals"]["total"], 0)
         self.assertIn({"value": "2024", "label": "2024/2025"}, report["school_years"])
+
+    def test_only_processed_completed_records_count_as_completions(self):
+        records = [self.record(), self.record(status="uploaded"),
+                   self.record(completion_state="in_progress"), self.record(completion_state="discontinued"),
+                   self.record(kind="teacher_training"), self.record(kind="other_course")]
+        report = self.report(records)
+        self.assertEqual(report["totals"], {"employees": 1, "total": 3, "qualifications": 1, "exams": 0,
+                                           "teacher_training": 1, "other_courses": 1})
+        self.assertEqual({row["kind"] for row in report["records"]}, {"qualification", "teacher_training", "other_course"})
+        for kind in ("teacher_training", "other_course"):
+            filters = _parse_filters(MultiDict({"kind": kind}), self.users, _type_options(records), self.today)
+            self.assertEqual(self.report(records, **filters)["totals"]["total"], 1)
+
+    def test_participation_is_independent_of_award_date_and_uses_interval_overlap(self):
+        ongoing = self.record(None, completion_state="in_progress", study_start_date=date(2025, 9, 1),
+                              study_categories=["master", "level_raising"])
+        before = self.record(date(2026, 8, 31), study_start_date=date(2025, 9, 1), study_end_date=date(2026, 8, 31),
+                             study_categories=["bachelor"])
+        boundary = self.record(date(2026, 9, 1), study_start_date=date(2025, 9, 1), study_end_date=date(2026, 9, 1),
+                               study_categories=["bachelor"])
+        future = self.record(None, completion_state="in_progress", study_start_date=date(2027, 9, 1), study_categories=["master"])
+        report = self.report([ongoing, before, boundary, future])
+        self.assertEqual(report["totals"]["total"], 1)
+        self.assertEqual(report["ksh"]["participation_totals"]["total"], 2)
+        self.assertEqual(report["ksh"]["participation_totals"]["employees"], 1)
+        study = {row["value"]: row for row in report["ksh"]["by_study"]}
+        self.assertEqual(study["master"]["total"], 1)
+        self.assertEqual(study["level_raising"]["total"], 1)
+        self.assertEqual(study["bachelor"]["total"], 1)
+        self.assertEqual(self.report([ongoing], year="unknown")["ksh"]["participation_totals"]["total"], 0)
+
+    def test_unconfirmed_study_periods_never_invent_participation(self):
+        records = [self.record(study_categories=["bachelor"]),
+                   self.record(study_start_date=date(2026, 9, 1), study_categories=["bachelor"]),
+                   self.record(study_start_date=date(2026, 10, 1), study_end_date=date(2026, 9, 1), study_categories=["bachelor"]),
+                   self.record(status="uploaded", completion_state="in_progress", study_start_date=date(2026, 9, 1), study_categories=["bachelor"])]
+        report = self.report(records, year="all")
+        self.assertEqual(report["ksh"]["participation_totals"]["total"], 0)
+        self.assertEqual(report["ksh"]["unassigned_participation_count"], 3)
+
+    def test_ksh_training_dimensions_count_people_and_records_separately(self):
+        options = dict(kind="teacher_training", study_start_date=date(2026, 9, 1), study_end_date=date(2026, 9, 2),
+                       training_topic="methodology", organiser_type="higher_education", funding_type="self",
+                       attendance_mode="blended", duration_hours=30, digital_pedagogy=True)
+        records = [self.record(**options), self.record(**options), self.record(user=2, **options)]
+        report = self.report(records)
+        ksh = report["ksh"]
+        self.assertEqual(ksh["teacher_training_totals"]["employees"], 2)
+        for field in ("by_training_topic", "by_organiser", "by_training_funding", "by_attendance", "by_duration", "by_digital_pedagogy"):
+            populated = [row for row in ksh[field] if row["total"]]
+            self.assertEqual(len(populated), 1)
+            self.assertEqual((populated[0]["employees"], populated[0]["total"]), (2, 3))
+        self.assertEqual(report["totals"]["exams"], 0)
+
+    def test_ksh_award_tags_overlap_and_only_count_selected_completed_records(self):
+        tags = ["leadership", "leadership_university"]
+        records = [self.record(award_categories=tags), self.record(award_categories=tags),
+                   self.record(award_categories=tags, completion_state="in_progress"),
+                   self.record(None, award_categories=tags)]
+        report = self.report(records)
+        awards = {row["value"]: row for row in report["ksh"]["by_award"]}
+        for key in tags:
+            self.assertEqual((awards[key]["employees"], awards[key]["total"]), (1, 2))
+        self.assertEqual(report["totals"]["total"], 2)
+        self.assertEqual(self.report(records, year="unknown")["totals"]["total"], 1)
+
 
     def test_invalid_filters_are_rejected_instead_of_silently_changing_report(self):
         options = _type_options([self.record()])

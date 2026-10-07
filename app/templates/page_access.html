@@ -18,7 +18,8 @@
         <tr{% if page.key == 'page_access.settings' %} class="access-locked-row"{% endif %}>
           <th scope="row"><span>{{ page.label }}</span>{% if page.note %}<small>{{ page.note }}</small>{% endif %}</th>
           {% for role in roles %}
-          <td><label class="access-cell" for="access-{{ page.key|replace('.', '-') }}-{{ role }}"><input type="checkbox" id="access-{{ page.key|replace('.', '-') }}-{{ role }}" name="permissions" value="{{ page.key }}:{{ role }}"{% if matrix[(page.key, role)] %} checked{% endif %}{% if page.key == 'page_access.settings' %} disabled{% endif %}><span class="sr-only">{{ page.label }} — {{ role_labels[role] }}{% if page.key == 'page_access.settings' %} · {{ _('Fixed permission') }}{% endif %}</span></label></td>
+          {% set locked = page.key == 'page_access.settings' or (page.key == 'qualifications.manage' and role not in ['hr', 'ceo']) %}
+          <td><label class="access-cell" for="access-{{ page.key|replace('.', '-') }}-{{ role }}"><input type="checkbox" id="access-{{ page.key|replace('.', '-') }}-{{ role }}" name="permissions" value="{{ page.key }}:{{ role }}"{% if matrix[(page.key, role)] %} checked{% endif %}{% if locked %} disabled{% endif %}><span class="sr-only">{{ page.label }} — {{ role_labels[role] }}{% if locked %} · {{ _('Fixed permission') }}{% endif %}</span></label></td>
           {% endfor %}
         </tr>
       {% endfor %}

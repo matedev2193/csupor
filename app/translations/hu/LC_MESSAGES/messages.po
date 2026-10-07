@@ -4851,3 +4851,758 @@ msgstr "Adatok megtekintése"
 
 msgid "View records without an exact date"
 msgstr "Pontos dátum nélküli bejegyzések megtekintése"
+
+#: app/page_access.py:47 app/templates/base.html:64 app/templates/dashboard.html:164 app/templates/manage_qualifications.html:2 app/templates/manage_qualifications.html:6 app/templates/qualification_record_form.html:14
+msgid "Qualification processing"
+msgstr "Képesítések feldolgozása"
+
+#: app/page_access.py:47
+msgid "HR or Director privilege is also required."
+msgstr "HR- vagy Igazgató-jogosultság is szükséges."
+
+#: app/page_access.py:48 app/templates/base.html:65 app/templates/dashboard.html:165 app/templates/manage_qualifications.html:6 app/templates/qualification_report_employee.html:2 app/templates/qualification_report_employees.html:6 app/templates/qualification_reports.html:2 app/templates/qualification_reports.html:30
+msgid "Qualification reports"
+msgstr "Képesítési kimutatások"
+
+#: app/qualification_reports.py:70
+msgid "Not yet classified"
+msgstr "Még nincs besorolva"
+
+#: app/qualification_reports.py:75 app/templates/dashboard.html:151 app/templates/manage_qualifications.html:10 app/templates/manage_qualifications.html:23 app/templates/qualification_record_form.html:18 app/templates/qualifications.html:24
+msgid "Processed"
+msgstr "Feldolgozott"
+
+#: app/qualification_reports.py:75 app/templates/dashboard.html:151 app/templates/manage_qualifications.html:10 app/templates/manage_qualifications.html:23 app/templates/qualification_record_form.html:18 app/templates/qualifications.html:24
+msgctxt "qualification_status"
+msgid "Uploaded"
+msgstr "Feltöltött"
+
+#: app/qualification_reports.py:150 app/templates/qualification_report_employee.html:20
+#, python-format
+msgid "%(hours)s hours"
+msgstr "%(hours)s órás"
+
+#: app/qualification_reports.py:152
+msgid "Other duration"
+msgstr "Egyéb óraszám"
+
+#: app/qualification_reports.py:169 app/templates/qualification_reports.html:100
+msgid "Digital pedagogy"
+msgstr "Digitális pedagógia"
+
+#: app/qualification_reports.py:170
+msgid "Other teacher training"
+msgstr "Egyéb pedagógus-továbbképzés"
+
+#: app/qualification_taxonomy.py:12
+msgid "Teacher continuing professional development"
+msgstr "Pedagógus-továbbképzés"
+
+#: app/qualification_taxonomy.py:13
+msgid "Other course"
+msgstr "Egyéb tanfolyami képzés"
+
+#: app/qualification_taxonomy.py:16
+msgid "Completed"
+msgstr "Befejezett"
+
+#: app/qualification_taxonomy.py:17 app/templates/qualification_report_employee.html:19
+msgid "In progress"
+msgstr "Folyamatban"
+
+#: app/qualification_taxonomy.py:18
+msgid "Discontinued"
+msgstr "Megszakított"
+
+#: app/qualification_taxonomy.py:21
+msgid "Basic or supplementary studies raising the qualification level"
+msgstr "Végzettségi szintet emelő alap- vagy kiegészítő képzés"
+
+#: app/qualification_taxonomy.py:22
+msgid "Second or further qualification at the same level"
+msgstr "Második vagy további, azonos szintű képesítésért folytatott tanulmányok"
+
+#: app/qualification_taxonomy.py:23
+msgid "University-level specialist postgraduate studies"
+msgstr "Egyetemi szakirányú továbbképzés"
+
+#: app/qualification_taxonomy.py:24
+msgid "College-level specialist postgraduate studies"
+msgstr "Főiskolai szakirányú továbbképzés"
+
+#: app/qualification_taxonomy.py:25
+msgid "Studies towards a trade or vocational qualification"
+msgstr "Szakma, szakképesítés megszerzésére irányuló képzés"
+
+#: app/qualification_taxonomy.py:26
+msgid "Preparation for a professional exam"
+msgstr "Szakvizsgára felkészítő képzés"
+
+#: app/qualification_taxonomy.py:27
+msgid "Bachelor's studies"
+msgstr "Alapképzés"
+
+#: app/qualification_taxonomy.py:28
+msgid "Master's studies"
+msgstr "Mesterképzés"
+
+#: app/qualification_taxonomy.py:29
+msgid "Undivided degree studies"
+msgstr "Osztatlan képzés"
+
+#: app/qualification_taxonomy.py:32
+msgid "Doctoral degree"
+msgstr "Doktori fokozat"
+
+#: app/qualification_taxonomy.py:33
+msgid "First university qualification"
+msgstr "Első egyetemi alapképesítés"
+
+#: app/qualification_taxonomy.py:34
+msgid "Second college or university qualification"
+msgstr "Második főiskolai vagy egyetemi alapképesítés"
+
+#: app/qualification_taxonomy.py:35
+msgid "College-level specialist postgraduate qualification"
+msgstr "Főiskolai szakirányú továbbképzésben szerzett képesítés"
+
+#: app/qualification_taxonomy.py:36
+msgid "University-level specialist postgraduate qualification"
+msgstr "Egyetemi szakirányú továbbképzésben szerzett képesítés"
+
+#: app/qualification_taxonomy.py:37
+msgid "Bachelor's degree"
+msgstr "Alapképzésben szerzett végzettség"
+
+#: app/qualification_taxonomy.py:38
+msgid "Master's degree"
+msgstr "Mesterképzésben szerzett végzettség"
+
+#: app/qualification_taxonomy.py:39
+msgid "Undivided degree"
+msgstr "Osztatlan képzésben szerzett végzettség"
+
+#: app/qualification_taxonomy.py:40
+msgid "Professional exam completed"
+msgstr "Szakvizsga"
+
+#: app/qualification_taxonomy.py:41
+msgid "IT qualification"
+msgstr "Informatikai képesítés"
+
+#: app/qualification_taxonomy.py:42
+msgid "ECDL qualification"
+msgstr "ECDL-képesítés"
+
+#: app/qualification_taxonomy.py:43
+msgid "Trade or vocational qualification"
+msgstr "Szakma, szakképesítés"
+
+#: app/qualification_taxonomy.py:44
+msgid "Language examination at B2 level or above"
+msgstr "Legalább középfokú (B2) nyelvvizsga"
+
+#: app/qualification_taxonomy.py:45
+msgid "Leadership qualification"
+msgstr "Vezetőképzésben szerzett képesítés"
+
+#: app/qualification_taxonomy.py:46
+msgid "University-level leadership qualification"
+msgstr "Egyetemi szintű vezetői képesítés"
+
+#: app/qualification_taxonomy.py:47
+msgid "College-level leadership qualification"
+msgstr "Főiskolai szintű vezetői képesítés"
+
+#: app/qualification_taxonomy.py:48
+msgid "Public education leadership training completed"
+msgstr "Köznevelési igazgatóképzés elvégzése"
+
+#: app/qualification_taxonomy.py:51
+msgid "Subject theory"
+msgstr "Szaktárgyi elméleti"
+
+#: app/qualification_taxonomy.py:52
+msgid "Methodology"
+msgstr "Módszertani"
+
+#: app/qualification_taxonomy.py:53
+msgid "IT and digital culture"
+msgstr "Informatikai, digitális kultúra"
+
+#: app/qualification_taxonomy.py:54
+msgid "Other topic"
+msgstr "Egyéb téma"
+
+#: app/qualification_taxonomy.py:57
+msgid "Higher education institution"
+msgstr "Felsőoktatási intézmény"
+
+#: app/qualification_taxonomy.py:58
+msgid "Pedagogical professional service institution"
+msgstr "Pedagógiai szakmai szolgáltató intézmény"
+
+#: app/qualification_taxonomy.py:59
+msgid "Programme under an international agreement"
+msgstr "Nemzetközi egyezmény keretében szervezett"
+
+#: app/qualification_taxonomy.py:60
+msgid "Pedagogical Education Centre"
+msgstr "Pedagógiai Oktatási Központ"
+
+#: app/qualification_taxonomy.py:61
+msgid "Other licensed provider"
+msgstr "Egyéb engedéllyel rendelkező szervező"
+
+#: app/qualification_taxonomy.py:64
+msgid "Self-funded"
+msgstr "Önerőből vállalt"
+
+#: app/qualification_taxonomy.py:65
+msgid "Fully supported by a cost contribution"
+msgstr "Költség-hozzájárulással támogatott"
+
+#: app/qualification_taxonomy.py:66
+msgid "Partly supported by a cost contribution"
+msgstr "Költség-hozzájárulással részben támogatott"
+
+#: app/qualification_taxonomy.py:69
+msgid "In person"
+msgstr "Jelenléti"
+
+#: app/qualification_taxonomy.py:70
+msgid "E-learning"
+msgstr "E-learning"
+
+#: app/qualification_taxonomy.py:71
+msgid "Blended learning"
+msgstr "Blended (vegyes)"
+
+#: app/qualifications.py:94
+msgid "Choose a qualification document to upload."
+msgstr "Válaszd ki a feltöltendő, képesítést igazoló dokumentumot."
+
+#: app/qualifications.py:98
+msgid "Upload a PDF, JPEG, PNG or WebP document."
+msgstr "PDF-, JPEG-, PNG- vagy WebP-fájlt tölts fel."
+
+#: app/qualifications.py:101
+msgid "The qualification document must be no larger than 10 MB."
+msgstr "A képesítést igazoló dokumentum legfeljebb 10 MB lehet."
+
+#: app/qualifications.py:116 app/qualifications.py:123
+msgid "Use an image up to 20 megapixels and 10,000 pixels per side."
+msgstr "Legfeljebb 20 megapixeles képet használj, amelynek egyik oldala sem hosszabb 10 000 képpontnál."
+
+#: app/qualifications.py:136
+msgid "Submit each qualification field only once."
+msgstr "Minden képesítési mezőt csak egyszer küldj el."
+
+#: app/qualifications.py:140
+msgid "A qualification text field exceeds its maximum length."
+msgstr "Egy képesítési szövegmező hosszabb a megengedettnél."
+
+#: app/qualifications.py:145
+msgid "Choose a valid qualification classification."
+msgstr "Válassz érvényes képesítési besorolást."
+
+#: app/qualifications.py:148
+msgid "Enter the qualification name, type and completion status before processing it."
+msgstr "A feldolgozáshoz add meg a képesítés nevét, típusát és a tanulmányok állapotát."
+
+#: app/qualifications.py:162
+msgid "Enter valid dates between 1 January 1900 and today."
+msgstr "1900. január 1. és a mai nap közötti, érvényes dátumokat adj meg."
+
+#: app/qualifications.py:167
+msgid "Enter a valid year of completion between 1900 and the current year."
+msgstr "1900 és az aktuális év közötti, érvényes megszerzési évet adj meg."
+
+#: app/qualifications.py:172
+msgid "The completion year must match the completion date."
+msgstr "A megszerzés évének egyeznie kell a pontos dátum évével."
+
+#: app/qualifications.py:178
+msgid "Choose a valid KSH classification."
+msgstr "Válassz érvényes KSH-besorolást."
+
+#: app/qualifications.py:197
+msgid "Enter positive hours and credits with no more than two decimal places."
+msgstr "Pozitív óraszámot és kreditértéket adj meg, legfeljebb két tizedesjeggyel."
+
+#: app/qualifications.py:201
+msgid "Choose a valid checkbox value."
+msgstr "Érvényes jelölést adj meg."
+
+#: app/qualifications.py:207
+msgid "Enter the year or exact date when the qualification was obtained."
+msgstr "Add meg a képesítés megszerzésének évét vagy pontos dátumát."
+
+#: app/qualifications.py:210
+msgid "Uncompleted studies cannot have a completion date, award classification or highest-qualification marker."
+msgstr "Be nem fejezett tanulmányhoz nem adható meg megszerzési dátum, megszerzett képesítés szerinti besorolás vagy legmagasabb végzettség jelölés."
+
+#: app/qualifications.py:212
+msgid "Select Completed before recording an award or completion date."
+msgstr "Megszerzett képesítés vagy megszerzési dátum rögzítéséhez válaszd a Befejezett állapotot."
+
+#: app/qualifications.py:215
+msgid "Enter the study start date when recording a study end date."
+msgstr "A tanulmányok befejezése mellé add meg a kezdő dátumot is."
+
+#: app/qualifications.py:217
+msgid "The study end date cannot precede the start date."
+msgstr "A tanulmányok befejezése nem lehet korábbi a kezdeténél."
+
+#: app/qualifications.py:219
+msgid "The completion date cannot precede the study start date."
+msgstr "A képesítés megszerzése nem lehet korábbi a tanulmányok kezdeténél."
+
+#: app/qualifications.py:221
+msgid "The completion year cannot precede the study start year."
+msgstr "A megszerzés éve nem lehet korábbi a tanulmányok kezdőévénél."
+
+#: app/qualifications.py:223
+msgid "Ongoing studies cannot have an actual study end date."
+msgstr "Folyamatban lévő tanulmányhoz nem adható meg tényleges befejezési dátum."
+
+#: app/qualifications.py:225
+msgid "Enter the study period for participation statistics; ongoing studies need a start date."
+msgstr "A részvételi kimutatáshoz add meg a tanulmányok időszakát; folyamatban lévő képzésnél a kezdő dátum szükséges."
+
+#: app/qualifications.py:227
+msgid "Enter the study end date for completed or discontinued studies."
+msgstr "Befejezett vagy megszakított tanulmánynál add meg a befejezés dátumát."
+
+#: app/qualifications.py:279
+msgid "Choose one qualification document to upload."
+msgstr "Egy képesítést igazoló dokumentumot válassz ki a feltöltéshez."
+
+#: app/qualifications.py:293
+msgid "Document uploaded. HR or a director will record the qualification details."
+msgstr "A dokumentum feltöltve. A képesítés adatait a HR vagy az igazgató rögzíti."
+
+#: app/qualifications.py:346
+msgid "Choose whether to save a draft or mark the qualification as processed."
+msgstr "Válaszd ki, hogy piszkozatként mented vagy feldolgozottként jelölöd a képesítést."
+
+#: app/qualifications.py:350
+msgid "The employee linked to an existing qualification cannot be changed."
+msgstr "A meglévő képesítéshez tartozó munkavállaló nem módosítható."
+
+#: app/qualifications.py:353
+msgid "Choose a valid employee."
+msgstr "Válassz érvényes munkavállalót."
+
+#: app/qualifications.py:356
+msgid "Reload the qualification editor before saving."
+msgstr "Mentés előtt töltsd újra a képesítés szerkesztőoldalát."
+
+#: app/qualifications.py:373
+msgid "This qualification changed in another window. Reload it before saving again."
+msgstr "Ezt a képesítést közben egy másik ablakban módosították. Újabb mentés előtt töltsd újra az oldalt."
+
+#: app/qualifications.py:386
+msgid "Qualification details saved."
+msgstr "A képesítés adatai mentve."
+
+#: app/templates/dashboard.html:74 app/templates/dashboard.html:147 app/templates/qualifications.html:12
+msgid "Upload document"
+msgstr "Dokumentum feltöltése"
+
+#: app/templates/dashboard.html:147 app/templates/qualifications.html:6
+msgid "Your qualifications, professional exams and training documents in one place."
+msgstr "Képesítéseid, szakvizsgáid és továbbképzési dokumentumaid egy helyen."
+
+#: app/templates/dashboard.html:151 app/templates/manage_qualifications.html:21 app/templates/qualifications.html:21
+msgid "Qualification document"
+msgstr "Képesítést igazoló dokumentum"
+
+#: app/templates/dashboard.html:155
+msgid "View all qualifications"
+msgstr "Összes képesítés megtekintése"
+
+#: app/templates/dashboard.html:156 app/templates/qualifications.html:8
+msgid "Upload a diploma, certificate or professional exam document. HR will record its details."
+msgstr "Töltsd fel az okleveledet, bizonyítványodat, tanúsítványodat vagy a szakvizsgádat igazoló dokumentumot. Az adatokat a HR rögzíti."
+
+#: app/templates/manage_qualifications.html:6
+msgid "Review uploaded documents and record qualifications, professional exams and training."
+msgstr "Tekintsd át a feltöltött dokumentumokat, és rögzítsd a képesítések, szakvizsgák és továbbképzések adatait."
+
+#: app/templates/manage_qualifications.html:8 app/templates/manage_qualifications.html:17
+msgid "Qualification records"
+msgstr "Képesítési nyilvántartás"
+
+#: app/templates/manage_qualifications.html:10 app/templates/qualification_record_form.html:71
+msgid "Processing status"
+msgstr "Feldolgozási állapot"
+
+#: app/templates/manage_qualifications.html:15
+#, python-format
+msgid "%(count)s records match the selected filters."
+msgstr "A kiválasztott szűrőknek %(count)s tétel felel meg."
+
+#: app/templates/manage_qualifications.html:18 app/templates/qualifications.html:19
+msgid "Qualification or document"
+msgstr "Képesítés vagy dokumentum"
+
+#: app/templates/manage_qualifications.html:18 app/templates/qualifications.html:19
+msgid "Type"
+msgstr "Típus"
+
+#: app/templates/manage_qualifications.html:21 app/templates/qualifications.html:24
+msgid "Previously recorded"
+msgstr "Korábban rögzített adat"
+
+#: app/templates/manage_qualifications.html:29 app/templates/qualifications.html:28
+msgid "Pagination"
+msgstr "Lapozás"
+
+#: app/templates/manage_qualifications.html:29 app/templates/qualifications.html:28
+msgid "Previous"
+msgstr "Előző"
+
+#: app/templates/manage_qualifications.html:29 app/templates/qualifications.html:28
+#, python-format
+msgid "Page %(page)s of %(pages)s"
+msgstr "%(page)s. oldal / %(pages)s"
+
+#: app/templates/manage_qualifications.html:29 app/templates/qualifications.html:28
+msgid "Next"
+msgstr "Következő"
+
+#: app/templates/manage_qualifications.html:30
+msgid "No qualification records match the selected filters."
+msgstr "Nincs a kiválasztott szűrőknek megfelelő képesítés."
+
+#: app/templates/manage_qualifications.html:30
+msgid "Try another employee or show all statuses."
+msgstr "Válassz másik munkavállalót, vagy jeleníts meg minden állapotot."
+
+#: app/templates/qualification_record_form.html:14
+msgid "Record the document details and select the applicable statistical categories."
+msgstr "Rögzítsd a dokumentum adatait, és jelöld be a megfelelő statisztikai kategóriákat."
+
+#: app/templates/qualification_record_form.html:14
+msgid "Back to qualification records"
+msgstr "Vissza a képesítési nyilvántartáshoz"
+
+#: app/templates/qualification_record_form.html:15
+msgid "Please check the following details:"
+msgstr "Ellenőrizd az alábbi adatokat:"
+
+#: app/templates/qualification_record_form.html:18
+msgid "This record was retained from the previous qualification or professional exam register."
+msgstr "Ez a tétel a korábbi képesítési vagy szakvizsga-nyilvántartásból került át, a rögzített adatok megőrzésével."
+
+#: app/templates/qualification_record_form.html:19 app/templates/qualifications.html:25
+msgid "Download document"
+msgstr "Dokumentum letöltése"
+
+#: app/templates/qualification_record_form.html:19 app/templates/qualifications.html:25
+msgid "No document attached"
+msgstr "Nincs csatolt dokumentum"
+
+#: app/templates/qualification_record_form.html:26
+msgid "Qualification details"
+msgstr "A képesítés adatai"
+
+#: app/templates/qualification_record_form.html:26
+msgid "You can save incomplete details as a draft. Mark the record as processed when its details have been checked."
+msgstr "A hiányos adatokat piszkozatként is mentheted. Az adatok ellenőrzése után jelöld a tételt feldolgozottként."
+
+#: app/templates/qualification_record_form.html:28
+msgid "Choose an employee"
+msgstr "Válassz munkavállalót"
+
+#: app/templates/qualification_record_form.html:29
+msgid "Record type"
+msgstr "A tétel típusa"
+
+#: app/templates/qualification_record_form.html:30
+msgid "Study or completion status"
+msgstr "A tanulmányok állapota"
+
+#: app/templates/qualification_record_form.html:31
+msgid "Qualification or training name"
+msgstr "A képesítés vagy képzés megnevezése"
+
+#: app/templates/qualification_record_form.html:33
+msgid "Institution or training provider"
+msgstr "Intézmény vagy képzésszervező"
+
+#: app/templates/qualification_record_form.html:36
+msgid "Exact date obtained (optional)"
+msgstr "A megszerzés pontos dátuma (nem kötelező)"
+
+#: app/templates/qualification_record_form.html:37
+msgid "Enter the year if the exact date is unknown. A year alone is kept without assigning it to a month or a September–August school year."
+msgstr "Ha a pontos dátum nem ismert, csak az évet add meg. A pusztán évszámmal rögzített tételt nem soroljuk be hónaphoz vagy szeptembertől augusztusig tartó nevelési évhez."
+
+#: app/templates/qualification_record_form.html:38
+msgid "Mark as the employee’s highest qualification"
+msgstr "A munkavállaló legmagasabb végzettsége"
+
+#: app/templates/qualification_record_form.html:42
+msgid "Studies and participation"
+msgstr "Tanulmányok és részvétel"
+
+#: app/templates/qualification_record_form.html:44
+msgid "Record the study period to show participation in the relevant school years, including studies that are still in progress."
+msgstr "Add meg a tanulmányi időszakot, hogy a részvétel megjelenhessen az érintett nevelési években, folyamatban lévő tanulmányok esetén is."
+
+#: app/templates/qualification_record_form.html:46
+msgid "Study start date"
+msgstr "A tanulmányok kezdete"
+
+#: app/templates/qualification_record_form.html:47
+msgid "Study end date"
+msgstr "A tanulmányok vége"
+
+#: app/templates/qualification_record_form.html:47
+msgid "Leave the end date empty while studies are in progress."
+msgstr "Folyamatban lévő tanulmányoknál hagyd üresen a befejezési dátumot."
+
+#: app/templates/qualification_record_form.html:49
+msgid "Participation categories"
+msgstr "Részvételi kategóriák"
+
+#: app/templates/qualification_record_form.html:49
+msgid "Select every applicable category. These describe participation, separately from qualifications obtained."
+msgstr "Jelöld be az összes megfelelő kategóriát. Ezek a tanulmányi részvételt jelölik, a megszerzett képesítésektől elkülönítve."
+
+#: app/templates/qualification_record_form.html:53 app/templates/qualification_record_form.html:54
+msgid "Qualifications obtained — statistical categories"
+msgstr "Megszerzett képesítések statisztikai kategóriái"
+
+#: app/templates/qualification_record_form.html:54
+msgid "Select every applicable category from the document. More than one category may apply to the same qualification."
+msgstr "A dokumentum alapján jelöld be az összes megfelelő kategóriát. Egy képesítés több kategóriába is tartozhat."
+
+#: app/templates/qualification_record_form.html:57
+msgid "Continuing professional development and courses"
+msgstr "Továbbképzések és tanfolyamok"
+
+#: app/templates/qualification_record_form.html:58
+msgid "Enter the relevant training details. Duration may be any number of hours, including 30, 60, 90 or 120 hours."
+msgstr "Add meg a képzésre vonatkozó adatokat. Az időtartam bármilyen óraszám lehet, például 30, 60, 90 vagy 120 óra."
+
+#: app/templates/qualification_record_form.html:59
+msgid "Training topic"
+msgstr "A továbbképzés témája"
+
+#: app/templates/qualification_record_form.html:60
+msgid "Organiser type"
+msgstr "A szervező típusa"
+
+#: app/templates/qualification_record_form.html:61
+msgid "Attendance mode"
+msgstr "Részvételi forma"
+
+#: app/templates/qualification_record_form.html:62
+msgid "Duration in hours"
+msgstr "Időtartam órában"
+
+#: app/templates/qualification_record_form.html:63
+msgid "Credits"
+msgstr "Kreditek"
+
+#: app/templates/qualification_record_form.html:64
+msgid "Digital pedagogy continuing professional development"
+msgstr "Digitális pedagógiai pedagógus-továbbképzés"
+
+#: app/templates/qualification_record_form.html:68
+msgid "Funding and notes"
+msgstr "Támogatás és megjegyzések"
+
+#: app/templates/qualification_record_form.html:69
+msgid "Funding"
+msgstr "Támogatás"
+
+#: app/templates/qualification_record_form.html:69
+msgid "Notes"
+msgstr "Megjegyzések"
+
+#: app/templates/qualification_record_form.html:71
+msgid "Changes keep this record in Processed status."
+msgstr "A módosítások mentése után a tétel Feldolgozott állapotban marad."
+
+#: app/templates/qualification_record_form.html:71
+msgid "Saving a draft keeps the record in Uploaded status. Marking it as processed makes its recorded details available in reports."
+msgstr "Piszkozat mentésekor a tétel Feltöltött állapotban marad. Feldolgozottként mentve a rögzített adatai bekerülnek a kimutatásokba."
+
+#: app/templates/qualification_record_form.html:71
+msgid "Save draft"
+msgstr "Piszkozat mentése"
+
+#: app/templates/qualification_record_form.html:71
+msgid "Save as processed"
+msgstr "Mentés feldolgozottként"
+
+#: app/templates/qualification_report_employee.html:10
+msgid "All qualification, exam and course records are shown, including documents awaiting processing and studies in progress."
+msgstr "Minden képesítés, szakvizsga és képzés megjelenik, a feldolgozásra váró dokumentumokkal és a folyamatban lévő tanulmányokkal együtt."
+
+#: app/templates/qualification_report_employee.html:18
+msgid "Uploaded document"
+msgstr "Feltöltött dokumentum"
+
+#: app/templates/qualification_report_employee.html:19
+msgid "Study period"
+msgstr "Tanulmányi időszak"
+
+#: app/templates/qualification_report_employee.html:30
+msgid "This employee has no qualification records."
+msgstr "Ennek a munkavállalónak még nincs rögzített képesítése."
+
+#: app/templates/qualification_report_employees.html:6
+msgid "Choose an employee to review all their qualification, exam and course records."
+msgstr "Válassz munkavállalót a képesítései, szakvizsgái és képzései megtekintéséhez."
+
+#: app/templates/qualification_report_employees.html:12
+msgid "Counts include every recorded year and processing state. Users without records are also listed."
+msgstr "A darabszám minden rögzített évet és feldolgozási állapotot tartalmaz. A rögzített adat nélküli felhasználók is megjelennek."
+
+#: app/templates/qualification_report_employees.html:20
+msgid "Courses"
+msgstr "Képzések"
+
+#: app/templates/qualification_reports.html:9 app/templates/qualification_reports.html:62 app/templates/qualification_reports.html:87
+msgid "Teacher training"
+msgstr "Pedagógus-továbbképzések"
+
+#: app/templates/qualification_reports.html:9 app/templates/qualification_reports.html:63 app/templates/qualification_reports.html:88
+msgid "Other courses"
+msgstr "Egyéb tanfolyamok"
+
+#: app/templates/qualification_reports.html:20
+msgid "Category"
+msgstr "Kategória"
+
+#: app/templates/qualification_reports.html:31
+msgid "Compare completed qualifications, professional exams and courses, and review study participation."
+msgstr "Tekintsd át a megszerzett képesítéseket, szakvizsgákat, befejezett képzéseket és a tanulmányi részvételt."
+
+#: app/templates/qualification_reports.html:43
+msgid "All categories"
+msgstr "Minden kategória"
+
+#: app/templates/qualification_reports.html:59
+msgid "Only processed, completed records are counted."
+msgstr "Csak a feldolgozott, befejezett tételek számítanak bele."
+
+#: app/templates/qualification_reports.html:76
+msgid "KSH classifications"
+msgstr "KSH-besorolások"
+
+#: app/templates/qualification_reports.html:76
+msgid "Award categories use the acquisition date. Participation uses the recorded study period overlapping the selected school year; ongoing studies may have no end date."
+msgstr "A megszerzett képesítések besorolása a megszerzés dátumára épül. A részvételt a kiválasztott nevelési évvel átfedő, rögzített tanulmányi időszak alapján számoljuk; a folyamatban lévő tanulmányoknak még nem kell befejezési dátum."
+
+#: app/templates/qualification_reports.html:77
+msgid "One record may have several KSH classifications. Neither record counts nor employee counts can be added across categories."
+msgstr "Egy tétel több KSH-kategóriába is tartozhat. A kategóriák darabszámai és munkavállalói létszámai ezért nem adhatók össze."
+
+#: app/templates/qualification_reports.html:79
+msgid "Qualifications obtained by KSH category"
+msgstr "Megszerzett képesítések KSH-kategóriánként"
+
+#: app/templates/qualification_reports.html:81
+msgid "Participation in the selected period"
+msgstr "Részvétel a kiválasztott időszakban"
+
+#: app/templates/qualification_reports.html:81
+msgid "These counts include processed studies still in progress, separately from completed qualifications."
+msgstr "Ezek a számok a feldolgozott, még folyamatban lévő tanulmányokat is tartalmazzák, a megszerzett képesítésektől elkülönítve."
+
+#: app/templates/qualification_reports.html:82
+msgid "Select a school year or all school years to view participation."
+msgstr "A részvétel megjelenítéséhez válassz egy nevelési évet vagy az összes nevelési évet."
+
+#: app/templates/qualification_reports.html:83
+#, python-format
+msgid "%(count)s study or course records have no usable study period and are excluded from participation counts."
+msgstr "%(count)s tanulmány vagy képzés rögzített időszaka hiányos, ezért nem szerepel a részvételi létszámban."
+
+#: app/templates/qualification_reports.html:85
+msgid "Participants"
+msgstr "Résztvevők"
+
+#: app/templates/qualification_reports.html:86 app/templates/qualification_reports.html:90
+msgid "Studies towards further qualifications"
+msgstr "További képesítésért folytatott tanulmányok"
+
+#: app/templates/qualification_reports.html:86 app/templates/qualification_reports.html:87 app/templates/qualification_reports.html:88
+#, python-format
+msgid "%(count)s employees"
+msgstr "%(count)s munkavállaló"
+
+#: app/templates/qualification_reports.html:91
+msgid "By study category"
+msgstr "Tanulmányi kategória szerint"
+
+#: app/templates/qualification_reports.html:92
+msgid "Study funding"
+msgstr "Tanulmányok támogatása"
+
+#: app/templates/qualification_reports.html:94
+msgid "Teacher training breakdowns"
+msgstr "Pedagógus-továbbképzések bontása"
+
+#: app/templates/qualification_reports.html:95
+msgid "By topic"
+msgstr "Téma szerint"
+
+#: app/templates/qualification_reports.html:96
+msgid "By organiser"
+msgstr "Szervező szerint"
+
+#: app/templates/qualification_reports.html:97
+msgid "Training funding"
+msgstr "Továbbképzések támogatása"
+
+#: app/templates/qualification_reports.html:98
+msgid "By duration"
+msgstr "Óraszám szerint"
+
+#: app/templates/qualification_reports.html:99
+msgid "By attendance"
+msgstr "Részvételi forma szerint"
+
+#: app/templates/qualification_reports.html:105
+msgid "Open an employee to see their qualifications, exams, courses and documents awaiting processing."
+msgstr "Nyisd meg a munkavállalót a képesítései, szakvizsgái, képzései és feldolgozásra váró dokumentumai megtekintéséhez."
+
+#: app/templates/qualifications.html:8
+msgid "Upload a supporting document"
+msgstr "Igazoló dokumentum feltöltése"
+
+#: app/templates/qualifications.html:8
+#, python-format
+msgid "PDF, JPEG, PNG or WebP; up to %(size)s MB per document."
+msgstr "PDF, JPEG, PNG vagy WebP; dokumentumonként legfeljebb %(size)s MB."
+
+#: app/templates/qualifications.html:11
+msgid "Document file"
+msgstr "Dokumentumfájl"
+
+#: app/templates/qualifications.html:16 app/templates/qualifications.html:18
+msgid "My documents and qualifications"
+msgstr "Dokumentumaim és képesítéseim"
+
+#: app/templates/qualifications.html:16
+msgid "Uploaded documents are waiting for processing. Processed records already have recorded details."
+msgstr "A feltöltött dokumentumok feldolgozásra várnak. A feldolgozott tételek adatai már szerepelnek a nyilvántartásban."
+
+#: app/templates/qualifications.html:19
+msgid "Document"
+msgstr "Dokumentum"
+
+#: app/templates/qualifications.html:29
+msgid "No qualification documents yet"
+msgstr "Még nincs feltöltött képesítési dokumentum"
+
+#: app/templates/qualifications.html:29
+msgid "Choose a file above to send your first document for processing."
+msgstr "Válassz egy fájlt a fenti mezőben az első dokumentum feltöltéséhez."

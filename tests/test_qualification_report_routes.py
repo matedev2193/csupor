@@ -10,7 +10,8 @@ from unittest.mock import patch
 from flask import g
 
 from app import create_app, db
-from app.models import EducationalQualification, ProfessionalExam, User, UserPrivilege, UserProfile
+from app.models import EducationalQualification, User, UserPrivilege, UserProfile
+from app.qualification_models import QualificationRecord
 from app.page_access import ALL_ROLES, PAGE_DEFINITIONS, invalidate_access_cache
 from app.page_access_models import PageAccessSettings, PageRolePermission
 
@@ -55,12 +56,14 @@ class QualificationReportRouteTests(unittest.TestCase):
         self.qualifications = {}
         self.exams = {}
         for index, key in enumerate(("employee", "other")):
-            qualification = EducationalQualification(
+            qualification = QualificationRecord(
+                status="processed", completion_state="completed", kind="qualification",
                 user=self.users[key], level_or_type="Certificate", qualification_name=f"Unique qualification {key}",
                 institution_name=f"Institute {key}", degree_number=f"QUAL-{key}",
                 year_obtained=2025, date_obtained=date(2025, 9 + index, 15), highest=True,
             )
-            exam = ProfessionalExam(
+            exam = QualificationRecord(
+                status="processed", completion_state="completed", kind="exam",
                 user=self.users[key], qualification_name=f"Unique exam {key}",
                 degree_number=f"EXAM-{key}", year_obtained=2026, date_obtained=date(2026, 2 + index, 20),
             )
@@ -115,13 +118,9 @@ class QualificationReportRouteTests(unittest.TestCase):
 
     def record_snapshot(self):
         db.session.expire_all()
-        return (
-            [(row.id, row.user_id, row.qualification_name, row.institution_name, row.degree_number,
-              row.date_obtained, row.year_obtained, row.highest)
-             for row in EducationalQualification.query.order_by(EducationalQualification.id)],
-            [(row.id, row.user_id, row.qualification_name, row.degree_number, row.date_obtained, row.year_obtained)
-             for row in ProfessionalExam.query.order_by(ProfessionalExam.id)],
-        )
+        return [(row.id, row.user_id, row.kind, row.status, row.qualification_name, row.institution_name,
+                 row.degree_number, row.date_obtained, row.year_obtained, row.highest)
+                for row in QualificationRecord.query.order_by(QualificationRecord.id)]
 
     def test_anonymous_visitors_must_sign_in_for_every_report_route(self):
         for path in self.paths():
@@ -219,22 +218,44 @@ class QualificationReportRouteTests(unittest.TestCase):
                     self.assertEqual(response.status_code, 405)
         self.assertEqual(self.record_snapshot(), before)
 
-    def test_report_permission_never_allows_editing_another_users_qualification(self):
+    def test_report_permission_never_grants_employee_processing_access(self):
         self.matrix_save({(REPORT_PAGE, "employee"): True})
         before = self.record_snapshot()
-        for role in ("employee", "hr", "ceo"):
-            self.login(role)
-            self.assertEqual(self.client.get(self.detail_path()).status_code, 200)
-            self.assertEqual(self.client.get("/qualifications/add").status_code, 200)
-            with self.client.session_transaction() as session:
-                token = session["qualification_records_csrf_token"]
-            path = f"/qualifications/{self.qualifications['other'].id}/edit"
-            self.assertEqual(self.client.get(path).status_code, 404)
-            self.assertEqual(self.client.post(path, data={
-                "csrf_token": token, "level_or_type": "Degree", "qualification_name": "Forbidden",
-                "institution_name": "Changed", "degree_number": "Changed", "date_obtained": "2025-01-01",
-            }).status_code, 404)
+        self.login("employee")
+        html = self.client.get(self.detail_path()).get_data(as_text=True)
+        edit_path = f"/qualifications/manage/{self.qualifications['other'].id}/edit"
+        self.assertNotIn(edit_path, LinkParser(html).links)
+        self.assertEqual(self.client.get(edit_path).status_code, 403)
+        self.assertEqual(self.client.post(edit_path, data={"qualification_name": "Forbidden"}).status_code, 403)
         self.assertEqual(self.record_snapshot(), before)
+
+    def test_manager_detail_links_to_processing_without_counting_legacy_records_twice(self):
+        legacy = EducationalQualification(
+            user=self.users["other"], level_or_type="Certificate", qualification_name="Archived only",
+            institution_name="Old college", degree_number="OLD", year_obtained=2025,
+        )
+        db.session.add(legacy)
+        db.session.commit()
+        self.login("hr")
+        html = self.client.get(self.detail_path()).get_data(as_text=True)
+        self.assertIn(f"/qualifications/manage/{self.qualifications['other'].id}/edit", LinkParser(html).links)
+        self.assertNotIn("Archived only", html)
+
+    def test_directory_and_detail_include_uploads_and_courses_in_progress(self):
+        course = QualificationRecord(user=self.users["other"], status="processed", kind="teacher_training",
+            qualification_name="Ongoing training", completion_state="in_progress", study_start_date=date(2025, 9, 1))
+        uploaded = QualificationRecord(user=self.users["other"], status="uploaded")
+        db.session.add_all([course, uploaded])
+        db.session.commit()
+        self.login("hr")
+        html = self.client.get(self.detail_path()).get_data(as_text=True)
+        self.assertIn("Ongoing training", html)
+        self.assertIn("In progress", html)
+        self.assertIn("Uploaded document", html)
+        directory = self.client.get(f"{REPORT_ROOT}/employees?q=other").get_data(as_text=True)
+        self.assertIn("Courses", directory)
+        report = self.client.get(REPORT_ROOT, query_string={"year": "all", "kind": "teacher_training"}).get_data(as_text=True)
+        self.assertIn("No records match the selected filters.", report)
 
     def test_uploaded_record_text_is_escaped_in_manager_detail(self):
         malicious = '<script>alert("record")</script>'

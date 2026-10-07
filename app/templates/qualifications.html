@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Qualifications') }} · {{ _('CSUPOR Portal') }}{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/qualification_workflow.css') }}">
+<div class="qualification-flow">
+  <header class="qualification-flow-heading"><span class="eyebrow">{{ _('My workspace') }}</span><h1>{{ _('Qualifications') }}</h1><p>{{ _('Your qualifications, professional exams and training documents in one place.') }}</p></header>
+  <section class="card qualification-upload-card" aria-labelledby="upload-heading">
+    <div><span class="qualification-upload-symbol" aria-hidden="true">{{ icon('graduate') }}</span><h2 id="upload-heading">{{ _('Upload a supporting document') }}</h2><p>{{ _('Upload a diploma, certificate or professional exam document. HR will record its details.') }}</p><p class="help-text" id="upload-help">{{ _('PDF, JPEG, PNG or WebP; up to %(size)s MB per document.', size=max_upload_mb) }}</p></div>
+    <form method="post" action="{{ url_for('qualifications.index') }}" enctype="multipart/form-data" class="qualification-upload-form">
+      <input type="hidden" name="csrf_token" value="{{ qualification_csrf_token }}">
+      <div class="field"><label for="qualification-document">{{ _('Document file') }}</label><input id="qualification-document" name="document" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp" aria-describedby="upload-help" required></div>
+      <button type="submit">{{ icon('plus') }} {{ _('Upload document') }}</button>
+    </form>
+  </section>
+  <section class="table-card" aria-labelledby="own-records-heading">
+    <div class="section-heading"><div><h2 id="own-records-heading">{{ _('My documents and qualifications') }}</h2><p>{{ _('Uploaded documents are waiting for processing. Processed records already have recorded details.') }}</p></div></div>
+    {% if records %}
+    <div class="table-wrap" role="region" aria-label="{{ _('My documents and qualifications') }}" tabindex="0"><table class="qualification-own-table">
+      <thead><tr><th scope="col">{{ _('Qualification or document') }}</th><th scope="col">{{ _('Type') }}</th><th scope="col">{{ _('Date obtained') }}</th><th scope="col">{{ _('Status') }}</th><th scope="col">{{ _('Document') }}</th></tr></thead>
+      <tbody>{% for record in records %}<tr data-record-id="{{ record.id }}">
+        <td><strong>{{ record.qualification_name or (record.documents[0].filename if record.documents else _('Qualification document')) }}</strong>{% if record.institution_name %}<small class="qualification-flow-note">{{ record.institution_name }}</small>{% endif %}{% if record.degree_number %}<small class="qualification-flow-note">{{ _('Document #') }} {{ record.degree_number }}</small>{% endif %}{% if record.highest %}<span class="pill qualification-flow-highest">{{ _('Highest') }}</span>{% endif %}</td>
+        <td>{{ kinds.get(record.kind, '—') }}{% if record.level_or_type %}<small class="qualification-flow-note">{{ record.level_or_type }}</small>{% endif %}</td>
+        <td>{% if record.date_obtained %}<time datetime="{{ record.date_obtained.isoformat() }}">{{ record.date_obtained|dateformat('y. MM. dd.' if current_locale == 'hu' else 'd MMM y') }}</time>{% elif record.year_obtained %}{{ record.year_obtained }}<small class="qualification-flow-note">{{ _('Exact date not recorded') }}</small>{% else %}—{% endif %}{% if record.completion_state and record.completion_state != 'completed' %}<small class="qualification-flow-note">{{ completion_states.get(record.completion_state, '') }}</small>{% endif %}</td>
+        <td><span class="status-pill {{ 'status-approved' if record.status == 'processed' else 'status-pending-approval' }}">{{ _('Processed') if record.status == 'processed' else pgettext('qualification_status', 'Uploaded') }}</span>{% if record.legacy_source %}<small class="qualification-flow-note">{{ _('Previously recorded') }}</small>{% endif %}</td>
+        <td>{% for document in record.documents %}<a class="button button-secondary" href="{{ url_for('qualifications.document', document_id=document.id) }}">{{ _('Download document') }}</a>{% else %}<span class="qualification-flow-note">{{ _('No document attached') }}</span>{% endfor %}</td>
+      </tr>{% endfor %}</tbody>
+    </table></div>
+    {% if pagination.pages > 1 %}<nav class="qualification-pagination" aria-label="{{ _('Pagination') }}">{% if pagination.has_prev %}<a class="button button-secondary" href="{{ url_for('qualifications.index', page=pagination.prev_num) }}">{{ _('Previous') }}</a>{% endif %}<span>{{ _('Page %(page)s of %(pages)s', page=pagination.page, pages=pagination.pages) }}</span>{% if pagination.has_next %}<a class="button button-secondary" href="{{ url_for('qualifications.index', page=pagination.next_num) }}">{{ _('Next') }}</a>{% endif %}</nav>{% endif %}
+    {% else %}<div class="empty-state">{{ icon('graduate') }}<strong>{{ _('No qualification documents yet') }}</strong><p>{{ _('Choose a file above to send your first document for processing.') }}</p></div>{% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -182,6 +182,67 @@ CREATE TABLE IF NOT EXISTS professional_exams (
     CHECK (year_obtained BETWEEN 1900 AND 9999)
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS qualification_records (
+  id INT NOT NULL AUTO_INCREMENT,
+  user_id INT UNSIGNED NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'uploaded',
+  kind VARCHAR(40) NULL,
+  qualification_name VARCHAR(255) NULL,
+  level_or_type VARCHAR(120) NULL,
+  institution_name VARCHAR(255) NULL,
+  degree_number VARCHAR(120) NULL,
+  year_obtained INT NULL,
+  date_obtained DATE NULL,
+  highest TINYINT(1) NOT NULL DEFAULT 0,
+  completion_state VARCHAR(20) NULL,
+  study_start_date DATE NULL,
+  study_end_date DATE NULL,
+  study_categories JSON NULL,
+  award_categories JSON NULL,
+  training_topic VARCHAR(40) NULL,
+  organiser_type VARCHAR(40) NULL,
+  funding_type VARCHAR(40) NULL,
+  attendance_mode VARCHAR(40) NULL,
+  duration_hours DECIMAL(8,2) NULL,
+  credits DECIMAL(8,2) NULL,
+  digital_pedagogy TINYINT(1) NOT NULL DEFAULT 0,
+  notes TEXT NULL,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
+  processed_at DATETIME NULL,
+  processed_by_id INT UNSIGNED NULL,
+  revision INT NOT NULL DEFAULT 1,
+  legacy_source VARCHAR(40) NULL,
+  legacy_id INT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_qualification_record_legacy (legacy_source, legacy_id),
+  KEY ix_qualification_records_user_id (user_id),
+  KEY ix_qualification_records_status_user_id (status, user_id),
+  CONSTRAINT fk_qualification_records_user_id
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_qualification_records_processed_by_id
+    FOREIGN KEY (processed_by_id) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT qualification_record_status CHECK (status IN ('uploaded', 'processed'))
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS qualification_documents (
+  id INT NOT NULL AUTO_INCREMENT,
+  record_id INT NOT NULL,
+  filename VARCHAR(255) NOT NULL,
+  mime_type VARCHAR(80) NOT NULL,
+  size_bytes INT NOT NULL,
+  data MEDIUMBLOB NOT NULL,
+  uploaded_by_id INT UNSIGNED NULL,
+  uploaded_at DATETIME NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_qualification_documents_record_id (record_id),
+  CONSTRAINT fk_qualification_documents_record_id
+    FOREIGN KEY (record_id) REFERENCES qualification_records(id) ON DELETE CASCADE,
+  CONSTRAINT fk_qualification_documents_uploaded_by_id
+    FOREIGN KEY (uploaded_by_id) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT qualification_document_size CHECK (size_bytes > 0 AND size_bytes <= 10485760)
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS legal_entities (
   id INT NOT NULL AUTO_INCREMENT,
   name VARCHAR(120) NOT NULL,

@@ -217,6 +217,43 @@ class PageAccessTests(unittest.TestCase):
         self.rule("manage_user_profiles", "employee", True)
         self.assertTrue(can_access_endpoint("profile_photos.show_photo", employee, user_id=other.id))
 
+    def test_qualification_processing_requires_hr_or_director_despite_explicit_grants(self):
+        for role, user in self.users.items():
+            self.rule("qualifications.manage", role, True)
+            expected = role in {"hr", "ceo"}
+            for endpoint in ("qualifications.manage", "qualifications.new", "qualifications.edit"):
+                self.assertEqual(can_access_endpoint(endpoint, user), expected)
+            self.rule("qualifications.manage", role, False)
+            self.assertFalse(can_access_page("qualifications.manage", user))
+        self.login()
+        for role in ("employee", "developer"):
+            data = self.form()
+            data.add("permissions", f"qualifications.manage:{role}")
+            self.assertEqual(self.save(data).status_code, 400)
+
+    def test_qualification_document_permission_preserves_owner_and_processor_scope(self):
+        from app.qualification_models import QualificationDocument, QualificationRecord
+
+        owner = self.users["employee"]
+        record = QualificationRecord(user_id=owner.id)
+        document = QualificationDocument(record=record, filename="private.pdf", mime_type="application/pdf",
+                                         size_bytes=3, data=b"pdf", uploaded_by_id=owner.id)
+        db.session.add(record)
+        db.session.commit()
+        endpoint = "qualifications.document"
+        self.assertTrue(can_access_endpoint(endpoint, owner, document_id=document.id))
+        self.assertFalse(can_access_endpoint(endpoint, owner))
+        self.assertFalse(can_access_endpoint(endpoint, owner, document_id=999999))
+        self.assertFalse(can_access_endpoint(endpoint, self.users["developer"], document_id=document.id))
+        self.rule("qualifications.manage", "developer", True)
+        self.assertFalse(can_access_endpoint(endpoint, self.users["developer"], document_id=document.id))
+        for role in ("hr", "ceo"):
+            self.assertTrue(can_access_endpoint(endpoint, self.users[role], document_id=document.id))
+            self.rule("qualifications.manage", role, False)
+            self.assertFalse(can_access_endpoint(endpoint, self.users[role], document_id=document.id))
+        self.rule("add_qualification", "employee", False)
+        self.assertFalse(can_access_endpoint(endpoint, owner, document_id=document.id))
+
     def test_gyap_download_requires_one_of_its_parent_pages(self):
         employee = SimpleNamespace(
             is_authenticated=True, privilege=UserPrivilege.employee,

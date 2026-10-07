@@ -130,11 +130,13 @@ def initialise_database():
         page_access_models,
         password_reset_delivery_models,
         password_reset_models,
+        qualification_models,
         worktime_models,
     )
     from .leave_approval import initialise_leave_approval_settings
     from .page_access import initialise_page_access_settings
     from .initial_admin import initialise_initial_admin
+    from .qualification_migration import migrate_legacy_qualifications
 
     engine = db.engine
     is_mysql = engine.dialect.name in MYSQL_DIALECTS
@@ -143,6 +145,7 @@ def initialise_database():
     with _mysql_bootstrap_lock(engine) if is_mysql else nullcontext():
         create_missing_tables(engine, db.metadata)
         ensure_qualification_date_columns(engine)
+        migrate_legacy_qualifications(engine)
         ensure_work_assignment_flexible_shift_column(engine)
         initialise_leave_approval_settings()
         initialise_page_access_settings()

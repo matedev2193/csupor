@@ -14,7 +14,7 @@
 .qualification-date-note { display: flex; gap: 12px; padding: 16px 19px; border: 1px solid #ead9c5; border-radius: 12px; background: #fff8ee; color: #765232; font-size: 12px; }
 .qualification-date-note > .icon { margin-top: 2px; width: 19px; height: 19px; }
 .qualification-date-note p { margin: 4px 0 6px; line-height: 1.65; }
-.qualification-totals { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.qualification-totals { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
 .qualification-totals .stat-card { padding: 20px; display: flex; flex-direction: column; }
 .qualification-stat-label { color: var(--text-soft); font-size: 12px; }
 .qualification-stat-value { display: block; margin-top: 6px; font-size: 30px; letter-spacing: -.04em; line-height: 1.3; font-weight: 650; color: var(--text); }
@@ -26,7 +26,7 @@
 .qualification-summary[aria-labelledby='by-name-title'] { grid-column: 1 / -1; }
 .qualification-summary { padding: 20px; }
 .qualification-summary .section-heading { margin-bottom: 12px; }
-.qualification-summary-table { min-width: 560px; }
+.qualification-summary-table { min-width: 760px; }
 .qualification-summary-table th, .qualification-summary-table td { padding: 12px 9px; }
 .qualification-summary-table th:first-child { width: 40%; min-width: 180px; }
 .qualification-summary-table th:not(:first-child), .qualification-summary-table td { text-align: right; font-variant-numeric: tabular-nums; }
@@ -66,3 +66,11 @@
   .qualification-stat-label { font-size: 11px; }
   .qualification-date-note { padding: 14px; }
 }
+.qualification-ksh { display: grid; gap: 20px; min-width: 0; }
+.qualification-ksh > .section-heading { margin-bottom: 0; }
+.qualification-classification-table { min-width: 410px; }
+.qualification-classification-table th:first-child { width: 70%; min-width: 230px; }
+.qualification-classification-table tbody th { font-weight: 500; font-size: 12px; text-transform: none; letter-spacing: normal; background: transparent; }
+.qualification-classification-table td, .qualification-classification-table th:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+.qualification-breakdowns { min-width: 0; }
+.qualification-breakdowns > summary { cursor: pointer; font-weight: 600; padding: 15px 0; }
