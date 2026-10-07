@@ -1,0 +1,75 @@
+.qualification-flow { display: grid; gap: 22px; min-width: 0; }
+.qualification-flow-heading { margin-bottom: 0; }
+.qualification-flow-heading h1 { margin: 8px 0; }
+.qualification-flow-heading p { color: var(--text-soft); font-size: 13px; margin: 8px 0 0; }
+.qualification-upload-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 32px; align-items: center; background: linear-gradient(115deg, #fff8f2, #fff 75%); }
+.qualification-upload-card h2 { margin: 12px 0 8px; font-size: 19px; }
+.qualification-upload-card p { font-size: 13px; color: var(--text-soft); margin: 7px 0; line-height: 1.75; }
+.qualification-upload-symbol { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 13px; background: var(--primary-tint); color: var(--primary); }
+.qualification-upload-form { padding: 22px; border: 1px dashed #d9bda9; border-radius: 12px; background: #fff; align-content: center; }
+.qualification-upload-form input[type='file'] { padding: 9px; font-size: 12px; }
+.qualification-upload-form input[type='file']::file-selector-button { background: #f5f0eb; border: 0; border-radius: 6px; padding: 9px 10px; color: var(--text); margin-right: 10px; cursor: pointer; }
+.qualification-upload-form button { justify-self: start; }
+.qualification-processing-filters { display: grid; grid-template-columns: minmax(130px, .65fr) minmax(180px, 1fr) minmax(160px, 1fr); gap: 16px; align-items: end; }
+.qualification-processing-filters .button-row { grid-column: 1 / -1; margin-top: 0; }
+.qualification-flow-count { color: var(--text-soft); font-size: 12px; margin: 22px 0 0; }
+.qualification-flow-note { display: block; color: var(--text-soft); font-size: 11px; margin-top: 5px; line-height: 1.6; }
+.qualification-flow-highest { display: inline-flex; margin-top: 8px; }
+.qualification-own-table { min-width: 670px; }
+.qualification-processing-table { min-width: 920px; }
+.qualification-own-table td, .qualification-processing-table td { overflow-wrap: anywhere; }
+.qualification-own-table td:first-child { min-width: 210px; }
+.qualification-processing-table td:first-child { min-width: 160px; }
+.qualification-processing-table td:nth-child(2) { min-width: 210px; }
+.qualification-pagination { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 22px; font-size: 12px; }
+.qualification-editor { max-width: 1220px; }
+.qualification-editor-form { gap: 20px; }
+.qualification-source { display: flex; justify-content: space-between; gap: 20px; align-items: center; }
+.qualification-source h2 { margin: 0 0 7px; font-size: 18px; }
+.qualification-source p { font-size: 12px; color: var(--text-soft); margin: 7px 0; }
+.qualification-source .status-pill { margin-left: 8px; }
+.qualification-source-files { min-width: 0; text-align: right; overflow-wrap: anywhere; }
+.qualification-errors { display: block; }
+.qualification-errors ul { padding-left: 20px; margin: 10px 0 0; }
+.qualification-inline-note { margin: -4px 0 0; }
+.qualification-editor-section > summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; cursor: pointer; list-style: none; font-size: 16px; font-weight: 650; }
+.qualification-editor-section > summary::-webkit-details-marker { display: none; }
+.qualification-editor-section > summary .icon { width: 17px; height: 17px; flex-shrink: 0; transition: transform .15s; }
+.qualification-editor-section[open] > summary .icon { transform: rotate(90deg); }
+.qualification-editor-section > summary:focus-visible { outline: 2px solid var(--primary); outline-offset: 6px; border-radius: 3px; }
+.qualification-section-body { margin-top: 20px; display: grid; gap: 20px; }
+.qualification-section-body > p { margin: 0; }
+.qualification-category-group { border: 0; margin: 0; padding: 0; min-width: 0; }
+.qualification-category-group legend { font-size: 13px; font-weight: 650; padding: 0; }
+.qualification-category-group > p { margin: 8px 0 16px; }
+.qualification-checkbox-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.qualification-checkbox-grid .checkbox-field { align-items: flex-start; font-size: 12px; font-weight: 500; padding: 13px; line-height: 1.65; }
+.qualification-checkbox-grid .checkbox-field input { margin-top: 2px; }
+.qualification-checkbox-grid .checkbox-field:has(input:checked) { border-color: #dbb79f; background: #fff5ed; }
+.qualification-editor-actions { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.qualification-editor-actions strong { font-size: 13px; }
+.qualification-editor-actions .help-text { margin: 6px 0 0; max-width: 570px; }
+.qualification-editor-actions .button-row { margin: 0; flex-shrink: 0; }
+@media (max-width: 1050px) {
+  .qualification-upload-card { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .qualification-editor-actions { flex-direction: column; align-items: stretch; }
+}
+@media (max-width: 700px) {
+  .qualification-processing-filters { grid-template-columns: minmax(0, 1fr); }
+  .qualification-checkbox-grid { grid-template-columns: minmax(0, 1fr); }
+  .qualification-source { flex-direction: column; align-items: flex-start; }
+  .qualification-source-files { text-align: left; }
+  .qualification-flow-heading .button-row { width: 100%; }
+  .qualification-flow-heading .button-row > * { flex: 1 1 auto; }
+}
+@media (max-width: 520px) {
+  .qualification-flow { gap: 16px; }
+  .qualification-upload-form { padding: 15px; }
+  .qualification-upload-form button { justify-self: stretch; }
+  .qualification-upload-card h2 { font-size: 17px; }
+  .qualification-editor-section > summary { font-size: 14px; }
+  .qualification-editor-actions .button-row > * { flex: 1 1 auto; }
+}
+.qualification-flow .status-pill { white-space: nowrap; overflow-wrap: normal; }
+.qualification-processing-table td:nth-child(5), .qualification-processing-table td:nth-child(6), .qualification-own-table td:nth-child(3) { white-space: nowrap; }
+.qualification-processing-table td:nth-child(5) .qualification-flow-note, .qualification-own-table td:nth-child(3) .qualification-flow-note { white-space: normal; }

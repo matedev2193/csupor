@@ -12,7 +12,8 @@ The startup sequence:
 2. If MySQL/MariaDB reports that this database does not exist, connects to the same server with the same credentials and creates that exact database using `utf8mb4`. Authentication, connectivity and other errors do not trigger database creation.
 3. Serialises initialisation across MySQL/MariaDB workers with a database-specific advisory lock.
 4. Creates missing tables, indexes and foreign keys in dependency order, then applies the supported additive column updates.
-5. Creates the required approval and page-access settings only when absent, and initialises an explicitly configured first administrator when there is no developer account. It then allows normal application and worker startup.
+5. Imports existing qualification and professional-exam rows into the unified qualification register in one transaction, preserving their original tables and skipping records already imported.
+6. Creates the required approval and page-access settings only when absent, and initialises an explicitly configured first administrator when there is no developer account. It then allows normal application and worker startup.
 
 The database server and account must be provided by the hosting platform. If that account cannot create a database, create/select an empty database through the provider's control panel and supply its connection details. Creating tables still requires the account's `CREATE` permission; the supported upgrades of existing tables require `ALTER` permission. Application startup does not obtain extra server privileges or substitute different credentials.
 
@@ -24,7 +25,7 @@ The application uses its ORM schema and targeted additive helpers. It does not e
 
 MySQL DDL commits independently; the entire setup is therefore not a single transaction. If initial setup stops partway through, a later start can create the remaining missing tables and defaults. This does not repair arbitrary existing objects: for example, a missing standalone index on an already existing table still needs explicit repair. Permission, connection and unexpected schema failures encountered during initialisation stop startup instead of being ignored. Workers wait up to 30 seconds for another initialisation to finish; a timeout stops that worker's startup and can be retried by the hosting service.
 
-New foreign keys match existing MySQL identifier sizes and signedness. The supported automatic column updates remain the exact qualification dates and the flexible work-assignment shift flag. This initialisation is not a general migration runner: unrelated changes to existing columns still use their explicit scripts in `sql/migrations/`.
+New foreign keys match existing MySQL identifier sizes and signedness. The supported automatic column updates remain the exact qualification dates and the flexible work-assignment shift flag. The [unified qualification migration](qualification-workflow.md) additionally creates its two tables and copies legacy rows once, without changing subsequently edited records. This initialisation is not a general migration runner: unrelated changes to existing columns still use their explicit scripts in `sql/migrations/`.
 
 ## Verification
 

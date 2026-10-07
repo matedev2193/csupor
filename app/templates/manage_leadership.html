@@ -47,6 +47,7 @@
         id="start_date"
         name="start_date"
         type="date"
+        max="9999-12-31"
         value="{{ editing_leadership.start_date if editing_leadership and editing_leadership.start_date else '' }}"
         required
       >
@@ -56,6 +57,7 @@
         id="end_date"
         name="end_date"
         type="date"
+        max="9999-12-31"
         value="{{ editing_leadership.end_date if editing_leadership and editing_leadership.end_date else '' }}"
       >
 

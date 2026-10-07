@@ -15,12 +15,14 @@ Flask-based login and personnel data management system backed by MySQL schema `c
 - Numeric ascending user ID using MySQL auto-increment primary key.
 - Additional personnel profile data after registration.
 - Dependents management.
-- Educational qualifications management (multiple records supported).
-- Optional teacher professional exam record.
+- Unified qualifications, professional exams and continuing professional development.
+- Employee document uploads with HR/director processing and KSH classifications.
 
 ## Internationalisation
 
-The application uses Flask-Babel translations. English (`en`) is the default locale and Hungarian (`hu`) is registered as an additional supported locale. Users can switch languages from the header language selector; the selected locale is stored in the session and otherwise falls back to the browser's `Accept-Language` header.
+The application uses Flask-Babel translations. Hungarian (`hu`) is the default locale for a new browser session or device, regardless of the browser's `Accept-Language` header. English (`en`) remains available from the header language selector. An explicit language choice is stored in the session and retained through login and logout; without a valid saved choice, the interface uses Hungarian.
+
+Date fields retain the browser's native calendar and regional field order. Fields without a stricter date limit use `max="9999-12-31"`, matching Python's supported year range. This also lets the browser advance from the year segment after four digits instead of waiting for a six-digit year. New date fields should specify a four-digit upper year limit too; keep any stricter business limit, such as today's date for birth dates or completed qualifications.
 
 Translation extraction is configured in `babel.cfg`. After adding or updating translatable strings, update the existing catalogue, fill in the new Hungarian translations, and compile it:
 
@@ -97,7 +99,7 @@ The profile-photo editor supports dragging, zooming and a circular crop preview 
 
 Birthday reminders keep shared-workplace visibility for employees, show every director's birthday to everyone, and show every active employee's birthday to directors. Names are bold and the reminder uses singular/plural wording. Leave-calendar abbreviations have a visible legend and full accessible labels. Weekly hours remain editable on contracts but are omitted from the summary table.
 
-Qualifications and professional exams record the exact date obtained and use the label **Document number**. New or edited records require a valid date from 1900-01-01 through the current Budapest calendar day. Existing year-only records retain their original year and explicitly show that the exact date is missing; the qualification editor allows the owner to supply it. Startup adds a nullable `date_obtained` column to each of `educational_qualifications` and `professional_exams` when missing, requiring `ALTER` permission on existing MySQL tables. It does not invent a month/day or change old records. The legacy year remains for compatibility and is synchronised when a full date is saved.
+The personal **Qualifications** page combines qualifications, professional exams and training. Employees upload supporting PDF or image documents; HR/director accounts enter and correct the metadata on **Management → Qualification processing**, with filters for employee and Uploaded/Processed status. The editor records reusable KSH study/award classifications, acquisition year or exact date, study period and training details. Processing and completion are separate states. Startup imports both legacy tables into the unified register without removing the originals, inventing dates, duplicating records or overwriting later HR edits. Documents are stored privately in the database. See [qualification document processing](docs/qualification-workflow.md) and [reports](docs/qualification-reports.md).
 
 ## Manual portal testing
 

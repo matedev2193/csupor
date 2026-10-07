@@ -22,12 +22,12 @@
 
     <div class="field">
       <label for="start_date">{{ _('Start of contract *') }}</label>
-      <input id="start_date" type="date" name="start_date" value="{{ request.form.get('start_date', contract.start_date or '') }}" required>
+      <input id="start_date" type="date" max="9999-12-31" name="start_date" value="{{ request.form.get('start_date', contract.start_date or '') }}" required>
     </div>
 
     <div class="field">
       <label for="end_date">{{ _('End of contract') }}</label>
-      <input id="end_date" type="date" name="end_date" value="{{ request.form.get('end_date', contract.end_date or '') }}">
+      <input id="end_date" type="date" max="9999-12-31" name="end_date" value="{{ request.form.get('end_date', contract.end_date or '') }}">
     </div>
 
     <div class="field">
@@ -37,7 +37,7 @@
 
     <div class="field">
       <label for="certificate_of_good_conduct_date">{{ _('Date of certificate of good conduct') }}</label>
-      <input id="certificate_of_good_conduct_date" type="date" name="certificate_of_good_conduct_date" value="{{ request.form.get('certificate_of_good_conduct_date', contract.certificate_of_good_conduct_date or '') }}">
+      <input id="certificate_of_good_conduct_date" type="date" max="9999-12-31" name="certificate_of_good_conduct_date" value="{{ request.form.get('certificate_of_good_conduct_date', contract.certificate_of_good_conduct_date or '') }}">
     </div>
 
     <div class="field">
@@ -62,7 +62,7 @@
 
     <div class="field">
       <label for="classification_start_date">{{ _('Start of classification') }}</label>
-      <input id="classification_start_date" type="date" name="classification_start_date" value="{{ request.form.get('classification_start_date', contract.classification_start_date or '') }}">
+      <input id="classification_start_date" type="date" max="9999-12-31" name="classification_start_date" value="{{ request.form.get('classification_start_date', contract.classification_start_date or '') }}">
     </div>
 
     <div class="field">

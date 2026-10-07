@@ -36,7 +36,6 @@ from .models import (
     ContractType,
     Dependent,
     DependentType,
-    EducationalQualification,
     Gender,
     Leadership,
     LeadershipPosition,
@@ -48,7 +47,6 @@ from .models import (
     LeaveRequestStatus,
     LeaveType,
     PlaceOfWork,
-    ProfessionalExam,
     MaritalStatus,
     TeacherClassification,
     User,
@@ -146,23 +144,6 @@ def _normalize_optional_text(value: str | None) -> str | None:
         return None
     normalized = value.strip()
     return normalized or None
-
-
-def _validate_date_obtained(value: str, today: date) -> tuple[date | None, str | None]:
-    raw_value = value.strip()
-    try:
-        obtained = date.fromisoformat(raw_value)
-        # fromisoformat also accepts compact and ISO week dates. The forms and
-        # stored qualification history require an exact calendar date.
-        if obtained.isoformat() != raw_value:
-            raise ValueError
-    except ValueError:
-        return None, _("Enter the full date obtained in YYYY-MM-DD format.")
-    if obtained < date(1900, 1, 1):
-        return None, _("Date obtained must be on or after 1900-01-01.")
-    if obtained > today:
-        return None, _("Date obtained cannot be in the future.")
-    return obtained, None
 
 
 def _validate_digit_field(label: str, value: str | None, length: int) -> str | None:
@@ -2006,67 +1987,22 @@ def init_routes(app):
         dependent = Dependent.query.filter_by(id=dependent_id, user_id=current_user.id).first_or_404()
         return dependent_editor(dependent)
 
-    def qualification_editor(qualification=None):
-        session.setdefault("qualification_records_csrf_token", token_urlsafe(32))
-        today = local_today()
-        text_fields = ("level_or_type", "qualification_name", "institution_name", "degree_number")
-        form_values = {
-            field: getattr(qualification, field) or "" if qualification else ""
-            for field in text_fields
-        }
-        form_values["date_obtained"] = (
-            qualification.date_obtained.isoformat() if qualification and qualification.date_obtained else ""
-        )
-        form_values["highest"] = bool(qualification and qualification.highest)
+    def legacy_qualification_redirect():
+        # Metadata is now maintained by HR/Directors in the unified workflow.
+        # Old forms must never write to the retained migration source tables.
         if request.method == "POST":
-            if not compare_digest(session["qualification_records_csrf_token"].encode(), request.form.get("csrf_token", "").encode()):
-                abort(400)
-            form_values = {field: request.form.get(field, "") for field in (*text_fields, "date_obtained")}
-            form_values["highest"] = request.form.get("highest") == "on"
-            values = {field: form_values[field].strip() for field in text_fields}
-            obtained, date_error = _validate_date_obtained(form_values["date_obtained"], today)
-            errors = []
-            if not all(values.values()):
-                errors.append(_("Complete all qualification fields."))
-            if date_error:
-                errors.append(date_error)
-            if errors:
-                for error in errors:
-                    flash(error, "error")
-            else:
-                editing = qualification is not None
-                qualification = qualification or EducationalQualification(user_id=current_user.id)
-                if form_values["highest"]:
-                    EducationalQualification.query.filter_by(user_id=current_user.id, highest=True).update(
-                        {EducationalQualification.highest: False}, synchronize_session="fetch",
-                    )
-                for field, value in values.items():
-                    setattr(qualification, field, value)
-                qualification.date_obtained = obtained
-                qualification.year_obtained = obtained.year
-                qualification.highest = form_values["highest"]
-                db.session.add(qualification)
-                db.session.commit()
-                flash(_("Educational qualification updated.") if editing else _("Educational qualification added."), "success")
-                return redirect(landing_url())
-
-        return render_template(
-            "qualification_form.html", qualification=qualification, form_values=form_values,
-            csrf_token=session["qualification_records_csrf_token"], latest_obtained_date=today.isoformat(),
-        )
+            abort(403)
+        return redirect(url_for("qualifications.index"))
 
     @app.route("/qualifications/add", methods=["GET", "POST"])
     @login_required
     def add_qualification():
-        return qualification_editor()
+        return legacy_qualification_redirect()
 
     @app.route("/qualifications/<int:qualification_id>/edit", methods=["GET", "POST"])
     @login_required
     def edit_qualification(qualification_id):
-        qualification = EducationalQualification.query.filter_by(id=qualification_id, user_id=current_user.id).first_or_404()
-        return qualification_editor(qualification)
-
-
+        return legacy_qualification_redirect()
 
     @app.route("/legal-entities")
     @privilege_manager_required
@@ -2909,48 +2845,4 @@ def init_routes(app):
     @app.route("/professional-exam", methods=["GET", "POST"])
     @login_required
     def professional_exam():
-        exam = current_user.professional_exam or ProfessionalExam(user_id=current_user.id)
-        session.setdefault("qualification_records_csrf_token", token_urlsafe(32))
-        today = local_today()
-        visible_fields = ("qualification_name", "degree_number", "date_obtained")
-        form_values = {
-            "qualification_name": exam.qualification_name or "",
-            "degree_number": exam.degree_number or "",
-            "date_obtained": exam.date_obtained.isoformat() if exam.date_obtained else "",
-        }
-        if request.method == "POST":
-            if not compare_digest(session["qualification_records_csrf_token"].encode(), request.form.get("csrf_token", "").encode()):
-                abort(400)
-            form_values = {field: request.form.get(field, "") for field in visible_fields}
-            values = {field: value.strip() for field, value in form_values.items()}
-            # Only an explicitly cleared current form removes the record. A
-            # stale year-only form or an incomplete POST must never delete it.
-            removing = (
-                all(field in request.form for field in visible_fields)
-                and not any(values.values())
-                and not request.form.get("year_obtained", "").strip()
-            )
-            if removing:
-                if exam.id:
-                    db.session.delete(exam)
-                    db.session.commit()
-                flash(_("Professional exam removed."), "success")
-                return redirect(landing_url())
-
-            obtained, date_error = _validate_date_obtained(values["date_obtained"], today)
-            if date_error:
-                flash(date_error, "error")
-            else:
-                exam.qualification_name = values["qualification_name"]
-                exam.degree_number = values["degree_number"]
-                exam.date_obtained = obtained
-                exam.year_obtained = obtained.year
-                db.session.add(exam)
-                db.session.commit()
-                flash(_("Professional exam saved."), "success")
-                return redirect(landing_url())
-
-        return render_template(
-            "professional_exam_form.html", exam=exam, form_values=form_values,
-            csrf_token=session["qualification_records_csrf_token"], latest_obtained_date=today.isoformat(),
-        )
+        return legacy_qualification_redirect()

@@ -51,6 +51,8 @@ class PasswordResetDeliveryTests(unittest.TestCase):
             session["_fresh"] = True
             session["locale"] = "en"
         g.pop("_login_user", None)
+        # The test's shared app context otherwise retains an earlier request's locale.
+        g.pop("_flask_babel", None)
 
     def test_records_then_updates_only_fixed_metadata(self):
         delivery_id = record_reset_delivery("Person@Example.invalid")

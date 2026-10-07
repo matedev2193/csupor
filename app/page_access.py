@@ -1,7 +1,7 @@
 """One page policy for HTTP entry points, navigation and dashboard links.
 
 Page grants never override record ownership or the leave approval workflow.
-Only the developer access-matrix page is permanently tied to a base role.
+The developer access matrix and qualification processing retain base-role requirements.
 """
 
 from datetime import datetime, timezone
@@ -40,12 +40,12 @@ PAGE_DEFINITIONS = (
     _page("edit_profile", lazy_gettext("My profile"), lazy_gettext("My workspace")),
     _page("manage_dependents", lazy_gettext("Dependents"), lazy_gettext("My workspace")),
     _page("add_qualification", lazy_gettext("Qualifications"), lazy_gettext("My workspace")),
-    _page("professional_exam", lazy_gettext("Professional exam"), lazy_gettext("My workspace")),
     _page("change_password", lazy_gettext("Change password"), lazy_gettext("My workspace")),
     _page("leaves", lazy_gettext("Leave calendar"), lazy_gettext("Records"), note=lazy_gettext("An employment contract is also required.")),
     _page("worktime.index", lazy_gettext("Working-time register"), lazy_gettext("Records"), note=lazy_gettext("An employment contract is also required.")),
     _page("manage_user_profiles", lazy_gettext("User profiles"), lazy_gettext("Management"), MANAGER_ROLES),
-    _page("qualification_reports.index", lazy_gettext("Qualifications and exams"), lazy_gettext("Management"), MANAGER_ROLES),
+    _page("qualifications.manage", lazy_gettext("Qualification processing"), lazy_gettext("Management"), MANAGER_ROLES, lazy_gettext("HR or Director privilege is also required.")),
+    _page("qualification_reports.index", lazy_gettext("Qualification reports"), lazy_gettext("Management"), MANAGER_ROLES),
     _page("manage_contracts", lazy_gettext("Contracts"), lazy_gettext("Management"), MANAGER_ROLES),
     _page("worktime.groups", lazy_gettext("Groups"), lazy_gettext("Management"), MANAGER_ROLES),
     _page("worktime.management", lazy_gettext("Working-time management"), lazy_gettext("Management"), MANAGER_ROLES),
@@ -68,7 +68,8 @@ for _parent, _children in {
     "manage_user_profiles": ("edit_user_profile", "delete_user_profile"),
     "qualification_reports.index": ("qualification_reports.employees", "qualification_reports.employee"),
     "manage_dependents": ("add_dependent", "edit_dependent"),
-    "add_qualification": ("edit_qualification",),
+    "add_qualification": ("qualifications.index", "edit_qualification", "professional_exam"),
+    "qualifications.manage": ("qualifications.new", "qualifications.edit"),
     "manage_contracts": ("select_contract_employee", "create_contract", "edit_contract"),
     "manage_legal_entities": ("create_legal_entity", "edit_legal_entity"),
     "manage_places_of_work": ("create_place_of_work", "edit_place_of_work"),
@@ -84,7 +85,7 @@ UTILITY_ENDPOINTS = frozenset({
     "static", "index", "login", "logout", "register", "set_language", "page_access.unavailable",
     "password_reset.request_reset", "password_reset.reset_password",
 })
-SPECIAL_ENDPOINTS = frozenset({"profile_photos.show_photo", "gyap.download_form", "worktime.export"})
+SPECIAL_ENDPOINTS = frozenset({"profile_photos.show_photo", "gyap.download_form", "worktime.export", "qualifications.document"})
 
 
 def invalidate_access_cache():
@@ -119,6 +120,8 @@ def can_access_page(page_key, user=None, *, day=None):
     role = _role(user)
     if page_key == "page_access.settings":
         return role == "developer"
+    if page_key == "qualifications.manage" and role not in MANAGER_ROLES:
+        return False
     if role not in ALL_ROLES:
         return False
     allowed = _permission_rules().get((page_key, role), role in _PAGES[page_key]["default_roles"])
@@ -141,6 +144,22 @@ def can_access_endpoint(endpoint, user=None, **view_args):
         return True
     if not getattr(user, "is_authenticated", False):
         return False
+    if endpoint == "qualifications.document":
+        if can_access_page("qualifications.manage", user):
+            return True
+        if not can_access_page("add_qualification", user):
+            return False
+        document_id = view_args.get("document_id")
+        if document_id is None:
+            return False
+        from .qualification_models import QualificationDocument, QualificationRecord
+
+        owner_id = db.session.execute(
+            db.select(QualificationRecord.user_id)
+            .join(QualificationDocument, QualificationDocument.record_id == QualificationRecord.id)
+            .where(QualificationDocument.id == document_id)
+        ).scalar_one_or_none()
+        return owner_id == user.id
     if endpoint == "profile_photos.show_photo":
         return view_args.get("user_id") == user.id or can_access_page("manage_user_profiles", user)
     if endpoint == "gyap.download_form":
@@ -184,10 +203,17 @@ def _settings():
 
 def _raw_matrix():
     rules = _permission_rules()
-    return {
-        (page["key"], role): role == "developer" if page["key"] == "page_access.settings" else rules.get((page["key"], role), role in page["default_roles"])
-        for page in PAGE_DEFINITIONS for role in ALL_ROLES
-    }
+    matrix = {}
+    for page in PAGE_DEFINITIONS:
+        for role in ALL_ROLES:
+            if page["key"] == "page_access.settings":
+                allowed = role == "developer"
+            elif page["key"] == "qualifications.manage" and role not in MANAGER_ROLES:
+                allowed = False
+            else:
+                allowed = rules.get((page["key"], role), role in page["default_roles"])
+            matrix[(page["key"], role)] = allowed
+    return matrix
 
 
 def _check_form():
@@ -206,6 +232,8 @@ def _check_form():
     # Ignore attempts to remove developer access. Explicit attempts to grant
     # this page to another role are invalid rather than silently misleading.
     if any(f"page_access.settings:{role}" in selected for role in ALL_ROLES if role != "developer"):
+        abort(400)
+    if any(f"qualifications.manage:{role}" in selected for role in ALL_ROLES if role not in MANAGER_ROLES):
         abort(400)
     return set(selected)
 

@@ -2,7 +2,7 @@ import os
 from urllib.parse import quote_plus
 
 from dotenv import load_dotenv
-from flask import Flask, request, session
+from flask import Flask, session
 from flask_babel import Babel
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
@@ -25,16 +25,16 @@ SUPPORTED_LOCALES = {
     "en": "English",
     "hu": "Magyar",
 }
-DEFAULT_LOCALE = "en"
+DEFAULT_LOCALE = "hu"
 
 
 def get_locale() -> str:
-    """Select the active locale from the session or request headers."""
+    """Honour an explicit language choice, otherwise start in Hungarian."""
     selected_locale = session.get("locale")
     if selected_locale in SUPPORTED_LOCALES:
         return selected_locale
 
-    return request.accept_languages.best_match(SUPPORTED_LOCALES.keys()) or DEFAULT_LOCALE
+    return DEFAULT_LOCALE
 
 
 def _build_database_uri() -> str:
@@ -106,6 +106,10 @@ def create_app() -> Flask:
     from .qualification_reports import qualification_reports
 
     app.register_blueprint(qualification_reports)
+
+    from .qualifications import qualifications
+
+    app.register_blueprint(qualifications)
 
     from .account_display import account_template_context
 

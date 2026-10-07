@@ -50,7 +50,7 @@
         </div>
         <div class="field">
           <label for="dependency_start">{{ _("Start of dependency") }}</label>
-          <input id="dependency_start" type="date" name="dependency_start" value="{{ request.form.get('dependency_start', dependent.dependency_start if dependent and dependent.dependency_start else '') }}" required>
+          <input id="dependency_start" type="date" max="9999-12-31" name="dependency_start" value="{{ request.form.get('dependency_start', dependent.dependency_start if dependent and dependent.dependency_start else '') }}" required>
         </div>
         <div class="field">
           <label for="disability">{{ _('Disability, long-term illness') }}</label>

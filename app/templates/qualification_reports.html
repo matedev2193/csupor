@@ -1,16 +1,25 @@
 {% extends 'base.html' %}
-{% block title %}{{ _('Qualifications and exams') }} · {{ _('CSUPOR Portal') }}{% endblock %}
+{% block title %}{{ _('Qualification reports') }} · {{ _('CSUPOR Portal') }}{% endblock %}
 {% macro summary_table(id, title, label, rows) %}
 <section class="table-card qualification-summary" aria-labelledby="{{ id }}">
   <div class="section-heading"><div><h2 id="{{ id }}">{{ title }}</h2></div></div>
   {% if rows %}
   <div class="table-wrap" tabindex="0" role="region" aria-label="{{ title }}">
     <table class="qualification-summary-table">
-      <thead><tr><th scope="col">{{ label }}</th><th scope="col">{{ _('Employees') }}</th><th scope="col">{{ _('Qualifications') }}</th><th scope="col">{{ _('Professional exams') }}</th><th scope="col">{{ _('Total') }}</th></tr></thead>
-      <tbody>{% for row in rows %}<tr><th scope="row">{{ row.label }}</th><td>{{ row.employees }}</td><td>{{ row.qualifications }}</td><td>{{ row.exams }}</td><td><strong>{{ row.total }}</strong></td></tr>{% endfor %}</tbody>
+      <thead><tr><th scope="col">{{ label }}</th><th scope="col">{{ _('Employees') }}</th><th scope="col">{{ _('Qualifications') }}</th><th scope="col">{{ _('Professional exams') }}</th><th scope="col">{{ _('Teacher training') }}</th><th scope="col">{{ _('Other courses') }}</th><th scope="col">{{ _('Total') }}</th></tr></thead>
+      <tbody>{% for row in rows %}<tr><th scope="row">{{ row.label }}</th><td>{{ row.employees }}</td><td>{{ row.qualifications }}</td><td>{{ row.exams }}</td><td>{{ row.teacher_training }}</td><td>{{ row.other_courses }}</td><td><strong>{{ row.total }}</strong></td></tr>{% endfor %}</tbody>
     </table>
   </div>
   {% else %}<div class="empty-state">{{ _('No records match the selected filters.') }}</div>{% endif %}
+</section>
+{% endmacro %}
+{% macro classification_table(id, title, rows) %}
+<section class="table-card qualification-summary" aria-labelledby="{{ id }}">
+  <div class="section-heading"><h3 id="{{ id }}">{{ title }}</h3></div>
+  <div class="table-wrap" tabindex="0" role="region" aria-label="{{ title }}">
+    <table class="qualification-classification-table"><thead><tr><th scope="col">{{ _('Category') }}</th><th scope="col">{{ _('Employees') }}</th><th scope="col">{{ _('Records') }}</th></tr></thead>
+    <tbody>{% for row in rows %}<tr><th scope="row">{{ row.label }}</th><td>{{ row.employees }}</td><td>{{ row.total }}</td></tr>{% endfor %}</tbody></table>
+  </div>
 </section>
 {% endmacro %}
 {% block content %}
@@ -18,8 +27,8 @@
 <div class="qualification-workspace">
   <header class="qualification-page-heading">
     <span class="eyebrow">{{ _('Management') }}</span>
-    <h1>{{ _('Qualifications and exams') }}</h1>
-    <p>{{ _('Review employee records and compare completed qualifications and professional exams.') }}</p>
+    <h1>{{ _('Qualification reports') }}</h1>
+    <p>{{ _('Compare completed qualifications, professional exams and courses, and review study participation.') }}</p>
   </header>
   <nav class="qualification-tabs" aria-label="{{ _('Qualification report views') }}">
     <a class="qualification-tab active" href="{{ url_for('qualification_reports.index') }}" aria-current="page">{{ icon('graduate') }}{{ _('Overview') }}</a>
@@ -31,7 +40,7 @@
     <form method="get" action="{{ url_for('qualification_reports.index') }}" class="qualification-filters">
       <div class="field"><label for="report-year">{{ _('School year') }}</label><select id="report-year" name="year">{% for option in school_years %}<option value="{{ option.value }}"{% if filters.year == option.value|string %} selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></div>
       <div class="field"><label for="report-employee">{{ _('Employee') }}</label><select id="report-employee" name="user_id"><option value="">{{ _('All employees') }}</option>{% for employee in user_options %}<option value="{{ employee.id }}"{% if filters.user_id == employee.id|string %} selected{% endif %}>{{ employee.name }} ({{ employee.username }})</option>{% endfor %}</select></div>
-      <div class="field"><label for="report-kind">{{ _('Record category') }}</label><select id="report-kind" name="kind">{% for value, label in [('all', _('Qualifications and exams')), ('qualification', _('Qualifications')), ('exam', _('Professional exams'))] %}<option value="{{ value }}"{% if filters.kind == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="report-kind">{{ _('Record category') }}</label><select id="report-kind" name="kind">{% for value, label in [('all', _('All categories'))] + kinds.items()|list %}<option value="{{ value }}"{% if filters.kind == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
       <div class="field"><label for="report-type">{{ _('Level or type') }}</label><select id="report-type" name="type"><option value="">{{ _('All types') }}</option>{% for option in type_options %}<option value="{{ option.value }}"{% if filters.type == option.value %} selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></div>
       <div class="field qualification-search"><label for="report-search">{{ _('Search records') }}</label><input id="report-search" type="search" maxlength="200" name="q" value="{{ filters.q }}" placeholder="{{ _('Qualification, institution or document number') }}"></div>
       <div class="button-row qualification-filter-actions"><button type="submit">{{ _('Apply filters') }}</button><a class="button button-secondary" href="{{ url_for('qualification_reports.index') }}">{{ _('Reset') }}</a></div>
@@ -47,9 +56,11 @@
 
   <section class="qualification-totals" aria-label="{{ _('Totals for the selected filters') }}">
     <div class="stat-card"><span class="qualification-stat-label">{{ _('Employees with matching records') }}</span><strong class="qualification-stat-value">{{ totals.employees }}</strong><span class="qualification-stat-note">{{ _('Each employee is counted once.') }}</span></div>
-    <div class="stat-card"><span class="qualification-stat-label">{{ _('Total completions') }}</span><strong class="qualification-stat-value">{{ totals.total }}</strong><span class="qualification-stat-note">{{ _('Qualifications and exams combined') }}</span></div>
+    <div class="stat-card"><span class="qualification-stat-label">{{ _('Total completions') }}</span><strong class="qualification-stat-value">{{ totals.total }}</strong><span class="qualification-stat-note">{{ _('Only processed, completed records are counted.') }}</span></div>
     <div class="stat-card"><span class="qualification-stat-label">{{ _('Qualifications') }}</span><strong class="qualification-stat-value">{{ totals.qualifications }}</strong></div>
     <div class="stat-card"><span class="qualification-stat-label">{{ _('Professional exams') }}</span><strong class="qualification-stat-value">{{ totals.exams }}</strong></div>
+    <div class="stat-card"><span class="qualification-stat-label">{{ _('Teacher training') }}</span><strong class="qualification-stat-value">{{ totals.teacher_training }}</strong></div>
+    <div class="stat-card"><span class="qualification-stat-label">{{ _('Other courses') }}</span><strong class="qualification-stat-value">{{ totals.other_courses }}</strong></div>
   </section>
 
   <p class="qualification-count-note muted">{{ _('The same employee may appear in several groups. Employee counts must not be added together.') }}</p>
@@ -60,8 +71,38 @@
     {{ summary_table('by-name-title', _('By qualification or exam'), _('Qualification name'), by_name) }}
   </div>
 
+
+  <section class="qualification-ksh" aria-labelledby="ksh-title">
+    <div class="section-heading"><div><h2 id="ksh-title">{{ _('KSH classifications') }}</h2><p>{{ _('Award categories use the acquisition date. Participation uses the recorded study period overlapping the selected school year; ongoing studies may have no end date.') }}</p></div></div>
+    <p class="qualification-count-note muted">{{ _('One record may have several KSH classifications. Neither record counts nor employee counts can be added across categories.') }}</p>
+    <div class="qualification-summary-grid">
+      {{ classification_table('by-award-title', _('Qualifications obtained by KSH category'), ksh.by_award) }}
+    </div>
+    <div class="section-heading"><div><h2>{{ _('Participation in the selected period') }}</h2><p>{{ _('These counts include processed studies still in progress, separately from completed qualifications.') }}</p></div></div>
+    {% if filters.year == 'unknown' %}<p class="qualification-date-note">{{ _('Select a school year or all school years to view participation.') }}</p>{% endif %}
+    {% if ksh.unassigned_participation_count %}<p class="qualification-date-note">{{ _('%(count)s study or course records have no usable study period and are excluded from participation counts.', count=ksh.unassigned_participation_count) }}</p>{% endif %}
+    <div class="qualification-totals">
+      <div class="stat-card"><span class="qualification-stat-label">{{ _('Participants') }}</span><strong class="qualification-stat-value">{{ ksh.participation_totals.employees }}</strong><span class="qualification-stat-note">{{ _('Each employee is counted once.') }}</span></div>
+      <div class="stat-card"><span class="qualification-stat-label">{{ _('Studies towards further qualifications') }}</span><strong class="qualification-stat-value">{{ ksh.study_totals.total }}</strong><span class="qualification-stat-note">{{ _('%(count)s employees', count=ksh.study_totals.employees) }}</span></div>
+      <div class="stat-card"><span class="qualification-stat-label">{{ _('Teacher training') }}</span><strong class="qualification-stat-value">{{ ksh.teacher_training_totals.total }}</strong><span class="qualification-stat-note">{{ _('%(count)s employees', count=ksh.teacher_training_totals.employees) }}</span></div>
+      <div class="stat-card"><span class="qualification-stat-label">{{ _('Other courses') }}</span><strong class="qualification-stat-value">{{ ksh.other_course_totals.total }}</strong><span class="qualification-stat-note">{{ _('%(count)s employees', count=ksh.other_course_totals.employees) }}</span></div>
+    </div>
+    <details class="qualification-breakdowns" open><summary>{{ _('Studies towards further qualifications') }}</summary><div class="qualification-summary-grid">
+      {{ classification_table('by-study-title', _('By study category'), ksh.by_study) }}
+      {{ classification_table('by-study-funding-title', _('Study funding'), ksh.by_study_funding) }}
+    </div></details>
+    <details class="qualification-breakdowns"><summary>{{ _('Teacher training breakdowns') }}</summary><div class="qualification-summary-grid">
+      {{ classification_table('by-topic-title', _('By topic'), ksh.by_training_topic) }}
+      {{ classification_table('by-organiser-title', _('By organiser'), ksh.by_organiser) }}
+      {{ classification_table('by-training-funding-title', _('Training funding'), ksh.by_training_funding) }}
+      {{ classification_table('by-duration-title', _('By duration'), ksh.by_duration) }}
+      {{ classification_table('by-attendance-title', _('By attendance'), ksh.by_attendance) }}
+      {{ classification_table('by-digital-title', _('Digital pedagogy'), ksh.by_digital_pedagogy) }}
+    </div></details>
+  </section>
+
   <section class="table-card" aria-labelledby="matching-records-title">
-    <div class="section-heading"><div><h2 id="matching-records-title">{{ _('Matching records') }}</h2><p>{{ _('Open an employee to see all their recorded qualifications and professional exam details.') }}</p></div></div>
+    <div class="section-heading"><div><h2 id="matching-records-title">{{ _('Matching records') }}</h2><p>{{ _('Open an employee to see their qualifications, exams, courses and documents awaiting processing.') }}</p></div></div>
     {% if records %}
     <div class="table-wrap" tabindex="0" role="region" aria-label="{{ _('Matching records') }}">
       <table class="qualification-records-table"><thead><tr><th scope="col">{{ _('Employee') }}</th><th scope="col">{{ _('Qualification name') }}</th><th scope="col">{{ _('Level or type') }}</th><th scope="col">{{ _('Date obtained') }}</th><th scope="col">{{ _('School year') }}</th></tr></thead>
