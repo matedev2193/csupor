@@ -103,6 +103,10 @@ def create_app() -> Flask:
 
     app.register_blueprint(password_reset)
 
+    from .qualification_reports import qualification_reports
+
+    app.register_blueprint(qualification_reports)
+
     from .account_display import account_template_context
 
     app.context_processor(account_template_context)

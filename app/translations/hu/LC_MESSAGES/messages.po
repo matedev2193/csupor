@@ -4698,3 +4698,156 @@ msgstr "A profil és az új e-mail-cím mentéséhez add meg a jelenlegi jelszav
 
 msgid "Confirm and save"
 msgstr "Megerősítés és mentés"
+
+msgid "%(count)s records have no exact date."
+msgstr "%(count)s bejegyzésnél hiányzik a megszerzés pontos dátuma."
+
+msgid "A calendar year alone cannot determine the school year or month. These records appear under an unknown school year and are excluded from monthly totals."
+msgstr "Egy évszámból nem állapítható meg biztosan a nevelési év vagy a hónap. Ezek a bejegyzések az ismeretlen nevelési évhez kerülnek, és nem szerepelnek a havi összesítésben."
+
+msgid "A school year runs from 1 September to 31 August. Reports use the date obtained, not the date the record was added."
+msgstr "A nevelési év szeptember 1-től augusztus 31-ig tart. A kimutatás a megszerzés dátuma alapján készül, nem a rögzítés időpontjából."
+
+msgid "All school years"
+msgstr "Összes nevelési év"
+
+msgid "All types"
+msgstr "Összes típus"
+
+msgid "Back to employees"
+msgstr "Vissza a munkavállalókhoz"
+
+msgid "By month"
+msgstr "Havi bontás"
+
+msgid "By qualification or exam"
+msgstr "Képesítés és szakvizsga szerinti bontás"
+
+msgid "By school year"
+msgstr "Nevelési évenkénti bontás"
+
+msgid "By type"
+msgstr "Típus szerinti bontás"
+
+msgid "Choose an employee to review their recorded qualifications and professional exam."
+msgstr "Válassz munkavállalót a rögzített képesítései és szakvizsgája megtekintéséhez."
+
+msgid "Counts include every recorded year. Users without recorded qualifications are also listed."
+msgstr "A darabszámok az összes rögzített év adatait tartalmazzák. A képesítést még nem rögzített felhasználók is szerepelnek a listában."
+
+msgid "Each employee is counted once."
+msgstr "Minden munkavállaló egyszer szerepel a létszámban."
+
+msgid "Employee qualifications"
+msgstr "Munkavállaló képesítései"
+
+msgid "Employee records"
+msgstr "Munkavállalói nyilvántartás"
+
+msgid "Employees"
+msgstr "Munkavállalók"
+
+msgid "Employees with matching records"
+msgstr "Érintett munkavállalók"
+
+msgid "Highest qualification"
+msgstr "Legmagasabb képesítés"
+
+msgid "Matching records"
+msgstr "Szűrésnek megfelelő bejegyzések"
+
+msgid "Name or username"
+msgstr "Név vagy felhasználónév"
+
+msgid "No records match the selected filters."
+msgstr "Nincs a szűrésnek megfelelő bejegyzés."
+
+msgid "Not specified"
+msgstr "Nincs megadva"
+
+msgid "Open an employee to see all their recorded qualifications and professional exam details."
+msgstr "A munkavállaló nevére kattintva az összes rögzített képesítése és szakvizsgájának adatai megtekinthetők."
+
+msgid "Overview"
+msgstr "Összesítés"
+
+msgid "Professional exams"
+msgstr "Szakvizsgák"
+
+msgid "Qualification report views"
+msgstr "Képesítési kimutatás nézetei"
+
+msgid "Qualification, institution or document number"
+msgstr "Képesítés, intézmény vagy okiratszám"
+
+msgid "Qualifications and exams"
+msgstr "Képesítések és szakvizsgák"
+
+msgid "Qualifications and exams combined"
+msgstr "Képesítések és szakvizsgák együtt"
+
+msgid "Record category"
+msgstr "Bejegyzés kategóriája"
+
+msgid "Records with only a calendar year cannot be assigned to a school year or month."
+msgstr "A csak évszámmal rögzített bejegyzések nem sorolhatók biztosan nevelési évhez vagy hónaphoz."
+
+msgid "Records without an exact date"
+msgstr "Pontos dátum nélküli bejegyzések"
+
+msgid "Report filters"
+msgstr "Kimutatás szűrése"
+
+msgid "Review employee records and compare completed qualifications and professional exams."
+msgstr "Tekintsd át a munkavállalók rögzített képesítéseit és szakvizsgáit, valamint a teljesítések összesítését."
+
+msgid "School year"
+msgstr "Nevelési év"
+
+msgid "Search"
+msgstr "Keresés"
+
+msgid "Search employees"
+msgstr "Munkavállalók keresése"
+
+msgid "Search records"
+msgstr "Bejegyzések keresése"
+
+msgid "The same employee may appear in several groups. Employee counts must not be added together."
+msgstr "Ugyanaz a munkavállaló több sorban is szerepelhet, ezért a sorok létszámai nem adhatók össze."
+
+msgid "These are the details recorded by the employee. This view is read-only."
+msgstr "Az itt látható adatokat a munkavállaló rögzítette. Ezen az oldalon az adatok megtekinthetők, de nem szerkeszthetők."
+
+msgid "This employee has not recorded a professional exam."
+msgstr "Ez a munkavállaló még nem rögzített szakvizsgát."
+
+msgid "This employee has not recorded any qualifications."
+msgstr "Ez a munkavállaló még nem rögzített képesítést."
+
+msgid "Total"
+msgstr "Összesen"
+
+msgid "Total completions"
+msgstr "Teljesítések száma"
+
+msgid "Totals for the selected filters"
+msgstr "A kiválasztott szűrés összesítése"
+
+msgid "Try a different school year, employee or record type."
+msgstr "Válassz másik nevelési évet, munkavállalót vagy típust."
+
+msgid "Try another name or username."
+msgstr "Keress másik névre vagy felhasználónévre."
+
+msgid "Unknown school year"
+msgstr "Ismeretlen nevelési év"
+
+msgid "View employee report"
+msgstr "Munkavállaló kimutatása"
+
+msgid "View records"
+msgstr "Adatok megtekintése"
+
+msgid "View records without an exact date"
+msgstr "Pontos dátum nélküli bejegyzések megtekintése"

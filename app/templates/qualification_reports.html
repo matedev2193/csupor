@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Qualifications and exams') }} · {{ _('CSUPOR Portal') }}{% endblock %}
+{% macro summary_table(id, title, label, rows) %}
+<section class="table-card qualification-summary" aria-labelledby="{{ id }}">
+  <div class="section-heading"><div><h2 id="{{ id }}">{{ title }}</h2></div></div>
+  {% if rows %}
+  <div class="table-wrap" tabindex="0" role="region" aria-label="{{ title }}">
+    <table class="qualification-summary-table">
+      <thead><tr><th scope="col">{{ label }}</th><th scope="col">{{ _('Employees') }}</th><th scope="col">{{ _('Qualifications') }}</th><th scope="col">{{ _('Professional exams') }}</th><th scope="col">{{ _('Total') }}</th></tr></thead>
+      <tbody>{% for row in rows %}<tr><th scope="row">{{ row.label }}</th><td>{{ row.employees }}</td><td>{{ row.qualifications }}</td><td>{{ row.exams }}</td><td><strong>{{ row.total }}</strong></td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+  {% else %}<div class="empty-state">{{ _('No records match the selected filters.') }}</div>{% endif %}
+</section>
+{% endmacro %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/qualification_reports.css') }}">
+<div class="qualification-workspace">
+  <header class="qualification-page-heading">
+    <span class="eyebrow">{{ _('Management') }}</span>
+    <h1>{{ _('Qualifications and exams') }}</h1>
+    <p>{{ _('Review employee records and compare completed qualifications and professional exams.') }}</p>
+  </header>
+  <nav class="qualification-tabs" aria-label="{{ _('Qualification report views') }}">
+    <a class="qualification-tab active" href="{{ url_for('qualification_reports.index') }}" aria-current="page">{{ icon('graduate') }}{{ _('Overview') }}</a>
+    <a class="qualification-tab" href="{{ url_for('qualification_reports.employees') }}">{{ icon('users') }}{{ _('Employees') }}</a>
+  </nav>
+
+  <section class="card qualification-filter-card" aria-labelledby="qualification-filters-title">
+    <div class="section-heading"><div><h2 id="qualification-filters-title">{{ _('Report filters') }}</h2><p>{{ _('A school year runs from 1 September to 31 August. Reports use the date obtained, not the date the record was added.') }}</p></div></div>
+    <form method="get" action="{{ url_for('qualification_reports.index') }}" class="qualification-filters">
+      <div class="field"><label for="report-year">{{ _('School year') }}</label><select id="report-year" name="year">{% for option in school_years %}<option value="{{ option.value }}"{% if filters.year == option.value|string %} selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="report-employee">{{ _('Employee') }}</label><select id="report-employee" name="user_id"><option value="">{{ _('All employees') }}</option>{% for employee in user_options %}<option value="{{ employee.id }}"{% if filters.user_id == employee.id|string %} selected{% endif %}>{{ employee.name }} ({{ employee.username }})</option>{% endfor %}</select></div>
+      <div class="field"><label for="report-kind">{{ _('Record category') }}</label><select id="report-kind" name="kind">{% for value, label in [('all', _('Qualifications and exams')), ('qualification', _('Qualifications')), ('exam', _('Professional exams'))] %}<option value="{{ value }}"{% if filters.kind == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="report-type">{{ _('Level or type') }}</label><select id="report-type" name="type"><option value="">{{ _('All types') }}</option>{% for option in type_options %}<option value="{{ option.value }}"{% if filters.type == option.value %} selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></div>
+      <div class="field qualification-search"><label for="report-search">{{ _('Search records') }}</label><input id="report-search" type="search" maxlength="200" name="q" value="{{ filters.q }}" placeholder="{{ _('Qualification, institution or document number') }}"></div>
+      <div class="button-row qualification-filter-actions"><button type="submit">{{ _('Apply filters') }}</button><a class="button button-secondary" href="{{ url_for('qualification_reports.index') }}">{{ _('Reset') }}</a></div>
+    </form>
+  </section>
+
+  {% if unknown_count %}
+  <aside class="qualification-date-note" aria-label="{{ _('Records without an exact date') }}">
+    {{ icon('calendar') }}
+    <div><strong>{{ _('%(count)s records have no exact date.', count=unknown_count) }}</strong><p>{{ _('A calendar year alone cannot determine the school year or month. These records appear under an unknown school year and are excluded from monthly totals.') }}</p><a class="text-link" href="{{ url_for('qualification_reports.index', year='unknown', user_id=filters.user_id, kind=filters.kind, type=filters.type, q=filters.q) }}">{{ _('View records without an exact date') }} {{ icon('arrow') }}</a></div>
+  </aside>
+  {% endif %}
+
+  <section class="qualification-totals" aria-label="{{ _('Totals for the selected filters') }}">
+    <div class="stat-card"><span class="qualification-stat-label">{{ _('Employees with matching records') }}</span><strong class="qualification-stat-value">{{ totals.employees }}</strong><span class="qualification-stat-note">{{ _('Each employee is counted once.') }}</span></div>
+    <div class="stat-card"><span class="qualification-stat-label">{{ _('Total completions') }}</span><strong class="qualification-stat-value">{{ totals.total }}</strong><span class="qualification-stat-note">{{ _('Qualifications and exams combined') }}</span></div>
+    <div class="stat-card"><span class="qualification-stat-label">{{ _('Qualifications') }}</span><strong class="qualification-stat-value">{{ totals.qualifications }}</strong></div>
+    <div class="stat-card"><span class="qualification-stat-label">{{ _('Professional exams') }}</span><strong class="qualification-stat-value">{{ totals.exams }}</strong></div>
+  </section>
+
+  <p class="qualification-count-note muted">{{ _('The same employee may appear in several groups. Employee counts must not be added together.') }}</p>
+  <div class="qualification-summary-grid">
+    {{ summary_table('by-type-title', _('By type'), _('Level or type'), by_type) }}
+    {{ summary_table('by-year-title', _('By school year'), _('School year'), by_year) }}
+    {{ summary_table('by-month-title', _('By month'), _('Month'), by_month) }}
+    {{ summary_table('by-name-title', _('By qualification or exam'), _('Qualification name'), by_name) }}
+  </div>
+
+  <section class="table-card" aria-labelledby="matching-records-title">
+    <div class="section-heading"><div><h2 id="matching-records-title">{{ _('Matching records') }}</h2><p>{{ _('Open an employee to see all their recorded qualifications and professional exam details.') }}</p></div></div>
+    {% if records %}
+    <div class="table-wrap" tabindex="0" role="region" aria-label="{{ _('Matching records') }}">
+      <table class="qualification-records-table"><thead><tr><th scope="col">{{ _('Employee') }}</th><th scope="col">{{ _('Qualification name') }}</th><th scope="col">{{ _('Level or type') }}</th><th scope="col">{{ _('Date obtained') }}</th><th scope="col">{{ _('School year') }}</th></tr></thead>
+      <tbody>{% for record in records %}<tr>
+        <td><a class="text-link" href="{{ url_for('qualification_reports.employee', user_id=record.user_id) }}">{{ record.employee_name }}</a><small class="qualification-cell-note">{{ record.username }}</small></td>
+        <td><strong>{{ record.qualification_name }}</strong><small class="qualification-cell-note">{{ record.kind_label }}</small></td>
+        <td>{{ record.type_name }}</td>
+        <td>{% if record.date_obtained %}<time datetime="{{ record.date_obtained.isoformat() }}">{{ record.date_obtained.strftime('%Y.%m.%d.') }}</time>{% else %}{{ record.year_obtained or '—' }}<small class="qualification-cell-note">{{ _('Exact date not recorded') }}</small>{% endif %}</td>
+        <td>{{ record.school_year or _('Unknown school year') }}</td>
+      </tr>{% endfor %}</tbody></table>
+    </div>
+    {% else %}<div class="empty-state"><strong>{{ _('No records match the selected filters.') }}</strong><p>{{ _('Try a different school year, employee or record type.') }}</p></div>{% endif %}
+  </section>
+</div>
+{% endblock %}
