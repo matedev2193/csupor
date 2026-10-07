@@ -4,7 +4,7 @@ import unittest
 from datetime import date, datetime, timedelta, timezone
 from unittest.mock import patch
 
-from flask import g
+from flask import g, session
 
 from app import create_app, db
 from app.approval_display import approval_description
@@ -76,6 +76,7 @@ class PeopleContextTests(unittest.TestCase):
 
     def description(self, policy, applicant="employee", contract=None):
         with self.app.test_request_context():
+            session["locale"] = "en"
             return approval_description(contract or self.contracts[applicant], self.users[applicant], policy, self.today)
 
     def test_dependents_list_create_edit_preserves_owner_and_empty_note(self):
@@ -331,6 +332,7 @@ class PeopleContextTests(unittest.TestCase):
         for kind, law, base_days in ((ContractType.teacher, "Púétv.", "50"), (ContractType.employee_under_the_labour_code, "Mt.", "20")):
             contract = self.contracts["employee"];contract.contract_type = kind
             with self.app.test_request_context():
+                session["locale"] = "en"
                 basic = leave_basis(contract, 2026, LeaveType.basic_leave)
                 children = leave_basis(contract, 2026, LeaveType.supplementary_leave_for_children)
                 sick = leave_basis(contract, 2026, LeaveType.sick_leave)
@@ -348,6 +350,7 @@ class PeopleContextTests(unittest.TestCase):
         for kind, law in ((ContractType.teacher, "Púétv."), (ContractType.employee_under_the_labour_code, "Mt.")):
             self.contracts["employee"].contract_type = kind
             with self.app.test_request_context():
+                session["locale"] = "en"
                 basis = leave_basis(self.contracts["employee"], 2026, LeaveType.paternity_leave)
             self.assertTrue(basis["reference"].startswith(law));self.assertEqual(len(basis["paragraphs"]), 2)
             self.assertIn("April 30, 2026", basis["paragraphs"][0])

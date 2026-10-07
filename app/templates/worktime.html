@@ -77,7 +77,7 @@
       {% if groups|length > 1 %}
       <form method="post" action="{{ url_for('worktime.merge') }}" class="worktime-merge-form">
         {{ period_fields() }}<input type="hidden" name="action" value="create">
-        <div class="field"><label for="merge-day">{{ _('Date') }}</label><input id="merge-day" name="day" type="date" required></div>
+        <div class="field"><label for="merge-day">{{ _('Date') }}</label><input id="merge-day" name="day" type="date" max="9999-12-31" required></div>
         <div class="field"><label for="source-group">{{ _('Group without teachers') }}</label><select id="source-group" name="source_group_id" required><option value="">{{ _('Select a group') }}</option>{% for group in groups %}<option value="{{ group.id }}">{{ group.name }}</option>{% endfor %}</select></div>
         <div class="field"><label for="target-group">{{ _('Receiving group') }}</label><select id="target-group" name="target_group_id" required><option value="">{{ _('Select a group') }}</option>{% for group in groups %}<option value="{{ group.id }}">{{ group.name }}</option>{% endfor %}</select></div>
         <div class="field field-full"><label for="merge-note">{{ _('Note') }}</label><input id="merge-note" name="note" maxlength="255"></div>

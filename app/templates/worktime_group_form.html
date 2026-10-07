@@ -8,8 +8,8 @@
 {% macro assignment_fields(suffix, values) -%}
 <div class="field"><label for="assignment-contract-{{ suffix }}">{{ _('Employee / contract') }}</label><select id="assignment-contract-{{ suffix }}" name="contract_id" required><option value="">{{ _('Select a contract') }}</option>{% for contract in contracts %}<option value="{{ contract.id }}"{% if values.get('contract_id', '')|string == contract.id|string %} selected{% endif %}>{{ user_display_name(contract.user) }} · {{ contract.job_title }} · {{ contract.start_date }}</option>{% endfor %}</select></div>
 <div class="form-grid">
-  <div class="field"><label for="assignment-start-{{ suffix }}">{{ _('Valid from') }}</label><input id="assignment-start-{{ suffix }}" name="start_date" type="date" value="{{ values.get('start_date', '') }}" required></div>
-  <div class="field"><label for="assignment-end-{{ suffix }}">{{ _('Valid until (optional)') }}</label><input id="assignment-end-{{ suffix }}" name="end_date" type="date" value="{{ values.get('end_date', '') }}"></div>
+  <div class="field"><label for="assignment-start-{{ suffix }}">{{ _('Valid from') }}</label><input id="assignment-start-{{ suffix }}" name="start_date" type="date" max="9999-12-31" value="{{ values.get('start_date', '') }}" required></div>
+  <div class="field"><label for="assignment-end-{{ suffix }}">{{ _('Valid until (optional)') }}</label><input id="assignment-end-{{ suffix }}" name="end_date" type="date" max="9999-12-31" value="{{ values.get('end_date', '') }}"></div>
 </div>
 <div class="field"><label for="assignment-phase-{{ suffix }}">{{ _('Weekly shift rotation') }}</label><select id="assignment-phase-{{ suffix }}" name="shift_phase" aria-describedby="assignment-phase-help-{{ suffix }}"><option value=""{% if values.get('shift_phase', '')|string == '' %} selected{% endif %}>{{ _('No assigned shift') }}</option>{% for phase in [0, 1] %}<option value="{{ phase }}"{% if values.get('shift_phase', '')|string == phase|string %} selected{% endif %}>{{ phase_label(phase) }}</option>{% endfor %}</select><small id="assignment-phase-help-{{ suffix }}" class="help-text">{{ _('Without an assigned shift, the employee can work mornings or afternoons according to the group’s needs. A selected rotation alternates weekly.') }}</small></div>
 {%- endmacro %}
@@ -27,8 +27,8 @@
       {{ security_fields() }}<input type="hidden" name="action" value="group">
       <div class="field"><label for="group-name">{{ _('Group name') }}</label><input id="group-name" name="name" value="{{ group_values.get('name', '') }}" maxlength="120" required></div>
       <div class="form-grid">
-        <div class="field"><label for="group-start">{{ _('Valid from') }}</label><input id="group-start" name="start_date" type="date" value="{{ group_values.get('start_date', '') }}" required></div>
-        <div class="field"><label for="group-end">{{ _('Valid until (optional)') }}</label><input id="group-end" name="end_date" type="date" value="{{ group_values.get('end_date', '') }}"></div>
+        <div class="field"><label for="group-start">{{ _('Valid from') }}</label><input id="group-start" name="start_date" type="date" max="9999-12-31" value="{{ group_values.get('start_date', '') }}" required></div>
+        <div class="field"><label for="group-end">{{ _('Valid until (optional)') }}</label><input id="group-end" name="end_date" type="date" max="9999-12-31" value="{{ group_values.get('end_date', '') }}"></div>
       </div>
       {% if not group %}<p class="help-text groups-form-note">{{ _('Save the group first, then assign its employees.') }}</p>{% endif %}
       <div class="button-row"><button type="submit">{{ _('Save changes') if group else _('Create group') }}</button></div>

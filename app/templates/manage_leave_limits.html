@@ -223,10 +223,10 @@
                   <td class="leave-period-cell">
                     <div class="leave-period-fields">
                       <label>{{ _('Start date') }}
-                        <input type="date" name="range_period_start" value="{{ existing.period_start if existing.period_start else '' }}">
+                        <input type="date" max="9999-12-31" name="range_period_start" value="{{ existing.period_start if existing.period_start else '' }}">
                       </label>
                       <label>{{ _('End date') }}
-                        <input type="date" name="range_period_end" value="{{ existing.period_end if existing.period_end else '' }}">
+                        <input type="date" max="9999-12-31" name="range_period_end" value="{{ existing.period_end if existing.period_end else '' }}">
                       </label>
                     </div>
                   </td>
@@ -247,10 +247,10 @@
                   <td class="leave-period-cell">
                     <div class="leave-period-fields">
                       <label>{{ _('Start date') }}
-                        <input type="date" name="range_period_start" value="">
+                        <input type="date" max="9999-12-31" name="range_period_start" value="">
                       </label>
                       <label>{{ _('End date') }}
-                        <input type="date" name="range_period_end" value="">
+                        <input type="date" max="9999-12-31" name="range_period_end" value="">
                       </label>
                     </div>
                   </td>

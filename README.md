@@ -20,7 +20,9 @@ Flask-based login and personnel data management system backed by MySQL schema `c
 
 ## Internationalisation
 
-The application uses Flask-Babel translations. English (`en`) is the default locale and Hungarian (`hu`) is registered as an additional supported locale. Users can switch languages from the header language selector; the selected locale is stored in the session and otherwise falls back to the browser's `Accept-Language` header.
+The application uses Flask-Babel translations. Hungarian (`hu`) is the default locale for a new browser session or device, regardless of the browser's `Accept-Language` header. English (`en`) remains available from the header language selector. An explicit language choice is stored in the session and retained through login and logout; without a valid saved choice, the interface uses Hungarian.
+
+Date fields retain the browser's native calendar and regional field order. Fields without a stricter date limit use `max="9999-12-31"`, matching Python's supported year range. This also lets the browser advance from the year segment after four digits instead of waiting for a six-digit year. New date fields should specify a four-digit upper year limit too; keep any stricter business limit, such as today's date for birth dates or completed qualifications.
 
 Translation extraction is configured in `babel.cfg`. After adding or updating translatable strings, update the existing catalogue, fill in the new Hungarian translations, and compile it:
 

@@ -127,7 +127,7 @@
         </div>
         <div class="field">
           <label for="date_of_birth">{{ _('Date of birth') }}</label>
-          <input id="date_of_birth" type="date" name="date_of_birth" value="{{ profile_values.get('date_of_birth', profile.date_of_birth or '') }}">
+          <input id="date_of_birth" type="date" max="9999-12-31" name="date_of_birth" value="{{ profile_values.get('date_of_birth', profile.date_of_birth or '') }}">
         </div>
         <div class="field">
           <label for="place_of_birth">{{ _('Place of birth') }}</label>
