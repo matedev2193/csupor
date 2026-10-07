@@ -1,0 +1,68 @@
+.qualification-workspace { display: grid; gap: 20px; min-width: 0; }
+.qualification-page-heading h1 { margin: 8px 0; }
+.qualification-page-heading p { margin: 0; color: var(--text-soft); font-size: 13px; }
+.qualification-tabs { display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+.qualification-tab { display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 10px 16px; border-radius: 9px; color: var(--text-soft); font-size: 13px; font-weight: 600; }
+.qualification-tab .icon { width: 18px; height: 18px; }
+.qualification-tab:hover { background: #fff; color: var(--text); }
+.qualification-tab.active { background: var(--primary-tint); color: var(--primary); }
+.qualification-filters { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; align-items: end; }
+.qualification-search { grid-column: span 2; }
+.qualification-filter-actions { grid-column: span 2; margin: 0; }
+.qualification-directory-search { grid-template-columns: minmax(0, 500px) auto; align-items: end; justify-content: start; }
+.qualification-directory-search .button-row { margin: 0; }
+.qualification-date-note { display: flex; gap: 12px; padding: 16px 19px; border: 1px solid #ead9c5; border-radius: 12px; background: #fff8ee; color: #765232; font-size: 12px; }
+.qualification-date-note > .icon { margin-top: 2px; width: 19px; height: 19px; }
+.qualification-date-note p { margin: 4px 0 6px; line-height: 1.65; }
+.qualification-totals { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.qualification-totals .stat-card { padding: 20px; display: flex; flex-direction: column; }
+.qualification-stat-label { color: var(--text-soft); font-size: 12px; }
+.qualification-stat-value { display: block; margin-top: 6px; font-size: 30px; letter-spacing: -.04em; line-height: 1.3; font-weight: 650; color: var(--text); }
+.qualification-stat-note { margin-top: 5px; font-size: 11px; color: var(--text-soft); }
+.qualification-totals .stat-card:first-child { background: var(--primary-tint); border-color: #edd9cb; }
+.qualification-count-note { margin: 0; font-size: 12px; }
+.qualification-directory-search + .qualification-count-note { margin-top: 20px; }
+.qualification-summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+.qualification-summary[aria-labelledby='by-name-title'] { grid-column: 1 / -1; }
+.qualification-summary { padding: 20px; }
+.qualification-summary .section-heading { margin-bottom: 12px; }
+.qualification-summary-table { min-width: 560px; }
+.qualification-summary-table th, .qualification-summary-table td { padding: 12px 9px; }
+.qualification-summary-table th:first-child { width: 40%; min-width: 180px; }
+.qualification-summary-table th:not(:first-child), .qualification-summary-table td { text-align: right; font-variant-numeric: tabular-nums; }
+.qualification-summary-table tbody th { color: var(--text); font-size: 12px; font-weight: 550; letter-spacing: normal; text-transform: none; background: transparent; overflow-wrap: break-word; }
+.qualification-summary-table tbody tr:last-child th { border-bottom: 0; }
+.qualification-records-table { min-width: 680px; }
+.qualification-directory-table { min-width: 520px; }
+.qualification-details-table { min-width: 870px; }
+.qualification-exams-table { min-width: 590px; }
+.qualification-records-table td, .qualification-directory-table td, .qualification-details-table td, .qualification-exams-table td { overflow-wrap: anywhere; }
+.qualification-records-table td:first-child { min-width: 170px; }
+.qualification-records-table td:nth-child(2), .qualification-details-table td:first-child { min-width: 200px; }
+.qualification-records-table time, .qualification-details-table time, .qualification-exams-table time { white-space: nowrap; }
+.qualification-cell-note { display: block; margin-top: 4px; color: var(--text-soft); font-size: 11px; line-height: 1.5; }
+.qualification-number { font-variant-numeric: tabular-nums; }
+.qualification-employee-heading { display: flex; justify-content: space-between; align-items: center; gap: 18px; margin-top: 12px; }
+.qualification-employee-heading > div { min-width: 0; }
+.qualification-employee-heading > .button { flex-shrink: 0; }
+.qualification-readonly-note { margin: 0; color: var(--text-soft); font-size: 12px; }
+.qualification-highest { display: table; margin-top: 8px; }
+@media (max-width: 1599px) {
+  .qualification-summary-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 800px) {
+  .qualification-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .qualification-totals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .qualification-employee-heading { flex-direction: column; align-items: flex-start; }
+}
+@media (max-width: 520px) {
+  .qualification-workspace { gap: 16px; }
+  .qualification-filter-card, .qualification-workspace .table-card { padding: 18px; }
+  .qualification-filters, .qualification-directory-search { grid-template-columns: minmax(0, 1fr); }
+  .qualification-search, .qualification-filter-actions { grid-column: auto; }
+  .qualification-totals { gap: 10px; }
+  .qualification-totals .stat-card { padding: 15px; }
+  .qualification-stat-value { font-size: 27px; }
+  .qualification-stat-label { font-size: 11px; }
+  .qualification-date-note { padding: 14px; }
+}
