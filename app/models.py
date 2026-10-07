@@ -168,6 +168,10 @@ class User(UserMixin, db.Model):
     professional_exam = db.relationship(
         "ProfessionalExam", back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
+    qualification_records = db.relationship(
+        "QualificationRecord", back_populates="user", cascade="all, delete-orphan",
+        foreign_keys="QualificationRecord.user_id",
+    )
     contracts = db.relationship("Contract", back_populates="user", cascade="all, delete-orphan")
     leave_requests = db.relationship(
         "LeaveRequest",

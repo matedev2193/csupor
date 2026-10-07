@@ -20,6 +20,7 @@ from app.models import (
 )
 from app.routes import PROFILE_COMPLETION_FIELDS, _profile_completion_percentage, _profile_completion_state
 from app.password_reset_models import PasswordResetToken
+from app.qualification_models import QualificationDocument, QualificationRecord
 
 
 PASSWORDS = {key: f"{key}-own-password" for key in ("hr", "ceo", "employee", "developer", "target", "other")}
@@ -270,6 +271,31 @@ class ProfileManagementTests(unittest.TestCase):
         self.assertEqual(db.session.get(GyapForm, 2026).data, b"pdf")
         self.assertEqual(LegalEntity.query.count(), 1)
         self.assertEqual(PlaceOfWork.query.count(), 1)
+
+    def test_account_deletion_removes_own_evidence_and_preserves_other_employees_evidence(self):
+        target_id = self.users["target"].id
+        owned = QualificationRecord(user_id=target_id, processed_by_id=target_id)
+        shared = QualificationRecord(user_id=self.users["other"].id, processed_by_id=target_id,
+                                     qualification_name="Keep this qualification", status="processed")
+        own_document = QualificationDocument(record=owned, filename="own.pdf", mime_type="application/pdf",
+                                            size_bytes=3, data=b"own", uploaded_by_id=target_id)
+        shared_document = QualificationDocument(record=shared, filename="other.pdf", mime_type="application/pdf",
+                                               size_bytes=5, data=b"other", uploaded_by_id=target_id)
+        db.session.add_all([owned, shared])
+        db.session.commit()
+        owned_id, own_document_id = owned.id, own_document.id
+        shared_id, shared_document_id = shared.id, shared_document.id
+        self.assertEqual(self.delete().status_code, 302)
+        db.session.expire_all()
+        self.assertIsNone(db.session.get(User, target_id))
+        self.assertIsNone(db.session.get(QualificationRecord, owned_id))
+        self.assertIsNone(db.session.get(QualificationDocument, own_document_id))
+        saved = db.session.get(QualificationRecord, shared_id)
+        self.assertEqual(saved.qualification_name, "Keep this qualification")
+        self.assertIsNone(saved.processed_by_id)
+        saved_document = db.session.get(QualificationDocument, shared_document_id)
+        self.assertEqual(saved_document.data, b"other")
+        self.assertIsNone(saved_document.uploaded_by_id)
 
     def test_database_failure_rolls_back_owned_deletion_and_external_reference_changes(self):
         _, _, other_request_id = self.seed_owned_and_shared_records()

@@ -1,14 +1,17 @@
 # Qualifications and professional-exam reports
 
-Authorised managers open **Management → Qualifications and exams** from the menu
+Authorised managers open **Management → Qualification reports** from the menu
 or dashboard. HR and CEO accounts have access by default. Developers can change
 access in **Settings → Page access**; the same permission protects the overview,
 employee directory and individual records, including direct URLs. This permission
-does not grant editing rights over another person's own qualification forms.
+does not grant editing rights or access to another person's uploaded documents.
+HR/CEO accounts with the separate **Qualification processing** permission can
+open an editor from an employee's record. See [document processing](qualification-workflow.md).
 
-The **Employees** view lists accounts and their recorded qualifications and
-professional exams. Opening an employee shows the stored document details and
-completion dates. Records remain visible even if an account has no current
+The **Employees** view lists accounts and their recorded qualifications,
+professional exams, teacher training and other courses, including uploaded records
+awaiting processing and ongoing studies. Opening an employee shows stored metadata
+and completion dates. Records remain visible even if an account has no current
 contract, so a change of employment status does not erase its qualification
 history. The page displays existing records without changing them.
 
@@ -32,7 +35,16 @@ A selected school year includes all twelve months, including months with no
 recorded completions. Type/name grouping ignores differences in letter case and
 repeated whitespace while preserving readable labels.
 
-No schema migration is required. The report reads `educational_qualifications`,
-`professional_exams` and account/profile names. It reports the existing records;
-it does not infer missing qualifications or restore records replaced or removed
-by their owners.
+Completion summaries include only processed, completed records. KSH participation
+summaries separately use recorded study periods overlapping the selected school
+year, including ongoing studies. Records with an incomplete study period are
+identified rather than assigned an invented period. Further breakdowns cover the
+supplied study and award classifications, training topic, organiser, funding,
+hours, attendance mode and digital pedagogy. Overlapping classifications display
+distinct employees and record counts and must not be added as if they were
+disjoint groups.
+
+Reports now read only `qualification_records` and account/profile names. Startup
+imports the retained legacy qualification and exam tables into that register
+once; reading only the unified register avoids double counting. No qualification,
+study period or missing completion date is inferred from an uploaded file.

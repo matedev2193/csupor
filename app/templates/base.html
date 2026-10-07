@@ -24,8 +24,8 @@
     <script defer src="{{ url_for('static', filename='js/portal.js') }}"></script>
   </head>
   <body class="{{ 'portal-page' if current_user.is_authenticated else 'public-page' }}">
-    {% set workspace_pages = ['dashboard', 'edit_profile', 'manage_dependents', 'add_dependent', 'edit_dependent', 'add_qualification', 'edit_qualification', 'professional_exam'] %}
-    {% set management_pages = ['qualification_reports.index', 'qualification_reports.employees', 'qualification_reports.employee', 'manage_user_profiles', 'edit_user_profile', 'manage_contracts', 'create_contract', 'edit_contract', 'manage_legal_entities', 'create_legal_entity', 'edit_legal_entity', 'manage_places_of_work', 'create_place_of_work', 'edit_place_of_work', 'select_contract_employee', 'manage_leadership', 'manage_leave_limits', 'manage_working_days', 'manage_leaves', 'leave_approval_settings', 'gyap.manage_forms', 'worktime.management', 'worktime.groups', 'worktime.group_new', 'worktime.group_edit'] %}
+    {% set workspace_pages = ['dashboard', 'edit_profile', 'manage_dependents', 'add_dependent', 'edit_dependent', 'qualifications.index'] %}
+    {% set management_pages = ['qualifications.manage', 'qualifications.edit', 'qualifications.new', 'qualification_reports.index', 'qualification_reports.employees', 'qualification_reports.employee', 'manage_user_profiles', 'edit_user_profile', 'manage_contracts', 'create_contract', 'edit_contract', 'manage_legal_entities', 'create_legal_entity', 'edit_legal_entity', 'manage_places_of_work', 'create_place_of_work', 'edit_place_of_work', 'select_contract_employee', 'manage_leadership', 'manage_leave_limits', 'manage_working_days', 'manage_leaves', 'leave_approval_settings', 'gyap.manage_forms', 'worktime.management', 'worktime.groups', 'worktime.group_new', 'worktime.group_edit'] %}
     {% set settings_pages = ['manage_privileges', 'page_access.settings', 'mail_settings.settings', 'mail_settings.initialise_key'] %}
     <a class="skip-link" href="#main-content">{{ _('Skip to content') }}</a>
     {% if current_user.is_authenticated %}
@@ -39,7 +39,7 @@
       </div>
       <nav class="sidebar-nav" aria-label="{{ _('Main navigation') }}">
         {% set workspace_active = request.endpoint in workspace_pages %}
-        {% if has_access_to_any(['dashboard', 'edit_profile', 'manage_dependents', 'add_qualification', 'professional_exam']) %}
+        {% if has_access_to_any(['dashboard', 'edit_profile', 'manage_dependents', 'qualifications.index']) %}
         <details class="nav-group{% if workspace_active %} has-current{% endif %}"{% if workspace_active %} open{% endif %}>
           <summary class="nav-group-trigger" id="workspace-trigger" aria-controls="workspace-menu">
             {{ icon('home', 'nav-group-icon') }}<span>{{ _('My workspace') }}</span>{{ icon('chevron', 'nav-group-chevron') }}
@@ -48,21 +48,21 @@
             {{ nav_item('dashboard', _('Dashboard'), 'home') }}
             {{ nav_item('edit_profile', _('My profile'), 'user') }}
             {{ nav_item('manage_dependents', _('Dependents'), 'users', ['add_dependent', 'edit_dependent']) }}
-            {{ nav_item('add_qualification', _('Qualifications'), 'graduate', ['edit_qualification']) }}
-            {{ nav_item('professional_exam', _('Professional exam'), 'award') }}
+            {{ nav_item('qualifications.index', _('Qualifications'), 'graduate') }}
           </div>
         </details>
         {% endif %}
         {{ nav_item('leaves', _('Leave calendar'), 'calendar') }}
         {{ nav_item('worktime.index', _('Working-time register'), 'calendar') }}
-        {% if has_access_to_any(['qualification_reports.index', 'manage_user_profiles', 'manage_contracts', 'worktime.groups', 'worktime.management', 'manage_working_days', 'manage_leave_limits', 'manage_leaves', 'gyap.manage_forms', 'leave_approval_settings', 'manage_leadership', 'manage_legal_entities', 'manage_places_of_work']) %}
+        {% if has_access_to_any(['qualifications.manage', 'qualification_reports.index', 'manage_user_profiles', 'manage_contracts', 'worktime.groups', 'worktime.management', 'manage_working_days', 'manage_leave_limits', 'manage_leaves', 'gyap.manage_forms', 'leave_approval_settings', 'manage_leadership', 'manage_legal_entities', 'manage_places_of_work']) %}
         <details class="nav-group{% if request.endpoint in management_pages %} has-current{% endif %}"{% if request.endpoint in management_pages %} open{% endif %}>
           <summary class="nav-group-trigger" id="management-trigger" aria-controls="management-menu">
             {{ icon('briefcase', 'nav-group-icon') }}<span>{{ _('Management') }}</span>{{ icon('chevron', 'nav-group-chevron') }}
           </summary>
           <div class="nav-group-menu" id="management-menu" aria-labelledby="management-trigger">
             {{ nav_item('manage_user_profiles', _('User profiles'), 'users', ['edit_user_profile']) }}
-            {{ nav_item('qualification_reports.index', _('Qualifications and exams'), 'graduate', ['qualification_reports.employees', 'qualification_reports.employee']) }}
+            {{ nav_item('qualifications.manage', _('Qualification processing'), 'graduate', ['qualifications.edit', 'qualifications.new']) }}
+            {{ nav_item('qualification_reports.index', _('Qualification reports'), 'graduate', ['qualification_reports.employees', 'qualification_reports.employee']) }}
             {{ nav_item('manage_contracts', _('Contracts'), 'briefcase', ['create_contract', 'edit_contract', 'select_contract_employee']) }}
             {{ nav_item('worktime.groups', _('Groups'), 'users', ['worktime.group_new', 'worktime.group_edit']) }}
             {{ nav_item('worktime.management', _('Working-time management'), 'calendar') }}

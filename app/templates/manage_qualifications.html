@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Qualification processing') }} · {{ _('CSUPOR Portal') }}{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/qualification_workflow.css') }}">
+<div class="qualification-flow">
+  <header class="qualification-flow-heading section-heading"><div><span class="eyebrow">{{ _('Management') }}</span><h1>{{ _('Qualification processing') }}</h1><p>{{ _('Review uploaded documents and record qualifications, professional exams and training.') }}</p></div><div class="button-row">{% if can_access_endpoint('qualification_reports.index') %}<a class="button button-secondary" href="{{ url_for('qualification_reports.index') }}">{{ _('Qualification reports') }}</a>{% endif %}<a class="button button-primary" href="{{ url_for('qualifications.new') }}">{{ icon('plus') }} {{ _('Add qualification') }}</a></div></header>
+  <section class="table-card" aria-labelledby="processing-heading">
+    <div class="section-heading"><div><h2 id="processing-heading">{{ _('Qualification records') }}</h2></div></div>
+    <form method="get" action="{{ url_for('qualifications.manage') }}" class="qualification-processing-filters">
+      <div class="field"><label for="qualification-status">{{ _('Processing status') }}</label><select id="qualification-status" name="status">{% for value, label in [('all', _('All statuses')), ('uploaded', pgettext('qualification_status', 'Uploaded')), ('processed', _('Processed'))] %}<option value="{{ value }}"{% if filters.status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="qualification-employee">{{ _('Employee') }}</label><select id="qualification-employee" name="user_id"><option value="">{{ _('All employees') }}</option>{% for person in employees %}<option value="{{ person.id }}"{% if filters.user_id|string == person.id|string %} selected{% endif %}>{{ person.profile.full_name if person.profile and person.profile.full_name else person.username }} ({{ person.username }})</option>{% endfor %}</select></div>
+      <div class="field"><label for="qualification-search">{{ _('Search employees') }}</label><input id="qualification-search" name="q" type="search" maxlength="120" value="{{ filters.q }}" placeholder="{{ _('Name or username') }}"></div>
+      <div class="button-row"><button type="submit">{{ _('Apply filters') }}</button><a class="button button-secondary" href="{{ url_for('qualifications.manage') }}">{{ _('Reset') }}</a></div>
+    </form>
+    <p class="qualification-flow-count" role="status">{{ _('%(count)s records match the selected filters.', count=pagination.total) }}</p>
+    {% if records %}
+    <div class="table-wrap" role="region" aria-label="{{ _('Qualification records') }}" tabindex="0"><table class="qualification-processing-table">
+      <thead><tr><th scope="col">{{ _('Employee') }}</th><th scope="col">{{ _('Qualification or document') }}</th><th scope="col">{{ _('Type') }}</th><th scope="col">{{ _('Status') }}</th><th scope="col">{{ _('Date obtained') }}</th><th scope="col">{{ _('Uploaded') }}</th><th scope="col">{{ _('Actions') }}</th></tr></thead>
+      <tbody>{% for record in records %}<tr data-record-id="{{ record.id }}">
+        <td><strong>{{ record.user.profile.full_name if record.user.profile and record.user.profile.full_name else record.user.username }}</strong><small class="qualification-flow-note">{{ record.user.username }}</small></td>
+        <td><strong>{{ record.qualification_name or (record.documents[0].filename if record.documents else _('Qualification document')) }}</strong>{% if record.institution_name %}<small class="qualification-flow-note">{{ record.institution_name }}</small>{% endif %}{% if record.legacy_source %}<small class="qualification-flow-note">{{ _('Previously recorded') }}</small>{% endif %}</td>
+        <td>{{ kinds.get(record.kind, '—') }}{% if record.level_or_type %}<small class="qualification-flow-note">{{ record.level_or_type }}</small>{% endif %}</td>
+        <td><span class="status-pill {{ 'status-approved' if record.status == 'processed' else 'status-pending-approval' }}">{{ _('Processed') if record.status == 'processed' else pgettext('qualification_status', 'Uploaded') }}</span></td>
+        <td>{% if record.date_obtained %}{{ record.date_obtained|dateformat('y. MM. dd.' if current_locale == 'hu' else 'd MMM y') }}{% elif record.year_obtained %}{{ record.year_obtained }}<small class="qualification-flow-note">{{ _('Exact date not recorded') }}</small>{% else %}—{% endif %}</td>
+        <td>{% if record.documents %}{{ record.documents[0].uploaded_at|dateformat('y. MM. dd.' if current_locale == 'hu' else 'd MMM y') }}{% else %}—{% endif %}</td>
+        <td><a class="button button-secondary" href="{{ url_for('qualifications.edit', record_id=record.id) }}" aria-label="{{ _('Edit qualification') }}: {{ record.qualification_name or record.user.username }}">{{ _('Edit') }}</a></td>
+      </tr>{% endfor %}</tbody>
+    </table></div>
+    {% if pagination.pages > 1 %}<nav class="qualification-pagination" aria-label="{{ _('Pagination') }}">{% if pagination.has_prev %}<a class="button button-secondary" href="{{ url_for('qualifications.manage', page=pagination.prev_num, status=filters.status, user_id=filters.user_id or '', q=filters.q) }}">{{ _('Previous') }}</a>{% endif %}<span>{{ _('Page %(page)s of %(pages)s', page=pagination.page, pages=pagination.pages) }}</span>{% if pagination.has_next %}<a class="button button-secondary" href="{{ url_for('qualifications.manage', page=pagination.next_num, status=filters.status, user_id=filters.user_id or '', q=filters.q) }}">{{ _('Next') }}</a>{% endif %}</nav>{% endif %}
+    {% else %}<div class="empty-state"><strong>{{ _('No qualification records match the selected filters.') }}</strong><p>{{ _('Try another employee or show all statuses.') }}</p></div>{% endif %}
+  </section>
+</div>
+{% endblock %}

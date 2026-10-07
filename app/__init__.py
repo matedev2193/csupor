@@ -107,6 +107,10 @@ def create_app() -> Flask:
 
     app.register_blueprint(qualification_reports)
 
+    from .qualifications import qualifications
+
+    app.register_blueprint(qualifications)
+
     from .account_display import account_template_context
 
     app.context_processor(account_template_context)

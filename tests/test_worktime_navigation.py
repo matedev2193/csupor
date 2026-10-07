@@ -133,7 +133,7 @@ class WorktimeNavigationTests(unittest.TestCase):
         nav = self.sidebar()
         workspace = [urlsplit(link["href"]).path for link in nav.links if "workspace-menu" in link["ancestors"]]
         self.assertEqual(workspace, [self.path(endpoint) for endpoint in (
-            "dashboard", "edit_profile", "manage_dependents", "add_qualification", "professional_exam",
+            "dashboard", "edit_profile", "manage_dependents", "qualifications.index",
         )])
         for endpoint in ("leaves", "worktime.index"):
             links = nav.matching(self.path(endpoint))

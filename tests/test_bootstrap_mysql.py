@@ -242,6 +242,7 @@ class BootstrapOrderingTests(unittest.TestCase):
             for target, label in (
                 ("app.bootstrap.create_missing_tables", "tables"),
                 ("app.bootstrap.ensure_qualification_date_columns", "dates"),
+                ("app.qualification_migration.migrate_legacy_qualifications", "qualifications"),
                 ("app.bootstrap.ensure_work_assignment_flexible_shift_column", "shifts"),
                 ("app.leave_approval.initialise_leave_approval_settings", "approvals"),
                 ("app.page_access.initialise_page_access_settings", "access"),
@@ -249,7 +250,7 @@ class BootstrapOrderingTests(unittest.TestCase):
             ):
                 stack.enter_context(patch(target, side_effect=lambda *args, label=label: events.append(label)))
             initialise_database()
-        self.assertEqual(events, ["database", "acquire", "tables", "dates", "shifts", "approvals", "access", "admin", "release"])
+        self.assertEqual(events, ["database", "acquire", "tables", "dates", "qualifications", "shifts", "approvals", "access", "admin", "release"])
 
     def test_sqlite_uses_schema_helpers_without_mysql_creation_or_named_locks(self):
         engine, _ = engine_fixture()
@@ -261,6 +262,7 @@ class BootstrapOrderingTests(unittest.TestCase):
             helpers = [stack.enter_context(patch(target)) for target in (
                 "app.bootstrap.create_missing_tables",
                 "app.bootstrap.ensure_qualification_date_columns",
+                "app.qualification_migration.migrate_legacy_qualifications",
                 "app.bootstrap.ensure_work_assignment_flexible_shift_column",
                 "app.leave_approval.initialise_leave_approval_settings",
                 "app.page_access.initialise_page_access_settings",
