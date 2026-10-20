@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Fiókkezelés · Micimackó-fiók{% endblock %}
+{% block content %}
+<span class="eyebrow">Központi adminisztráció</span><h2 id="page-title">Fiókok és alkalmazások</h2>
+<p class="lead">{{ account_count }} közös fiók. Itt adhatod meg, ki melyik rendszerbe léphet be.</p>
+<p><a href="{{ url_for('account_admin.accounts') }}">Fiókok hozzáféréseinek kezelése →</a></p>
+<p><a href="{{ url_for('account_admin.client_new', client_id='munkavedelem') }}">Tűz- és munkavédelmi alkalmazás hozzáadása →</a></p>
+<p><a href="{{ url_for('account_admin.client_new') }}">Másik alkalmazás hozzáadása →</a></p>
+<h3>Kapcsolódó alkalmazások</h3>
+{% for client in clients %}<section><h3><a href="{{ url_for('account_admin.client_edit', client_id=client.client_id) }}">{{ client.name }}</a></h3><p>{{ client.client_id }} · {{ 'Aktív' if client.active else 'Szüneteltetve' }}</p><p>{{ client.redirect_uris|join(' · ') }}</p></section>{% else %}<p>Még nincs regisztrált alkalmazás.</p>{% endfor %}
+{% endblock %}

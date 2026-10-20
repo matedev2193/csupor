@@ -1,0 +1,39 @@
+name: micimacko-fiok
+services:
+  - name: accounts
+    github:
+      repo: matedev2193/csupor
+      branch: main
+      deploy_on_push: true
+    source_dir: /
+    dockerfile_path: accounts/Dockerfile
+    run_command: python -m accounts.start
+    http_port: 8080
+    instance_count: 1
+    health_check:
+      http_path: /healthz
+      initial_delay_seconds: 15
+      period_seconds: 10
+      failure_threshold: 6
+    envs:
+      - key: ACCOUNTS_DATABASE_URL
+        scope: RUN_TIME
+        type: SECRET
+        value: ""
+      - key: ACCOUNTS_DATABASE_CA_CERT
+        scope: RUN_TIME
+        value: ""
+      - key: ACCOUNTS_SECRET_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: ""
+      - key: ACCOUNTS_SETUP_TOKEN
+        scope: RUN_TIME
+        type: SECRET
+        value: ""
+      - key: ACCOUNTS_ISSUER
+        scope: RUN_TIME
+        value: https://fiok.matedev.hu
+      - key: ACCOUNTS_PROXY_HOPS
+        scope: RUN_TIME
+        value: "1"

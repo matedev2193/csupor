@@ -76,6 +76,7 @@ for _parent, _children in {
     "worktime.groups": ("worktime.group_new", "worktime.group_edit", "worktime.legacy_groups"),
     "worktime.management": ("worktime.generate", "worktime.confirm", "worktime.edit_entry", "worktime.merge"),
     "mail_settings.settings": ("mail_settings.initialise_key",),
+    "page_access.settings": ("account_transfer.settings",),
 }.items():
     _ENDPOINT_PAGES.update({endpoint: _parent for endpoint in _children})
 
@@ -84,7 +85,7 @@ for _parent, _children in {
 UTILITY_ENDPOINTS = frozenset({
     "static", "index", "login", "logout", "register", "set_language", "page_access.unavailable",
     "password_reset.request_reset", "password_reset.reset_password",
-    "shared_auth.login", "shared_auth.callback",
+    "shared_auth.login", "shared_auth.callback", "account_transfer.health",
 })
 SPECIAL_ENDPOINTS = frozenset({"profile_photos.show_photo", "gyap.download_form", "worktime.export", "qualifications.document"})
 

@@ -6,7 +6,9 @@ The independent **Micimackó-fiók** service in `accounts/` supports shared
 OpenID Connect sign-in across CSUPOR and other applications, using separate
 identity storage and preserving each application's permissions. Existing
 installations remain in local authentication mode until migrated.
-See the [shared accounts deployment and migration guide](docs/shared-accounts.md)
+For browser-only setup, encrypted migration and application access management,
+see the [DigitalOcean guide without console commands](docs/shared-accounts-digitalocean.md).
+See also the [shared accounts deployment and migration guide](docs/shared-accounts.md)
 before enabling `AUTH_MODE=oidc`. The account service can be deployed from this
 repository without importing or accessing CSUPOR's personnel application.
 

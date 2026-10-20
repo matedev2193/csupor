@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Alkalmazás beállítása · Micimackó-fiók{% endblock %}
+{% block content %}
+<span class="eyebrow">Központi adminisztráció</span><h2 id="page-title">{{ client.name if client else 'Új alkalmazás' }}</h2>
+<p><a href="{{ url_for('account_admin.index') }}">← Fiókkezelés</a></p>
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if client %}<p>Alkalmazásazonosító: <strong>{{ client.client_id }}</strong></p>{% else %}<label for="client-id">Alkalmazásazonosító</label><input id="client-id" name="client_id" maxlength="80" value="{{ request.form.get('client_id', suggested_id) }}" pattern="[A-Za-z0-9._-]+" required>{% endif %}
+  <label for="client-name">Alkalmazás neve</label><input id="client-name" name="name" maxlength="120" value="{{ client.name if client else request.form.get('name', 'Tűz- és munkavédelem' if suggested_id == 'munkavedelem' else '') }}" required>
+  <label for="redirect-uris">Engedélyezett visszatérési címek</label><textarea id="redirect-uris" name="redirect_uris" rows="3" required placeholder="https://az-alkalmazas-sajat-cime.hu/auth/callback">{{ client.redirect_uris|join('\n') if client else request.form.get('redirect_uris', '') }}</textarea>
+  <small>Teljes HTTPS-cím, soronként egy. A CSUPOR és a tűz- és munkavédelmi rendszer címének vége /auth/callback.</small>
+  <label for="client-active">Állapot</label><select id="client-active" name="active"><option value="true" {% if not client or client.active %}selected{% endif %}>Aktív</option><option value="false" {% if client and not client.active %}selected{% endif %}>Szüneteltetve</option></select>
+  <label><input type="checkbox" name="allow_registration" value="1" {% if client and client.allow_registration %}checked{% endif %}> Új fiókok regisztrációjának engedélyezése ebből az alkalmazásból</label>
+  {% if client %}<label><input type="checkbox" name="rotate_secret" value="1"> Az összekapcsolási kulcsot is lecserélem</label>{% endif %}
+  <label for="client-secret">{{ 'Új összekapcsolási kulcs (csak kulcscserénél)' if client else 'Összekapcsolási kulcs' }}</label><input id="client-secret" name="client_secret" type="password" minlength="32" maxlength="1024" autocomplete="new-password" {% if not client %}required{% endif %}>
+  <button type="button" data-generate-secret="client-secret">Véletlen kulcs készítése</button><button type="button" data-copy-input="client-secret">Kulcs másolása</button>
+  <small>A választott kulcsot a kapcsolódó alkalmazás környezeti beállításánál is ugyanígy add meg. Mentés után itt nem olvasható vissza. Kulcs- vagy címcsere után az alkalmazásban új bejelentkezés szükséges.</small>
+  <p data-copy-status role="status" aria-live="polite"></p>
+  <button type="submit">Alkalmazás mentése</button>
+</form>
+{% if env_values %}<h3>A kapcsolódó alkalmazás környezeti beállításai</h3>
+{% for key, value in env_values %}<p><strong>{{ key }}</strong><br><code>{{ value }}</code><br><button type="button" data-copy-value="{{ value }}">Érték másolása</button></p>{% endfor %}
+<p><strong>{{ 'SAFETY_' if client.client_id == 'munkavedelem' else '' }}OIDC_CLIENT_SECRET</strong>: a létrehozáskor vagy kulcscserénél választott kulcs.</p>
+{% if client.redirect_uris|length > 1 %}<p>Több visszatérési cím van engedélyezve. Az adott példányhoz tartozó pontos címet add meg.</p>{% endif %}
+<p><a href="{{ url_for('account_admin.accounts') }}">Következő lépés: a kollégák hozzáférésének engedélyezése →</a></p>
+{% endif %}
+<script src="{{ url_for('static', filename='admin.js') }}" defer></script>
+{% endblock %}

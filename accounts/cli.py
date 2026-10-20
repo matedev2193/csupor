@@ -4,38 +4,12 @@ import os
 import re
 import time
 from pathlib import Path
-from uuid import UUID
 
 import click
-from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from .models import Account, AccessToken, AuthorizationCode, Client, Membership, PasswordReset, RateLimit, db
-from .security import valid_email
-
-
-def _valid_hash(value):
-    if not isinstance(value, str) or len(value) > 255:
-        return False
-    parts = value.split('$')
-    if len(parts) != 3 or not re.fullmatch(r'[A-Za-z0-9]{1,64}', parts[1]):
-        return False
-    method, _, digest = parts
-    if re.fullmatch(r'[0-9a-f]+', digest) is None:
-        return False
-    if method.startswith('scrypt:'):
-        try:
-            n, r, p = map(int, method.split(':')[1:])
-            return 2 <= n <= 65536 and n & (n - 1) == 0 and 1 <= r <= 8 and 1 <= p <= 4 and len(digest) == 128
-        except (ValueError, TypeError):
-            return False
-    if method.startswith('pbkdf2:'):
-        try:
-            _, algorithm, iterations = method.split(':')
-            return algorithm in {'sha256', 'sha512'} and 1 <= int(iterations) <= 5000000 and len(digest) == {'sha256': 64, 'sha512': 128}[algorithm]
-        except (ValueError, TypeError):
-            return False
-    return False
+from .importing import MAX_PLAINTEXT_BYTES, apply_import, valid_password_hash as _valid_hash
 
 
 def register_cli(app):
@@ -114,58 +88,16 @@ def register_cli(app):
         if not client or not client.active:
             raise click.ClickException('Register an active target application first.')
         try:
-            if filename.stat().st_size > 20 * 1024 * 1024:
+            if filename.stat().st_size > MAX_PLAINTEXT_BYTES:
                 raise ValueError('Export is too large.')
             data = json.loads(filename.read_text(encoding='utf-8'))
-            if not isinstance(data, dict) or data.get('version') != 1 or data.get('source') != 'csupor' or data.get('issuer') != app.config['ACCOUNTS_ISSUER']:
-                raise ValueError('Export version, source or issuer does not match.')
-            rows = data.get('users')
-            if not isinstance(rows, list) or len(rows) > 50000:
-                raise ValueError('Invalid user list.')
-            subjects, emails, names = set(), set(), set()
-            imported = 0
-            for index, row in enumerate(rows, 1):
-                if not isinstance(row, dict) or set(row) != {'subject', 'username', 'email', 'password_hash'}:
-                    raise ValueError(f'Record {index}: invalid fields.')
-                subject, username, email, password_hash = (row[k] for k in ('subject', 'username', 'email', 'password_hash'))
-                if not isinstance(subject, str) or str(UUID(subject)) != subject:
-                    raise ValueError(f'Record {index}: invalid subject.')
-                if (not isinstance(username, str) or not 1 <= len(username) <= 50 or username != username.strip()
-                        or any(ord(c) < 32 or ord(c) == 127 for c in username)):
-                    raise ValueError(f'Record {index}: invalid username.')
-                if not valid_email(email) or email != email.strip().lower() or not _valid_hash(password_hash):
-                    raise ValueError(f'Record {index}: invalid email or unsupported password hash.')
-                if subject in subjects or email.casefold() in emails or username.casefold() in names:
-                    raise ValueError(f'Record {index}: duplicate identity.')
-                subjects.add(subject); emails.add(email.casefold()); names.add(username.casefold())
-                existing = db.session.execute(db.select(Account).where(
-                    (Account.subject == subject) | (func.lower(Account.email) == email.lower()) | (func.lower(Account.username) == username.lower())
-                )).scalars().all()
-                if existing:
-                    if (len(existing) != 1 or existing[0].subject != subject or existing[0].email != email
-                            or existing[0].username != username or existing[0].password_hash != password_hash):
-                        raise ValueError(f'Record {index}: conflicts with an existing identity. Nothing was overwritten.')
-                else:
-                    db.session.add(Account(subject=subject, username=username, email=email, password_hash=password_hash, version=1, active=True, email_verified=False))
-                    db.session.flush()
-                    imported += 1
-                if not db.session.get(Membership, (subject, client_id)):
-                    db.session.add(Membership(account_subject=subject, client_id=client_id))
-            # A username may legitimately equal its own email in legacy CSUPOR.
-            # Only collisions across different identities make login ambiguous.
-            all_accounts = db.session.execute(db.select(Account)).scalars().all()
-            identifiers = {}
-            for account in all_accounts:
-                for identifier in {account.email.casefold(), account.username.casefold()}:
-                    owner = identifiers.setdefault(identifier, account.subject)
-                    if owner != account.subject:
-                        raise ValueError('Ambiguous login identifiers across accounts.')
+            imported, total = apply_import(data, client_id, app.config['ACCOUNTS_ISSUER'])
             db.session.commit()
         except (ValueError, TypeError, KeyError, OSError, SQLAlchemyError):
             db.session.rollback()
             # No row values, database details or hashes are leaked on failure.
             raise click.ClickException('Import rejected. Check issuer, fields, duplicate identities, supported hashes and conflicts. No accounts were imported or overwritten.') from None
-        click.echo(f'Imported {imported} new accounts; {len(rows)} application memberships ready.')
+        click.echo(f'Imported {imported} new accounts; {total} application memberships ready.')
 
     @app.cli.command('cleanup')
     def cleanup():

@@ -1,5 +1,9 @@
 # Közös Micimackó-fiók és önálló CSUPOR
 
+**DigitalOceanön, konzolparancsok nélkül:** kövesd a
+[böngészős telepítési és átvezetési útmutatót](shared-accounts-digitalocean.md).
+Az alábbi leírás a kézi, parancssori üzemeltetést is dokumentálja.
+
 A `accounts/` egy külön futtatható fiókszolgáltatás saját adatbázissal,
 saját titkos kulcsokkal és saját böngészős munkamenettel. A CSUPOR ennek
 OpenID Connect kliense. A forrásuk egy tárolóban van, de két külön alkalmazásként

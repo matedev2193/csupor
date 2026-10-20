@@ -10,7 +10,7 @@
 <body>
   <header class="site-header">
     <a class="brand" href="{{ url_for('web.index') }}" aria-label="Micimackó-fiók kezdőlap"><span class="brand-mark" aria-hidden="true">m</span><span>Micimackó<span class="brand-subtitle">Közös fiók</span></span></a>
-    {% if account %}<nav aria-label="Fiókmenü"><a href="{{ url_for('web.account_page') }}">Fiókom</a><a href="{{ url_for('web.logout') }}">Kijelentkezés</a></nav>{% endif %}
+    {% if account %}<nav aria-label="Fiókmenü"><a href="{{ url_for('web.account_page') }}">Fiókom</a>{% if is_account_admin %}<a href="{{ url_for('account_admin.index') }}">Fiókkezelés</a>{% endif %}<a href="{{ url_for('web.logout') }}">Kijelentkezés</a></nav>{% elif account_setup_available %}<nav aria-label="Kezdeti beállítás"><a href="{{ url_for('account_admin.setup') }}">Első beállítás</a></nav>{% endif %}
   </header>
   <main class="layout">
     <aside class="introduction">

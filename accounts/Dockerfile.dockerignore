@@ -1,0 +1,11 @@
+# This build context may be the whole repository. Include only the account service.
+**
+!accounts/
+!accounts/*.py
+!accounts/requirements.txt
+!accounts/templates/
+!accounts/templates/**
+!accounts/static/
+!accounts/static/**
+!accounts/Dockerfile
+!accounts/Dockerfile.dockerignore
