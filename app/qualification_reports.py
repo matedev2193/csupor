@@ -111,6 +111,7 @@ def _counts(records):
         "exams": sum(row["kind"] == "exam" for row in records),
         "teacher_training": sum(row["kind"] == "teacher_training" for row in records),
         "other_courses": sum(row["kind"] == "other_course" for row in records),
+        "teacher_assessments": sum(row["kind"] == "teacher_assessment" for row in records),
     }
 
 
@@ -142,6 +143,10 @@ def _participates(row, year):
 
 
 def _ksh_report(processed, completed, year):
+    # Career assessments are tracked separately, even if an old import or a
+    # direct database update left study/award classifications on the record.
+    processed = [row for row in processed if row["kind"] != "teacher_assessment"]
+    completed = [row for row in completed if row["kind"] != "teacher_assessment"]
     participants = [row for row in processed if _participates(row, year)]
     studying = [row for row in participants if row["study_categories"]]
     training = [row for row in participants if row["kind"] == "teacher_training"]
@@ -322,6 +327,7 @@ def employees():
         counts = _counts(records[user["id"]])
         result.append({**user, "qualification_count": counts["qualifications"], "exam_count": counts["exams"],
                        "training_count": counts["teacher_training"] + counts["other_courses"],
+                       "teacher_assessment_count": counts["teacher_assessments"],
                        "uploaded_count": sum(row["status"] == "uploaded" for row in records[user["id"]]),
                        "unknown_count": sum(row["status"] == "processed" and row["completion_state"] == "completed"
                                             and row["date_obtained"] is None for row in records[user["id"]])})

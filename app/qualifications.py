@@ -201,6 +201,13 @@ def parse_metadata(form, *, require_complete=True, today=None):
             errors.append(_("Choose a valid checkbox value."))
         values[field] = raw in {"1", "on"}
 
+    if values["kind"] == "teacher_assessment" and any(values[field] for field in (
+        "highest", "study_categories", "award_categories", "study_start_date", "study_end_date",
+        "training_topic", "organiser_type", "funding_type", "attendance_mode",
+        "duration_hours", "credits", "digital_pedagogy",
+    )):
+        errors.append(_("Teacher assessments cannot have study or course details, KSH categories or a highest-qualification marker."))
+
     state = values["completion_state"]
     if state == "completed":
         if require_complete and not values["year_obtained"]:

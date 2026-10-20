@@ -11,6 +11,7 @@ KINDS = {
     "exam": _("Professional exam"),
     "teacher_training": _("Teacher continuing professional development"),
     "other_course": _("Other course"),
+    "teacher_assessment": _("Teacher assessment"),
 }
 COMPLETION_STATES = {
     "completed": _("Completed"),

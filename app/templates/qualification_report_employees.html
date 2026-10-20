@@ -3,7 +3,7 @@
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/qualification_reports.css') }}">
 <div class="qualification-workspace">
-  <header class="qualification-page-heading"><span class="eyebrow">{{ _('Management') }}</span><h1>{{ _('Qualification reports') }}</h1><p>{{ _('Choose an employee to review all their qualification, exam and course records.') }}</p></header>
+  <header class="qualification-page-heading"><span class="eyebrow">{{ _('Management') }}</span><h1>{{ _('Qualification reports') }}</h1><p>{{ _('Choose an employee to review all their qualification, exam, course and teacher assessment records.') }}</p></header>
   <nav class="qualification-tabs" aria-label="{{ _('Qualification report views') }}">
     <a class="qualification-tab" href="{{ url_for('qualification_reports.index') }}">{{ icon('graduate') }}{{ _('Overview') }}</a>
     <a class="qualification-tab active" href="{{ url_for('qualification_reports.employees') }}" aria-current="page">{{ icon('users') }}{{ _('Employees') }}</a>
@@ -17,10 +17,10 @@
     <p class="qualification-count-note muted" role="status">{{ _('%(count)s users match the selected filters.', count=users|length) }}</p>
     {% if users %}
     <div class="table-wrap" tabindex="0" role="region" aria-label="{{ _('Employee records') }}"><table class="qualification-directory-table">
-      <thead><tr><th scope="col">{{ _('Employee') }}</th><th scope="col">{{ _('Qualifications') }}</th><th scope="col">{{ _('Professional exams') }}</th><th scope="col">{{ _('Courses') }}</th><th scope="col">{{ _('Uploaded') }}</th><th scope="col">{{ _('Actions') }}</th></tr></thead>
+      <thead><tr><th scope="col">{{ _('Employee') }}</th><th scope="col">{{ _('Qualifications') }}</th><th scope="col">{{ _('Professional exams') }}</th><th scope="col">{{ _('Courses') }}</th><th scope="col">{{ _('Teacher assessments') }}</th><th scope="col">{{ _('Uploaded') }}</th><th scope="col">{{ _('Actions') }}</th></tr></thead>
       <tbody>{% for employee in users %}<tr data-user-id="{{ employee.id }}">
         <td><strong>{{ employee.name }}</strong><small class="qualification-cell-note">{{ employee.username }}</small>{% if employee.unknown_count %}<small class="qualification-cell-note">{{ _('%(count)s records have no exact date.', count=employee.unknown_count) }}</small>{% endif %}</td>
-        <td class="qualification-number">{{ employee.qualification_count }}</td><td class="qualification-number">{{ employee.exam_count }}</td><td class="qualification-number">{{ employee.training_count }}</td><td class="qualification-number">{{ employee.uploaded_count }}</td>
+        <td class="qualification-number">{{ employee.qualification_count }}</td><td class="qualification-number">{{ employee.exam_count }}</td><td class="qualification-number">{{ employee.training_count }}</td><td class="qualification-number">{{ employee.teacher_assessment_count }}</td><td class="qualification-number">{{ employee.uploaded_count }}</td>
         <td><a class="button button-secondary" href="{{ url_for('qualification_reports.employee', user_id=employee.id) }}">{{ _('View records') }} {{ icon('arrow') }}</a></td>
       </tr>{% endfor %}</tbody>
     </table></div>

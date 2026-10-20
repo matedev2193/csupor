@@ -13,6 +13,23 @@ Managers can save incomplete work as a draft, mark a validated record as process
 and subsequently correct the data. Concurrent edits are checked using a revision
 number. Managers can also record historical qualifications without a document.
 
+### Teacher assessments
+
+The **Teacher assessment** record type stores assessment documents such as
+**Pedagógus I. fokozat** and **Pedagógus II. fokozat**. HR records the name,
+optional level, issuing institution, document number, acquisition year or exact
+date, completion status and notes using the same protected document workflow.
+These records appear separately in reports and do not enter the KSH qualification
+or study-participation counts. Study/course details, KSH categories and the
+highest-qualification marker are unavailable for this type and rejected by the
+server if submitted. Changing the record type in the editor restores the other
+fields without discarding unsaved values.
+
+An assessment document does not change employment details: the employee's
+**Teacher classification** and its effective start date remain on the contract.
+The type uses the existing text-based `kind` column, so this addition requires
+no database schema change or manual migration.
+
 ## Recorded information
 
 The supplied KSH screenshots (`9977.jpg`–`9980.jpg`) inform the categories. These

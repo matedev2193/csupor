@@ -8,6 +8,7 @@ from io import BytesIO
 from unittest.mock import patch
 
 from flask import g
+from flask_babel import force_locale
 from PIL import Image
 from werkzeug.datastructures import FileStorage, MultiDict
 
@@ -173,6 +174,74 @@ class QualificationWorkflowTests(unittest.TestCase):
         self.assertIsNone(saved.date_obtained)
         self.assertEqual(saved.processed_by_id, self.users["hr"].id)
         self.assertEqual(saved.revision, 2)
+
+    def test_teacher_assessment_processes_uploaded_evidence_without_changing_highest(self):
+        highest = self.seed(processed=True, highest=True)
+        self.assertEqual(self.upload(filename="Minosites.pdf").status_code, 302)
+        record = QualificationRecord.query.filter_by(status="uploaded").one()
+        record_id, document_id = record.id, record.documents[0].id
+        self.login("hr")
+        self.assertIn('value="teacher_assessment"', self.client.get(
+            f"/qualifications/manage/{record_id}/edit").get_data(as_text=True))
+        response = self.save(record, kind="teacher_assessment", qualification_name="Pedagógus I. fokozat",
+                             date_obtained="2024-06-12", degree_number="MIN/2024/1")
+        self.assertEqual(response.status_code, 302)
+        db.session.expire_all()
+        self.assertEqual(record.kind, "teacher_assessment")
+        self.assertEqual(record.status, "processed")
+        self.assertEqual(record.date_obtained, date(2024, 6, 12))
+        self.assertEqual(record.degree_number, "MIN/2024/1")
+        self.assertFalse(record.highest)
+        self.assertTrue(highest.highest)
+        self.assertEqual(record.documents[0].id, document_id)
+        self.assertEqual(record.documents[0].data, PDF)
+        self.assertEqual(self.save(record, kind="teacher_assessment", qualification_name="Pedagógus I. fokozat",
+                                   notes="Checked assessment document").status_code, 302)
+        self.login("employee")
+        own_page = self.client.get("/qualifications").get_data(as_text=True)
+        self.assertIn("Teacher assessment", own_page)
+        self.assertIn("Pedagógus I. fokozat", own_page)
+        self.assertEqual(self.client.get(f"/qualifications/documents/{document_id}").status_code, 200)
+        self.login("other")
+        self.assertEqual(self.client.get(f"/qualifications/documents/{document_id}").status_code, 403)
+
+    def test_teacher_assessment_allows_draft_and_year_only_manual_record(self):
+        self.login("ceo")
+        response = self.client.post("/qualifications/manage/new", data=self.form(
+            user_id=str(self.users["employee"].id), kind="teacher_assessment",
+            qualification_name="", year_obtained="", action="save_draft",
+        ))
+        self.assertEqual(response.status_code, 302)
+        record = QualificationRecord.query.one()
+        self.assertEqual(record.status, "uploaded")
+        self.assertEqual(self.save(record, kind="teacher_assessment",
+                                   qualification_name="Pedagógus II. fokozat").status_code, 302)
+        db.session.expire_all()
+        self.assertEqual(record.status, "processed")
+        self.assertEqual(record.year_obtained, 2024)
+        self.assertIsNone(record.date_obtained)
+        self.assertEqual(record.documents, [])
+
+    def test_teacher_assessment_rejects_qualification_and_training_metadata(self):
+        invalid = [
+            {"highest": "1"}, {"study_categories": ["bachelor"]},
+            {"award_categories": ["professional_exam"]}, {"study_start_date": "2023-09-01"},
+            {"study_end_date": "2024-01-01"}, {"training_topic": "methodology"},
+            {"organiser_type": "higher_education"}, {"funding_type": "self"},
+            {"attendance_mode": "in_person"}, {"duration_hours": "30"},
+            {"credits": "2"}, {"digital_pedagogy": "1"},
+        ]
+        for overrides in invalid:
+            with self.subTest(overrides=overrides):
+                with self.app.test_request_context(), force_locale("en"):
+                    _, errors = parse_metadata(MultiDict(self.form(kind="teacher_assessment", **overrides)))
+                self.assertTrue(any("Teacher assessments cannot" in str(error) for error in errors))
+        record = self.seed(processed=True, highest=True)
+        self.login("hr")
+        self.assertEqual(self.save(record, kind="teacher_assessment", highest="1").status_code, 400)
+        db.session.expire_all()
+        self.assertEqual(record.kind, "qualification")
+        self.assertTrue(record.highest)
 
     def test_manager_draft_is_not_processed_and_invalid_process_is_atomic(self):
         record = self.seed()

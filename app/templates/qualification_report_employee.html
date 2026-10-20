@@ -7,7 +7,7 @@
     <a class="text-link" href="{{ url_for('qualification_reports.employees') }}">{{ _('Back to employees') }}</a>
     <div class="qualification-employee-heading"><div><h1>{{ employee.name }}</h1><p>{{ employee.username }} · {{ _('Qualifications') }}</p></div><a class="button button-secondary" href="{{ url_for('qualification_reports.index', year='all', user_id=employee.id) }}">{{ _('View employee report') }} {{ icon('arrow') }}</a></div>
   </header>
-  <p class="qualification-readonly-note">{{ _('All qualification, exam and course records are shown, including documents awaiting processing and studies in progress.') }}</p>
+  <p class="qualification-readonly-note">{{ _('All qualification, exam, course and teacher assessment records are shown, including documents awaiting processing and studies in progress.') }}</p>
   {% if unknown_count %}<aside class="qualification-date-note"><div><strong>{{ _('%(count)s records have no exact date.', count=unknown_count) }}</strong><p>{{ _('Records with only a calendar year cannot be assigned to a school year or month.') }}</p></div></aside>{% endif %}
   <section class="table-card" aria-labelledby="employee-qualifications-title">
     <div class="section-heading"><div><h2 id="employee-qualifications-title">{{ _('Qualifications') }} <span class="badge">{{ records|length }}</span></h2></div></div>
