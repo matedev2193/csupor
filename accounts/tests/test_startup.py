@@ -277,7 +277,7 @@ def test_entrypoint_execs_after_preparation_and_validates_port(monkeypatch):
     assert startup.main() == 0
     assert calls[0] == 'prepared'
     assert calls[1][1] == [sys.executable, '-m', 'gunicorn', '--bind', '0.0.0.0:9123',
-                           '--workers', '2', '--worker-tmp-dir', '/dev/shm', 'accounts:create_app()']
+                           '--workers', '2', '--worker-tmp-dir', '/dev/shm', 'accounts.start:worker_app()']
     monkeypatch.delenv('PORT')
     assert startup._port() == 8080
     monkeypatch.setenv('PORT', 'invalid')

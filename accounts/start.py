@@ -9,10 +9,16 @@ from sqlalchemy.exc import DBAPIError, InterfaceError, OperationalError
 from . import create_app
 from .models import db
 from .bootstrap import prepare_database
+from .errors import StartupError, diagnostic
 
 
 def _retryable(error):
     if not isinstance(error, DBAPIError):
+        return False
+    # A rejected certificate or credential will not recover by waiting. Some
+    # MySQL TLS failures are InterfaceError, just like transient disconnects.
+    errno = getattr(error.orig, 'errno', None)
+    if errno in {1044, 1045, 1049, 1142, 1143, 1227, 1698, 2026, 2061, 3159}:
         return False
     if error.connection_invalidated or isinstance(error, InterfaceError):
         return True
@@ -53,10 +59,19 @@ def _port():
     try:
         port = int(os.environ.get('PORT', '8080'))
     except (TypeError, ValueError):
-        raise RuntimeError('PORT must be an integer from 1 to 65535.') from None
+        raise StartupError('PORT', 'PORT must be an integer from 1 to 65535.') from None
     if not 1 <= port <= 65535:
-        raise RuntimeError('PORT must be an integer from 1 to 65535.')
+        raise StartupError('PORT', 'PORT must be an integer from 1 to 65535.')
     return port
+
+
+def worker_app():
+    # Gunicorn creates its workers after exec; main's exception handler is no
+    # longer present. Suppress driver exception chains at this boundary too.
+    try:
+        return create_app()
+    except Exception as error:
+        raise RuntimeError(diagnostic(error)) from None
 
 
 def main():
@@ -65,11 +80,12 @@ def main():
         prepare_app()
         print('A fiókrendszer előkészítése kész; a webkiszolgáló indul.', flush=True)
         os.execv(sys.executable, [sys.executable, '-m', 'gunicorn', '--bind', f'0.0.0.0:{port}',
-                                '--workers', '2', '--worker-tmp-dir', '/dev/shm', 'accounts:create_app()'])
-    except Exception:
-        # DB-driver errors can include URLs, passwords and query parameters.
-        # No exception text or traceback is emitted to deployment logs.
-        print('A fiókrendszer előkészítése sikertelen. Ellenőrizd a környezeti beállításokat és az adatbázis elérhetőségét. A webkiszolgáló nem indult el.',
+                                '--workers', '2', '--worker-tmp-dir', '/dev/shm', 'accounts.start:worker_app()'])
+    except Exception as error:
+        # Only allowlisted messages reach the log, never raw exception text,
+        # SQL, connection URLs, keys or environment-variable values.
+        print(diagnostic(error), file=sys.stderr, flush=True)
+        print('A fiókrendszer előkészítése sikertelen. A webkiszolgáló nem indult el.',
               file=sys.stderr, flush=True)
         return 1
     return 0

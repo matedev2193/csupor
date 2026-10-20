@@ -11,6 +11,7 @@ from flask import current_app
 from sqlalchemy import event, select, text
 
 from .models import db
+from .errors import StartupError
 
 
 class StoredSigningKey(db.Model):
@@ -53,7 +54,7 @@ def _database_lock():
     with db.engine.connect() as connection:
         dialect = connection.dialect.name
         if dialect not in {'sqlite', 'mysql', 'mariadb'}:
-            raise RuntimeError('Automatic account preparation supports SQLite and MySQL/MariaDB.')
+            raise StartupError('ACCOUNTS_DATABASE_URL', 'Automatic account preparation supports SQLite and MySQL/MariaDB.')
         lock_name = None
         if dialect in {'mysql', 'mariadb'}:
             event.listen(connection, 'before_cursor_execute', _plain_parameters, retval=True)
@@ -61,7 +62,7 @@ def _database_lock():
             lock_name = 'accounts-bootstrap-' + sha256(str(database).encode()).hexdigest()[:40]
             locked = connection.execute(text('SELECT GET_LOCK(:name, 20)'), {'name': str(lock_name)}).scalar_one()
             if locked != 1:
-                raise RuntimeError('Account database preparation is busy; restart to try again.')
+                raise StartupError('DATABASE_LOCK', 'Account database preparation is busy; restart to try again.')
             connection.commit()
         try:
             if dialect == 'sqlite':
@@ -97,7 +98,7 @@ def _signing_key(connection):
     except (InvalidToken, ValueError, TypeError, UnicodeError):
         # Never silently rotate an unreadable key: that could invalidate all
         # clients and hide loss of the original deployment secret.
-        raise RuntimeError('The stored account signing key cannot be opened with the configured secret; no key was replaced.') from None
+        raise StartupError('SIGNING_KEY', 'The stored account signing key cannot be opened with the configured secret; no key was replaced.') from None
     return private_key
 
 
