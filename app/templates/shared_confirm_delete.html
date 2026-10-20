@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}CSUPOR-hozzáférés törlése{% endblock %}
+{% block content %}
+<section class="form-shell">
+  <h1>CSUPOR-hozzáférés és személyügyi adatok törlése</h1>
+  <p>A bejelentkezés megerősítve. Törlöd <strong>{{ target_user.username }}</strong> CSUPOR-profilját és a hozzá tartozó személyügyi adatokat?</p>
+  <p>A közös fiókja és más rendszerekhez való hozzáférése megmarad. A CSUPOR-adatok törlése nem vonható vissza.</p>
+  <form method="post" action="{{ url_for('delete_user_profile', user_id=target_user.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="button-row">
+      <button type="submit">CSUPOR-adatok végleges törlése</button>
+      <a class="button button-secondary" href="{{ url_for('manage_user_profiles') }}">Mégse</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

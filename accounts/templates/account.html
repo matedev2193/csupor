@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Fiókom · Micimackó-fiók{% endblock %}
+{% block content %}
+<span class="eyebrow">A közös fiókod</span>
+<h2 id="page-title">Szia, {{ account.username }}!</h2>
+<p class="lead">Ezeket a belépési adatokat használod a csatlakoztatott rendszerekben.</p>
+<div class="account-details"><span>Felhasználónév</span><strong>{{ account.username }}</strong></div>
+<h3>Elérhető rendszerek</h3>
+<ul class="applications">{% for client in memberships %}<li><span class="detail-dot" aria-hidden="true"></span>{{ client.name }}</li>{% else %}<li>Még nincs hozzád rendelt rendszer. Kérj hozzáférést az üzemeltetőtől.</li>{% endfor %}</ul>
+<div class="divider"></div>
+<h3>E-mail-cím módosítása</h3>
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label for="email">E-mail-cím</label>
+  <input id="email" name="email" type="email" autocomplete="email" maxlength="120" value="{{ request.form.get('email', account.email) }}" required>
+  <label for="current-password">Jelenlegi jelszó</label>
+  <input id="current-password" name="current_password" type="password" autocomplete="current-password" maxlength="1024" required>
+  <p class="help">A módosítás után a többi bejelentkezésed lezárul. A visszaállításhoz már az új e-mail-címedet használhatod.</p>
+  <button type="submit">E-mail-cím mentése</button>
+</form>
+<p class="form-footer"><a href="{{ url_for('web.password') }}">Jelszó módosítása</a></p>
+{% endblock %}

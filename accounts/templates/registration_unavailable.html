@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+<span class="eyebrow">Fiók létrehozása</span>
+<h2 id="page-title">Regisztráció a rendszerből</h2>
+<p class="lead">A regisztrációt annak a rendszernek a bejelentkezési oldaláról indítsd el, amelyet használni szeretnél. Ha ott nem látsz regisztrációs lehetőséget, kérj hozzáférést az üzemeltetőtől.</p>
+<a class="button" href="{{ url_for('web.login') }}">Már van fiókom</a>
+{% endblock %}

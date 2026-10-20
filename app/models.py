@@ -184,10 +184,17 @@ class User(UserMixin, db.Model):
         self.password_hash = generate_password_hash(raw_password)
 
     def check_password(self, raw_password: str) -> bool:
+        from .shared_auth import oidc_enabled
+        if oidc_enabled():
+            return False
         return check_password_hash(self.password_hash, raw_password)
 
     def get_id(self) -> str:
         """Bind every login session to the current password without exposing its hash."""
+        from .shared_auth import oidc_enabled
+        if oidc_enabled():
+            from flask import session
+            return "oidc:" + session["shared_login"]
         key = current_app.config["SECRET_KEY"]
         if isinstance(key, str):
             key = key.encode("utf-8")
@@ -454,6 +461,9 @@ class Leadership(db.Model):
 
 @login_manager.user_loader
 def load_user(identity: str):
+    from .shared_auth import load_oidc_user, oidc_enabled
+    if oidc_enabled():
+        return load_oidc_user(identity)
     # Numeric identities issued before password-bound sessions deliberately
     # require a fresh login. Never accept malformed or oversized SQL IDs.
     if not isinstance(identity, str) or not re.fullmatch(r"[1-9][0-9]{0,18}:[0-9a-f]{64}", identity):

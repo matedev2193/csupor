@@ -67,6 +67,9 @@ def initialise_initial_admin():
     ignore them, including changed or incomplete values, and never reset an
     account password. Password limits are 12–1024 Unicode characters.
     """
+    from .shared_auth import oidc_enabled
+    if oidc_enabled():
+        return
     values = tuple(os.getenv(key) for key in _ENVIRONMENT_KEYS)
     if all(value is None for value in values) or _has_developer():
         return

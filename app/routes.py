@@ -11,6 +11,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from werkzeug.security import generate_password_hash
 
 from . import SUPPORTED_LOCALES, db, get_locale
+from .shared_auth import begin_login, clear_local_session, deletion_reauthenticated, oidc_enabled, provider_url
 
 from .working_calendar import HungaryCalendar
 from .i18n import enum_label
@@ -1288,6 +1289,8 @@ def init_routes(app):
 
     @app.route("/register", methods=["GET", "POST"])
     def register():
+        if oidc_enabled():
+            return begin_login(register=True)
         if request.method == "POST":
             email = request.form.get("email", "").strip().lower()
             username = request.form.get("username", "").strip()
@@ -1318,6 +1321,8 @@ def init_routes(app):
 
     @app.route("/login", methods=["GET", "POST"])
     def login():
+        if oidc_enabled():
+            return begin_login()
         if request.method == "POST":
             login_identifier = request.form.get("login", "").strip()
             password = request.form.get("password", "")
@@ -1339,6 +1344,9 @@ def init_routes(app):
     @app.route("/logout")
     @login_required
     def logout():
+        if oidc_enabled():
+            clear_local_session()
+            return redirect(provider_url("/logout"))
         logout_user()
         flash(_("Logged out."), "success")
         return redirect(url_for("login"))
@@ -1656,6 +1664,8 @@ def init_routes(app):
     @app.route("/password", methods=["GET", "POST"])
     @login_required
     def change_password():
+        if oidc_enabled():
+            return redirect(provider_url("/password"))
         session.setdefault("change_password_csrf_token", token_urlsafe(32))
         if request.method == "POST":
             if not compare_digest(session["change_password_csrf_token"].encode(), request.form.get("csrf_token", "").encode()):
@@ -1701,10 +1711,16 @@ def init_routes(app):
     def edit_profile():
         profile = current_user.profile or UserProfile(user_id=current_user.id)
         if request.method == "POST":
+            if oidc_enabled():
+                csrf_token = session.get("profile_email_csrf_token", "")
+                if not csrf_token or not compare_digest(csrf_token.encode(), request.form.get("csrf_token", "").encode()):
+                    abort(400)
             email_changed = False
             observed_email = current_user.email
             observed_password_hash = current_user.password_hash
-            if "email" in request.form:
+            if oidc_enabled() and "email" in request.form and request.form.get("email", "").strip().lower() != observed_email.lower():
+                abort(400, description="Az e-mail-címet a közös fiók oldalán módosíthatod.")
+            if "email" in request.form and not oidc_enabled():
                 from .mail_settings import _has_control, _valid_email
 
                 csrf_token = session.get("profile_email_csrf_token", "")
@@ -1772,6 +1788,8 @@ def init_routes(app):
     @app.post("/profile/email")
     @login_required
     def change_account_email():
+        if oidc_enabled():
+            return redirect(provider_url("/account"))
         from .mail_settings import _has_control, _valid_email
 
         csrf_token = session.get("profile_email_csrf_token", "")
@@ -1868,7 +1886,9 @@ def init_routes(app):
         csrf_token = session.get("profile_delete_csrf_token")
         if not csrf_token or not compare_digest(csrf_token.encode(), request.form.get("csrf_token", "").encode()):
             abort(400)
-        if not current_user.check_password(request.form.get("manager_password", "")):
+        if oidc_enabled() and not deletion_reauthenticated(user_id):
+            return begin_login(deletion_target=user_id)
+        if not oidc_enabled() and not current_user.check_password(request.form.get("manager_password", "")):
             flash(_("Your password is incorrect. The user was not deleted."), "error")
             return redirect(url_for("manage_user_profiles"))
         if user_id == current_user.id:
