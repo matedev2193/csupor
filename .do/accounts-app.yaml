@@ -33,7 +33,9 @@ services:
         value: ""
       - key: ACCOUNTS_ISSUER
         scope: RUN_TIME
-        value: https://fiok.matedev.hu
+        # First deploy starts the domain-setup page. After adding the domain,
+        # set its permanent HTTPS origin here, then deploy the account service.
+        value: ""
       - key: ACCOUNTS_PROXY_HOPS
         scope: RUN_TIME
         value: "1"

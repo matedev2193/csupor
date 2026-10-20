@@ -41,7 +41,6 @@ def assert_redacted(output, values=()):
 
 
 @pytest.mark.parametrize(('key', 'value', 'code'), [
-    ('ACCOUNTS_ISSUER', None, 'ACCOUNTS_ISSUER'),
     ('ACCOUNTS_ISSUER', 'https://user:' + SENSITIVE + '@accounts.example.invalid', 'ACCOUNTS_ISSUER'),
     ('ACCOUNTS_SECRET_KEY', None, 'ACCOUNTS_SECRET_KEY'),
     ('ACCOUNTS_SECRET_KEY', 'tiny-private-value', 'ACCOUNTS_SECRET_KEY'),
@@ -165,6 +164,7 @@ def test_unexpected_exception_cannot_leak_text_or_spoof_a_diagnostic(monkeypatch
 @pytest.mark.parametrize('errno', [2026, 3159])
 @pytest.mark.parametrize('wrapper', [OperationalError, InterfaceError])
 def test_tls_configuration_failures_are_not_retried_even_if_connection_invalidated(monkeypatch, errno, wrapper):
+    monkeypatch.setenv('ACCOUNTS_ISSUER', 'https://accounts.example.invalid')
     error = mysql_error(errno, wrapper=wrapper, invalidated=True)
     assert startup._retryable(error) is False
     attempts = []
@@ -194,6 +194,7 @@ def test_unknown_typed_code_and_unknown_driver_errno_use_safe_fallbacks():
     (ValueError('mysql://user:' + SENSITIVE + '@db.example.invalid/database ' + PRIVATE_SQL), 'UNEXPECTED'),
 ])
 def test_worker_factory_suppresses_sensitive_exception_chains(monkeypatch, error, code):
+    monkeypatch.setenv('ACCOUNTS_ISSUER', 'https://accounts.example.invalid')
     def fail():
         raise error
     monkeypatch.setattr(startup, 'create_app', fail)
@@ -211,6 +212,7 @@ def test_worker_factory_suppresses_sensitive_exception_chains(monkeypatch, error
 
 
 def test_worker_factory_passes_through_successful_app(monkeypatch):
+    monkeypatch.setenv('ACCOUNTS_ISSUER', 'https://accounts.example.invalid')
     application = object()
     monkeypatch.setattr(startup, 'create_app', lambda: application)
     assert startup.worker_app() is application

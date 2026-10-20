@@ -93,6 +93,7 @@ def test_wrong_secret_or_corrupt_stored_key_fails_without_replacement(tmp_path, 
 def test_existing_key_file_remains_supported_and_start_creates_tables(tmp_path, private_file, monkeypatch):
     key, path = private_file
     settings = config(tmp_path, ACCOUNTS_SIGNING_KEY_FILE=str(path))
+    monkeypatch.setenv('ACCOUNTS_ISSUER', settings['ACCOUNTS_ISSUER'])
     monkeypatch.setattr(startup, 'create_app', lambda: create_app(settings))
     app = startup.prepare_app()
     assert app.extensions['accounts_key_id'] == key_id(key)
