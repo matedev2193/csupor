@@ -181,6 +181,33 @@ Az issuer az állandó fiókazonosság része; később ne nevezd át egyszerű
 domaincserével. Mentsd külön az adatbázisokat és a stabil titkos kulcsokat.
 A kézi üzemeltetés dokumentációja: [technikai útmutató](shared-accounts.md).
 
+## Ha az alkalmazás nem indul
+
+Az **App → Runtime Logs** naplóban az első `[ACCOUNTS_STARTUP_…]` sort keresd.
+A hibaüzenet megnevezi a hibás változót vagy az adatbázishiba fajtáját,
+de nem írja ki a jelszót, kulcsot, kapcsolat URL-jét vagy a nyers SQL-hibát.
+Ezt a sort megoszthatod a hiba vizsgálatához; a titkos változók értékeit ne küldd el.
+
+| Hibakód vége | Teendő |
+| --- | --- |
+| `ACCOUNTS_ISSUER` | `https://fiok.matedev.hu`, útvonal nélkül |
+| `ACCOUNTS_SECRET_KEY` | Legalább 32 karakter; meglévő adatbázisnál az eredeti kulcs |
+| `ACCOUNTS_DATABASE_URL` | Teljes MySQL-kapcsolati URL saját adatbázisnévvel, URL-kódolt jelszóval |
+| `ACCOUNTS_DATABASE_CA_CERT` / `DATABASE_TLS` | A megfelelő adatbázis-CA teljes PEM-szövege és a kapcsolat kiszolgálóneve |
+| `DATABASE_AUTH` | Az adatbázis-felhasználó belépési adatai |
+| `DATABASE_PERMISSION` | A felhasználó hozzáférése és tábla-/indexlétrehozási joga a saját adatbázisában |
+| `DATABASE_NAME` | A kapcsolatban megadott saját adatbázis létrehozása vagy nevének javítása |
+| `DATABASE_NETWORK` | Host, port, adatbázis elérhetősége és az alkalmazás engedélyezése a Trusted Sources alatt |
+| `SIGNING_KEY` | Az eredeti `ACCOUNTS_SECRET_KEY` és a hozzá tartozó adatbázis helyreállítása; kulcsot ne cserélj találomra |
+| `ACCOUNTS_SIGNING_KEY_FILE` | Új, adatbázisos kulcstárolásnál ne add meg; meglévő kulcsfájlos telepítésnél az eredeti fájlt állítsd helyre |
+
+A `Readiness probe failed … connection refused` üzenet, ha előtte az
+előkészítés leállt, annak következménye: még nincs futó webkiszolgáló.
+Előbb a megelőző indítási hibát javítsd, majd indíts új deployt. A dokumentált
+HTTP-port `8080`, a health check útvonala `/healthz` maradjon.
+Ha még csak az általános „A fiókrendszer előkészítése sikertelen” sort látod,
+a részletes hibakódokat tartalmazó változatot kell telepíteni.
+
 Platformleírások: [DigitalOcean domainbeállítás](https://docs.digitalocean.com/products/app-platform/how-to/manage-domains/),
 [MySQL és CA-tanúsítvány](https://docs.digitalocean.com/products/databases/mysql/how-to/connect/),
 [Dockerfile beállítás](https://docs.digitalocean.com/products/app-platform/reference/dockerfile/).
