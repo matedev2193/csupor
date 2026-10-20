@@ -32,6 +32,47 @@ def _issuer(value):
     return value
 
 
+def _export_payload(issuer):
+    """Build a locked snapshot and stage stable links; the caller commits it.
+
+    The caller must freeze normal account mutations before using this helper.
+    No password, role or personnel record is modified here.
+    """
+    if current_app.config.get("AUTH_MODE", "local") != "local":
+        raise click.ClickException("Export requires local authentication.")
+    issuer = _issuer(issuer)
+    users = db.session.execute(db.select(User).order_by(User.id).with_for_update()).scalars().all()
+    entries = []
+    seen_emails, seen_usernames = set(), set()
+    for user in users:
+        email = user.email.strip().lower()
+        username = user.username.strip()
+        if (
+            not email or not username or email in seen_emails
+            or username.casefold() in seen_usernames
+            or not user.password_hash.startswith(("scrypt:", "pbkdf2:"))
+        ):
+            raise click.ClickException(
+                "Resolve duplicate/empty identifiers or unsupported/already-retired passwords before exporting."
+            )
+        seen_emails.add(email)
+        seen_usernames.add(username.casefold())
+        identity = db.session.execute(
+            db.select(ExternalIdentity).where(ExternalIdentity.user_id == user.id)
+        ).scalar_one_or_none()
+        if identity is None:
+            identity = ExternalIdentity(issuer=issuer, subject=str(uuid4()), user_id=user.id, disabled=False)
+            db.session.add(identity)
+        elif identity.issuer != issuer or identity.disabled:
+            raise click.ClickException("A user already has another or disabled external identity; nothing was exported.")
+        entries.append({
+            "subject": identity.subject, "username": username,
+            "email": email, "password_hash": user.password_hash,
+        })
+    payload = {"version": 1, "source": "csupor", "issuer": issuer, "users": entries}
+    return payload
+
+
 def _export_users(issuer, output):
     """Write an exclusive private file before committing stable identity links.
 
@@ -46,35 +87,7 @@ def _export_users(issuer, output):
         raise click.ClickException("The output filename must end in .accounts-export.json.")
     created = False
     try:
-        users = db.session.execute(db.select(User).order_by(User.id).with_for_update()).scalars().all()
-        entries = []
-        seen_emails, seen_usernames = set(), set()
-        for user in users:
-            email = user.email.strip().lower()
-            username = user.username.strip()
-            if (
-                not email or not username or email in seen_emails
-                or username.casefold() in seen_usernames
-                or not user.password_hash.startswith(("scrypt:", "pbkdf2:"))
-            ):
-                raise click.ClickException(
-                    "Resolve duplicate/empty identifiers or unsupported/already-retired passwords before exporting."
-                )
-            seen_emails.add(email)
-            seen_usernames.add(username.casefold())
-            identity = db.session.execute(
-                db.select(ExternalIdentity).where(ExternalIdentity.user_id == user.id)
-            ).scalar_one_or_none()
-            if identity is None:
-                identity = ExternalIdentity(issuer=issuer, subject=str(uuid4()), user_id=user.id, disabled=False)
-                db.session.add(identity)
-            elif identity.issuer != issuer or identity.disabled:
-                raise click.ClickException("A user already has another or disabled external identity; nothing was exported.")
-            entries.append({
-                "subject": identity.subject, "username": username,
-                "email": email, "password_hash": user.password_hash,
-            })
-        payload = {"version": 1, "source": "csupor", "issuer": issuer, "users": entries}
+        payload = _export_payload(issuer)
         # O_EXCL also refuses symlink targets; umask can only make 0600 stricter.
         fd = os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         created = True
@@ -89,7 +102,7 @@ def _export_users(issuer, output):
         if created:
             destination.unlink(missing_ok=True)
         raise
-    return len(entries)
+    return len(payload["users"])
 
 
 def init_account_migration(app):

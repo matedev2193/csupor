@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Első beállítás · Micimackó-fiók{% endblock %}
+{% block content %}
+<span class="eyebrow">Első indítás</span><h2 id="page-title">CSUPOR-fiókok átemelése</h2>
+<p class="lead">A meglévő felhasználók ugyanazokkal az adatokkal léphetnek be a közös fiókrendszerbe.</p>
+<p>Előbb kapcsold be a CSUPOR átállási módját a telepítési útmutató szerint, majd a fejlesztői felületén töltsd le a titkosított fiókexportot. Az export 24 órán belül használható fel. A CSUPOR maradjon átállási módban az összekapcsolás végéig.</p>
+<form method="post" enctype="multipart/form-data">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label for="setup-token">Egyszeri beállítási kulcs</label><input id="setup-token" name="setup_token" type="password" minlength="32" maxlength="1024" autocomplete="off" required>
+  <small>A fiókrendszer telepítésénél megadott ACCOUNTS_SETUP_TOKEN.</small>
+  <label for="transfer-file">Titkosított CSUPOR-export</label><input id="transfer-file" name="transfer_file" type="file" required>
+  <label for="transfer-key">Az export átviteli kulcsa</label><input id="transfer-key" name="transfer_key" type="password" minlength="32" maxlength="1024" autocomplete="off" required>
+  <label for="admin-login">Saját meglévő CSUPOR-fiókod</label><input id="admin-login" name="admin_login" maxlength="120" autocomplete="username" required placeholder="Felhasználónév vagy e-mail-cím">
+  <label for="admin-password">A fiókod jelenlegi CSUPOR-jelszava</label><input id="admin-password" name="admin_password" type="password" maxlength="1024" autocomplete="current-password" required>
+  <small>Ez a fiók lesz a központi fiókrendszer adminisztrátora.</small>
+  <label for="csupor-redirect">CSUPOR-visszatérési cím</label><input id="csupor-redirect" name="csupor_redirect_uri" type="url" maxlength="2048" placeholder="https://a-csupor-sajat-cime.hu/auth/callback" required>
+  <label for="csupor-client-secret">Új összekapcsolási kulcs a CSUPOR-hoz</label><input id="csupor-client-secret" name="csupor_client_secret" type="password" minlength="32" maxlength="1024" autocomplete="new-password" required>
+  <button type="button" data-generate-secret="csupor-client-secret">Véletlen kulcs készítése</button>
+  <button type="button" data-copy-input="csupor-client-secret">Kulcs másolása</button>
+  <small>Ugyanezt add meg a CSUPOR környezeti beállításainál OIDC_CLIENT_SECRET néven. Mentés után a kulcs nem olvasható vissza.</small>
+  <p data-copy-status role="status" aria-live="polite"></p>
+  <button type="submit">Fiókok átemelése és adminisztrátor beállítása <span aria-hidden="true">→</span></button>
+</form>
+<script src="{{ url_for('static', filename='admin.js') }}" defer></script>
+{% endblock %}

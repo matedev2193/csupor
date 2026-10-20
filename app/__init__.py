@@ -79,6 +79,10 @@ def create_app() -> Flask:
     babel.init_app(app, locale_selector=get_locale)
     login_manager.init_app(app)
 
+    from .account_transfer import init_account_transfer
+
+    init_account_transfer(app)
+
     from .shared_auth import init_shared_auth
 
     init_shared_auth(app)

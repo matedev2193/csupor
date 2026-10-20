@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Fiókok hozzáférései · Micimackó-fiók{% endblock %}
+{% block content %}
+<span class="eyebrow">Központi adminisztráció</span><h2 id="page-title">Fiókok hozzáférései</h2>
+<p class="lead">Fiókonként jelöld be az elérhető alkalmazásokat. A visszavont hozzáférést a rendszer a következő ellenőrzéskor érvényesíti.</p>
+<p><a href="{{ url_for('account_admin.index') }}">← Fiókkezelés</a></p>
+{% for person in accounts %}
+<form method="post" action="{{ url_for('account_admin.account_access', subject=person.subject) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <fieldset><legend>{{ person.username }}{% if not person.active %} · Inaktív fiók{% endif %}</legend><p>{{ person.email }}</p><small>Fiókazonosító: {{ person.subject }}</small>
+  {% for client in clients %}<label><input type="checkbox" name="client_ids" value="{{ client.client_id }}" {% if (person.subject, client.client_id) in memberships %}checked{% endif %}> {{ client.name }}{% if not client.active %} · Szüneteltetve{% endif %}</label>{% else %}<p>Előbb adj hozzá alkalmazást.</p>{% endfor %}
+  <button type="submit">Hozzáférések mentése</button></fieldset>
+</form>
+{% else %}<p>Még nincs fiók.</p>{% endfor %}
+{% endblock %}
