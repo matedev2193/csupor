@@ -10,6 +10,7 @@ from . import create_app
 from .models import db
 from .bootstrap import prepare_database
 from .errors import StartupError, diagnostic
+from .domain_setup import create_domain_setup_app, domain_setup_requested
 
 
 def _retryable(error):
@@ -29,6 +30,8 @@ def _retryable(error):
 
 
 def prepare_app(*, retry_seconds=30):
+    if domain_setup_requested():
+        return create_domain_setup_app()
     deadline = time.monotonic() + retry_seconds
     while True:
         app = None
@@ -69,6 +72,8 @@ def worker_app():
     # Gunicorn creates its workers after exec; main's exception handler is no
     # longer present. Suppress driver exception chains at this boundary too.
     try:
+        if domain_setup_requested():
+            return create_domain_setup_app()
         return create_app()
     except Exception as error:
         raise RuntimeError(diagnostic(error)) from None
@@ -77,8 +82,11 @@ def worker_app():
 def main():
     try:
         port = _port()
-        prepare_app()
-        print('A fiókrendszer előkészítése kész; a webkiszolgáló indul.', flush=True)
+        app = prepare_app()
+        if app is not None and app.config.get('ACCOUNTS_DOMAIN_SETUP'):
+            print('[ACCOUNTS_DOMAIN_SETUP] A kiszolgáló domainbeállítási módban indul. Add hozzá a domaint, majd állítsd be az ACCOUNTS_ISSUER értékét, és indíts új deployt. A fiókkezelés még nincs bekapcsolva.', flush=True)
+        else:
+            print('A fiókrendszer előkészítése kész; a webkiszolgáló indul.', flush=True)
         os.execv(sys.executable, [sys.executable, '-m', 'gunicorn', '--bind', f'0.0.0.0:{port}',
                                 '--workers', '2', '--worker-tmp-dir', '/dev/shm', 'accounts.start:worker_app()'])
     except Exception as error:

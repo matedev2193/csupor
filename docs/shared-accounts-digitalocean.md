@@ -37,6 +37,26 @@ A DigitalOceanön hozz létre **új Appot** a fiókszolgáltatásnak:
 Az `.do/accounts-app.yaml` importálható beállításminta. Az új alkalmazás és
 adatbázis díját a DigitalOcean a létrehozás előtt mutatja.
 
+**Az első deploynál az `ACCOUNTS_ISSUER` mezőt hagyd üresen, vagy még ne vedd fel.**
+Így a kiszolgáló domainbeállítási módban indul. A `/healthz` HTTP 200 választ
+ad, és a DigitalOcean sikeresnek jelölheti a telepítést. A kezdőoldalon a
+domain beállításának lépései jelennek meg. Ehhez még adatbázis-kapcsolat és
+titkos kulcs sem szükséges; a korábban megadott kulcsokat őrizd meg változatlanul.
+
+Ez a mód kizárólag az első telepítés és a domain hozzárendelésének elvégzésére
+szolgál. Nem biztosít belépést, fiókimportot vagy OIDC-végpontot, és nem nyúl
+az adatbázishoz. Nem üres, de hibás `ACCOUNTS_ISSUER` esetén továbbra is
+konkrét indítási hibát kapsz, az alkalmazás nem vált vissza erre a módra.
+
+## 2. A fiok.matedev.hu hozzárendelése és a fiókkezelés indítása
+
+Az első sikeres deploy után a fiókalkalmazásnál:
+**Networking → Domains → Add domain → fiok.matedev.hu**.
+A **You manage your domain** lehetőségnél másold ki az `ondigitalocean.app`
+végű CNAME-célcímet. A `matedev.hu` DNS-kezelőjénél vegyél fel egy `CNAME`
+rekordot `fiok` névvel, erre a célra mutatva. Várd meg a domain és a HTTPS
+aktiválását. Ezután kapcsold be a fiókkezelést az alábbi beállításokkal.
+
 Hozz létre külön, tartós MySQL-adatbázist a szolgáltató webes felületén, és
 engedélyezd az alkalmazás hálózati hozzáférését. Az adatbázis-felhasználó a
 saját adatbázisában kapjon tábla- és indexlétrehozási jogot is.
@@ -57,19 +77,13 @@ karakterek legyenek URL-kódolva. A MySQL CA-tanúsítvány a DigitalOcean
 **Databases → adatbázis → Connection Details → Download CA certificate**
 lehetőségénél tölthető le. A kapcsolat tanúsítványt és kiszolgálónevet is ellenőriz.
 
-Induláskor elkészülnek a táblák és az aláírókulcs. Új telepítéshez nem kell
+A beállítások mentése után indíts új deployt. Most már a teljes fiókrendszer
+indul el, elkészülnek a táblák és az aláírókulcs. Új telepítéshez nem kell
 kulcsfájlt generálni vagy csatolni: az egyszer létrehozott RSA-kulcs titkosítva
 a fiókadatbázisban marad. A használatához az eredeti `ACCOUNTS_SECRET_KEY`
 kell. Az adatbázisról és erről a kulcsról is legyen védett mentés.
 Hibás visszafejtésnél az alkalmazás leáll, nem generál másik aláírókulcsot.
-
-## 2. A fiok.matedev.hu hozzárendelése
-
-A fiókalkalmazásnál: **Networking → Domains → Add domain → fiok.matedev.hu**.
-A **You manage your domain** lehetőségnél másold ki az `ondigitalocean.app`
-végű CNAME-célcímet. A `matedev.hu` DNS-kezelőjénél vegyél fel egy `CNAME`
-rekordot `fiok` névvel, erre a célra mutatva. Várd meg a domain és a HTTPS
-aktiválását. Az első beállítás címe: `https://fiok.matedev.hu/setup`.
+Sikeres indulás után az első fiókbeállítás címe: `https://fiok.matedev.hu/setup`.
 
 ## 3. A meglévő CSUPOR-fiókok exportálása
 
@@ -182,6 +196,10 @@ domaincserével. Mentsd külön az adatbázisokat és a stabil titkos kulcsokat.
 A kézi üzemeltetés dokumentációja: [technikai útmutató](shared-accounts.md).
 
 ## Ha az alkalmazás nem indul
+
+Ha a naplóban `[ACCOUNTS_DOMAIN_SETUP]` szerepel, a kiszolgáló már elindult,
+és a domain hozzáadására vár. Add hozzá a domaint, töltsd ki az `ACCOUNTS_ISSUER`
+értékét és a fenti beállításokat, majd indíts új deployt a fiókkezeléshez.
 
 Az **App → Runtime Logs** naplóban az első `[ACCOUNTS_STARTUP_…]` sort keresd.
 A hibaüzenet megnevezi a hibás változót vagy az adatbázishiba fajtáját,
