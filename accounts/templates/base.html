@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>{% block title %}Micimackó-fiók{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='accounts.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="{{ url_for('web.index') }}" aria-label="Micimackó-fiók kezdőlap"><span class="brand-mark" aria-hidden="true">m</span><span>Micimackó<span class="brand-subtitle">Közös fiók</span></span></a>
+    {% if account %}<nav aria-label="Fiókmenü"><a href="{{ url_for('web.account_page') }}">Fiókom</a><a href="{{ url_for('web.logout') }}">Kijelentkezés</a></nav>{% endif %}
+  </header>
+  <main class="layout">
+    <aside class="introduction">
+      <span class="eyebrow">Egy helyen kapcsolódunk</span>
+      <h1>Egy fiók.<br>Közös belépés.</h1>
+      <p>A Micimackó-fiókoddal eléred a számodra engedélyezett rendszereket. A bejelentkezési adataidat itt, egy helyen kezelheted.</p>
+      <div class="intro-detail"><span class="detail-dot" aria-hidden="true"></span>A személyügyi adataidat továbbra is a CSUPOR-ban találod.</div>
+    </aside>
+    <section class="card" aria-labelledby="page-title">
+      {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="notice {{ category }}" role="status">{{ message }}</div>{% endfor %}{% endwith %}
+      {% if error %}<div class="notice error" role="alert">{{ error }}</div>{% endif %}
+      {% block content %}{% endblock %}
+    </section>
+  </main>
+  <footer>Micimackó-fiók · Közös bejelentkezés</footer>
+</body>
+</html>

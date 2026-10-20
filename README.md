@@ -2,6 +2,14 @@
 
 Flask-based login and personnel data management system backed by MySQL schema `csupor`.
 
+The independent **Micimackó-fiók** service in `accounts/` supports shared
+OpenID Connect sign-in across CSUPOR and other applications, using separate
+identity storage and preserving each application's permissions. Existing
+installations remain in local authentication mode until migrated.
+See the [shared accounts deployment and migration guide](docs/shared-accounts.md)
+before enabling `AUTH_MODE=oidc`. The account service can be deployed from this
+repository without importing or accessing CSUPOR's personnel application.
+
 ## Features
 
 - Login using **e-mail or username + password**.

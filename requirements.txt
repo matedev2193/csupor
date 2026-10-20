@@ -9,3 +9,5 @@ workalendar==17.0.0
 Pillow==12.3.0
 reportlab==4.4.9
 cryptography==46.0.0
+Authlib==1.9.1
+requests==2.32.5

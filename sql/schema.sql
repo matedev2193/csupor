@@ -699,3 +699,30 @@ CREATE TABLE IF NOT EXISTS password_reset_deliveries (
   PRIMARY KEY (id),
   KEY ix_password_reset_deliveries_created_at (created_at)
 ) ENGINE=InnoDB;
+
+-- Shared-account identity links. Personnel data remains in the original tables.
+CREATE TABLE IF NOT EXISTS external_identities (
+  id INT NOT NULL AUTO_INCREMENT,
+  issuer VARCHAR(255) NOT NULL,
+  subject VARCHAR(255) NOT NULL,
+  user_id INT UNSIGNED NULL,
+  disabled BOOLEAN NOT NULL DEFAULT FALSE,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_external_identity (issuer, subject),
+  UNIQUE KEY uq_external_identity_user (user_id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS external_login_sessions (
+  id_hash VARCHAR(64) NOT NULL,
+  identity_id INT NOT NULL,
+  access_token TEXT NOT NULL,
+  expires_at DATETIME NOT NULL,
+  authenticated_at DATETIME NOT NULL,
+  deletion_target_id INT NULL,
+  deletion_expires_at DATETIME NULL,
+  PRIMARY KEY (id_hash),
+  KEY ix_external_login_sessions_identity_id (identity_id),
+  KEY ix_external_login_sessions_expires_at (expires_at),
+  FOREIGN KEY (identity_id) REFERENCES external_identities(id) ON DELETE CASCADE
+) ENGINE=InnoDB;

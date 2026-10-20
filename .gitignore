@@ -205,3 +205,8 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+# Shared-account migration files contain password hashes. Never commit them.
+*.accounts-export.json
+*.accounts-receipt.json
+accounts/instance/
+*.pem

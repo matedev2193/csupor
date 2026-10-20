@@ -84,6 +84,7 @@ for _parent, _children in {
 UTILITY_ENDPOINTS = frozenset({
     "static", "index", "login", "logout", "register", "set_language", "page_access.unavailable",
     "password_reset.request_reset", "password_reset.reset_password",
+    "shared_auth.login", "shared_auth.callback",
 })
 SPECIAL_ENDPOINTS = frozenset({"profile_photos.show_photo", "gyap.download_form", "worktime.export", "qualifications.document"})
 

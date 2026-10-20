@@ -131,6 +131,9 @@ def _allow_request(email, requester):
 def _deliver_reset(app, email, locale, attempt_id=None):
     """Resolve the account and contact SMTP outside the HTTP response path."""
     with app.app_context(), force_locale(locale):
+        from .shared_auth import oidc_enabled
+        if oidc_enabled():
+            return
         token_hash = None
         try:
             settings = get_mail_settings()
@@ -228,6 +231,9 @@ def _private_response(response):
 
 @password_reset.route("/forgot-password", methods=["GET", "POST"])
 def request_reset():
+    from .shared_auth import oidc_enabled, provider_url
+    if oidc_enabled():
+        return redirect(provider_url("/forgot-password"))
     if request.method == "POST":
         _check_csrf()
         email = request.form.get("email", "").strip().lower()
@@ -260,6 +266,9 @@ def request_reset():
 
 def _consume_token(token, new_password):
     """Claim the token and change unchanged credentials in one transaction."""
+    from .shared_auth import oidc_enabled
+    if oidc_enabled():
+        return False
     if not _TOKEN_PATTERN.fullmatch(token):
         return False
     now = _now()
@@ -294,6 +303,9 @@ def _consume_token(token, new_password):
 
 @password_reset.route("/reset-password", methods=["GET", "POST"])
 def reset_password():
+    from .shared_auth import oidc_enabled, provider_url
+    if oidc_enabled():
+        return redirect(provider_url("/forgot-password"))
     error = None
     if request.method == "POST":
         _check_csrf()
