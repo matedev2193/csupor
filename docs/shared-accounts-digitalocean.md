@@ -34,6 +34,13 @@ A DigitalOceanön hozz létre **új Appot** a fiókszolgáltatásnak:
 | HTTP port | `8080` |
 | Health check HTTP path | `/healthz` |
 
+Ha a már létrehozott app **automatikus Python-buildet** használ, azzal is
+indítható: a Source directory maradjon `/`, a Run command pedig
+`python -m accounts.start`. A gyökérben lévő `requirements.txt` a
+fiókszolgáltatás webkiszolgálóját, a Gunicornt is telepíti.
+`No module named gunicorn` hiba után a javított forrásból **új build/deploy**
+szükséges, hogy a csomag települjön; a korábbi build újraindítása nem elég.
+
 Az `.do/accounts-app.yaml` importálható beállításminta. Az új alkalmazás és
 adatbázis díját a DigitalOcean a létrehozás előtt mutatja.
 
@@ -228,4 +235,5 @@ a részletes hibakódokat tartalmazó változatot kell telepíteni.
 
 Platformleírások: [DigitalOcean domainbeállítás](https://docs.digitalocean.com/products/app-platform/how-to/manage-domains/),
 [MySQL és CA-tanúsítvány](https://docs.digitalocean.com/products/databases/mysql/how-to/connect/),
+[Python-build](https://docs.digitalocean.com/products/app-platform/reference/buildpacks/python/),
 [Dockerfile beállítás](https://docs.digitalocean.com/products/app-platform/reference/dockerfile/).
