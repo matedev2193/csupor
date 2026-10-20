@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="theme-color" content="#142d36">
+  <title>{% block title %}Tűz- és munkavédelem{% endblock %} · Micimackó</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='safety.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+<a class="skip-link" href="#main">Ugrás a tartalomhoz</a>
+<header class="app-header">
+  <a class="brand" href="{{ url_for('web.index') }}" aria-label="Tűz- és munkavédelem, kezdőlap">
+    <span class="brand-mark" aria-hidden="true">M<span>+</span></span>
+    <span><span class="brand-name">Tűz- és munkavédelem</span><span class="brand-subtitle">MICIMACKÓ · OKTATÁSI FELÜLET</span></span>
+  </a>
+  {% if g.member %}
+  <nav class="main-nav" aria-label="Főmenü">
+    <a class="nav-link {% if request.endpoint in ['web.index','web.reader','web.exam'] %}is-active{% endif %}" href="{{ url_for('web.index') }}">Tananyagaim</a>
+    {% if g.member.role == 'admin' %}
+    <a class="nav-link {% if request.endpoint == 'web.admin' %}is-active{% endif %}" href="{{ url_for('web.admin') }}">Áttekintés</a>
+    <a class="nav-link {% if request.endpoint == 'web.members' %}is-active{% endif %}" href="{{ url_for('web.members') }}">Kollégák</a>
+    {% endif %}
+  </nav>
+  <div class="user-area"><span class="user-name">{{ g.member.name }}</span>
+    <form class="logout-form" method="post" action="{{ url_for('auth.logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button button-quiet button-small" type="submit">Kilépés</button></form>
+  </div>
+  {% endif %}
+</header>
+<main class="container" id="main">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}<div class="notice {% if category in ['error','danger'] %}notice-error{% elif category == 'success' %}notice-success{% else %}notice-info{% endif %}" role="status">{{ message }}</div>{% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+<footer class="footer"><span>Micimackó · Tűz- és munkavédelmi oktatás</span><a href="{{ url_for('web.privacy') }}">A tanulási adatok kezelése</a></footer>
+{% block scripts %}{% endblock %}
+</body>
+</html>

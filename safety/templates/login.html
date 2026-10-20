@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Bejelentkezés{% endblock %}
+{% block content %}
+<div class="login-shell"><section class="login-card">
+  <div class="hero-mark" aria-hidden="true">M<span>+</span></div>
+  <p class="eyebrow">BIZTONSÁGBAN, EGYÜTT</p>
+  <h1>Felkészülten a<br>mindennapokra.</h1>
+  <p class="lead">Az éves tűz- és munkavédelmi tananyagok egy helyen, a saját tempódban.</p>
+  <a class="button button-primary" href="{{ url_for('auth.login') }}">Belépés Micimackó-fiókkal <span aria-hidden="true">→</span></a>
+  <p class="field-hint">A CSUPOR-hoz használt közös fiókoddal léphetsz be.</p>
+  <div class="divider"></div>
+  <ul class="feature-list"><li>Külön tűzvédelmi és munkavédelmi tananyag</li><li>Olvasás és folytatás, amikor neked megfelel</li><li>Elfogadó nyilatkozat vagy rövid vizsga</li></ul>
+</section></div>
+{% endblock %}

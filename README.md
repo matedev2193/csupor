@@ -10,6 +10,14 @@ See the [shared accounts deployment and migration guide](docs/shared-accounts.md
 before enabling `AUTH_MODE=oidc`. The account service can be deployed from this
 repository without importing or accessing CSUPOR's personnel application.
 
+## Independent safety training application
+
+The **Tűz- és munkavédelem** application in `safety/` provides annual PDF
+materials, private administrator progress reports, acknowledgements and an
+editable examination builder. It runs independently from CSUPOR, with its own
+database and persistent private file storage, and signs in through the shared
+Micimackó account service. See the [Hungarian usage and deployment guide](docs/safety-training.md).
+
 ## Features
 
 - Login using **e-mail or username + password**.

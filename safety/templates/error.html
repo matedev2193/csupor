@@ -1,0 +1,5 @@
+{% extends 'base.html' %}
+{% block title %}A művelet nem végezhető el{% endblock %}
+{% block content %}
+<section class="empty-state panel"><div class="empty-icon" aria-hidden="true">!</div><p class="eyebrow">EGY PILLANAT</p><h1>A művelet nem végezhető el</h1><p class="lead">{{ message }}</p><div class="actions"><a class="button button-primary" href="{{ url_for('web.index') }}">Vissza a kezdőlapra</a><a class="button button-secondary" href="{{ url_for('auth.login') }}">Új bejelentkezés</a></div></section>
+{% endblock %}

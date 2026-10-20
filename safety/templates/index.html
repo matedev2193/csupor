@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Tananyagaim{% endblock %}
+{% block content %}
+<div class="page-header"><div><p class="eyebrow">ÉVES OKTATÁS</p><h1 class="page-title">Jó felkészülést, {{ g.member.name }}!</h1><p class="lead">Olvasd végig a tananyagokat, majd végezd el a hozzájuk tartozó lezárást.</p></div>
+{% if years %}<form class="filter-bar" method="get"><label for="year">Oktatási év</label><select id="year" name="year">{% for year in years %}<option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>{% endfor %}</select><button class="button button-secondary button-small" type="submit">Megnyitás</button></form>{% endif %}</div>
+<div class="grid grid-two">
+{% for course in courses %}
+{% set progress = progress_by_course.get(course.id) %}
+<article class="course-card {{ course.kind }}">
+  <div class="course-meta"><span class="course-icon {{ course.kind }}" aria-hidden="true">{{ '♨' if course.kind == 'fire' else '+' }}</span><span class="pill {{ 'pill-success' if progress and progress.completed_at else 'pill-neutral' }}">{{ 'Teljesítve' if progress and progress.completed_at else 'Elvégzendő' }}</span></div>
+  <p class="eyebrow">{{ course.year }} · {{ 'TŰZVÉDELEM' if course.kind == 'fire' else 'MUNKAVÉDELEM' }}</p>
+  <h2>{{ course.title }}</h2>
+  <p class="muted">PDF-tananyag · {{ 'Elfogadó nyilatkozattal' if course.mode == 'accept' else 'Vizsgával' }} zárul</p>
+  {% if progress and progress.completed_at %}<p class="notice notice-success">Sikeresen lezártad ezt a tananyagot.</p>{% else %}<p>Nyisd meg a tananyagot. A következő alkalommal onnan folytathatod, ahol abbahagytad.</p>{% endif %}
+  <div class="card-footer"><a class="button button-primary" href="{{ url_for('web.reader', course_id=course.id) }}">{{ 'Tananyag megnyitása' if progress and progress.completed_at else 'Tanulás megkezdése / folytatása' }} <span aria-hidden="true">→</span></a></div>
+</article>
+{% else %}
+<section class="empty-state panel span-full"><div class="empty-icon" aria-hidden="true">✓</div><h2>Még nincs közzétett tananyag</h2><p class="muted">Az éves oktatás anyagai a közzététel után itt jelennek meg.</p>{% if g.member.role == 'admin' %}<a class="button button-primary" href="{{ url_for('web.course_new') }}">Első tananyag létrehozása</a>{% endif %}</section>
+{% endfor %}
+</div>
+<p class="field-hint">A rendszer rögzíti a tananyag megnyitását, a megtekintett oldalakat, az aktív olvasási időt és a teljesítést. <a href="{{ url_for('web.privacy') }}">További információ</a></p>
+{% endblock %}

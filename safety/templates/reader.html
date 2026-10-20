@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}{{ course.title }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='pdf-text-layer.css') }}">{% endblock %}
+{% block content %}
+<div class="page-header"><div><a class="back-link" href="{{ url_for('web.index', year=course.year) }}">← Tananyagaim</a><p class="eyebrow">{{ course.year }} · {{ 'TŰZVÉDELEM' if course.kind == 'fire' else 'MUNKAVÉDELEM' }}</p><h1 class="page-title">{{ course.title }}</h1></div><a class="button button-secondary button-small" href="{{ url_for('web.pdf', course_id=course.id) }}" target="_blank" rel="noopener">PDF megnyitása külön</a></div>
+<div id="reader" class="reader-shell" data-pdf-url="{{ url_for('web.pdf', course_id=course.id) }}" data-heartbeat-url="{{ url_for('web.heartbeat', course_id=course.id) }}" data-reading-token="{{ reading_token }}" data-start-page="{{ start_page }}" data-page-count="{{ course.page_count }}">
+  <div class="reader-toolbar">
+    <div class="reader-navigation"><button id="previous-page" class="button button-secondary button-small" type="button" disabled aria-label="Előző oldal">←</button><form id="page-form"><label class="visually-hidden" for="page-number">Oldalszám</label><input id="page-number" class="page-input" type="number" min="1" max="{{ course.page_count }}" value="{{ start_page }}" disabled><span class="muted">/ {{ course.page_count }}</span><button class="button button-quiet button-small" type="submit" id="go-page" disabled>Ugrás</button></form><button id="next-page" class="button button-secondary button-small" type="button" disabled aria-label="Következő oldal">→</button></div>
+    <div class="reader-zoom"><label class="visually-hidden" for="zoom">Nagyítás</label><select id="zoom" disabled><option value="fit">Szélességhez igazítás</option><option value="1">100%</option><option value="1.25">125%</option><option value="1.5">150%</option><option value="2">200%</option></select></div>
+  </div>
+  <p id="reader-status" class="reader-status" role="status">A tananyag betöltése…</p>
+  <div id="reader-error" class="notice notice-error reader-error" role="alert" hidden><span id="reader-error-text"></span> <a href="{{ url_for('web.reader', course_id=course.id) }}">Újratöltés</a></div>
+  <div id="pdf-stage" class="pdf-stage"><div id="pdf-sheet" class="pdf-sheet"><canvas id="pdf-canvas" class="pdf-canvas" aria-label="A tananyag aktuális oldala"></canvas><div id="pdf-text" class="textLayer"></div></div></div>
+  <noscript><div class="notice notice-error">A tananyag megjelenítéséhez és a teljesítés rögzítéséhez engedélyezd a JavaScriptet a böngésződben.</div></noscript>
+</div>
+{% if completed_at %}
+<section class="completion-panel panel"><span class="pill pill-success">Teljesítve</span><h2>Ezt a tananyagot már sikeresen lezártad.</h2><a href="{{ url_for('web.index', year=course.year) }}" class="button button-secondary">Vissza a tananyagokhoz</a></section>
+{% else %}
+<section id="completion" class="completion-panel panel" hidden><p class="eyebrow">A TANANYAG VÉGÉRE ÉRTÉL</p>
+{% if course.mode == 'accept' %}<h2>Tananyag elfogadása</h2><p>A lezáráshoz nyilatkozz arról, hogy végigolvastad és megértetted a tananyagot.</p><form id="completion-form" method="post" action="{{ url_for('web.accept', course_id=course.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label class="quiz-option"><input type="checkbox" name="accepted" value="1" required><span>{{ acceptance_text }}</span></label><button class="button button-primary" type="submit">Elfogadom a tananyagot</button></form>
+{% else %}<h2>Készen állsz a vizsgára?</h2><p>A tananyaghoz tartozó kérdéssor következik. A sikeres teljesítéshez legalább {{ course.passing_percent }}%-os eredmény szükséges.</p><a id="exam-link" class="button button-primary" href="{{ url_for('web.exam', course_id=course.id) }}">Vizsga megkezdése →</a>{% endif %}
+<p class="field-hint">A lezárás előtt az összes oldalt meg kell nyitnod ezen az olvasófelületen.</p></section>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script type="module" src="{{ url_for('static', filename='reader.js') }}"></script>{% endblock %}
