@@ -4,6 +4,8 @@ import ssl
 from mysql.connector.errors import Error as MySQLError
 from sqlalchemy.exc import ArgumentError, DBAPIError, SQLAlchemyError
 
+from .database_tls import TLS_MESSAGES, tls_error_code
+
 
 class StartupError(RuntimeError):
     def __init__(self, code, message):
@@ -26,8 +28,8 @@ _MESSAGES = {
     'DATABASE_AUTH': 'Az adatbázis elutasította a hitelesítést. Ellenőrizd az ACCOUNTS_DATABASE_URL felhasználónevét, jelszavát és a felhasználó hitelesítési beállításait.',
     'DATABASE_NAME': 'A kapcsolatban megadott adatbázis nem létezik. Hozd létre a fiókszolgáltatás saját adatbázisát, és annak nevét add meg az ACCOUNTS_DATABASE_URL-ben.',
     'DATABASE_PERMISSION': 'Az adatbázis-felhasználónak nincs elegendő jogosultsága. Engedélyezd a fiókszolgáltatás saját adatbázisának elérését, a táblák/indexek létrehozását és az adatok kezelését.',
-    'DATABASE_TLS': 'Az adatbázis titkosított kapcsolata vagy tanúsítvány-ellenőrzése sikertelen. Ellenőrizd a kiszolgálónevet és az ACCOUNTS_DATABASE_CA_CERT teljes PEM-szövegét; a TLS-ellenőrzést ne kapcsold ki.',
-    'DATABASE_NETWORK': 'Az adatbázis nem érhető el vagy a kapcsolat megszakadt. Ellenőrizd a hostot, portot és az alkalmazás engedélyezését az adatbázis Trusted Sources beállításánál.',
+    **TLS_MESSAGES,
+    'DATABASE_NETWORK': 'Az adatbázis nem érhető el vagy a kapcsolat megszakadt. Ellenőrizd a hostot, portot és az alkalmazás engedélyezését a szolgáltató távoli adatbázis-elérési beállításánál.',
     'DATABASE_CAPACITY': 'Az adatbázis kapcsolati korlátja betelt. Ellenőrizd az aktív kapcsolatokat és az adatbázis kapacitását.',
     'DATABASE_BUSY': 'Az adatbázis-művelet zárolás vagy ütköző tranzakció miatt nem fejeződött be. Az ütköző művelet után próbáld újra a telepítést.',
     'DATABASE_SCHEMA': 'Az adatbázis előkészítése során a séma vagy az SQL-művelet hibát jelzett. Őrizd meg az adatbázist; a telepített verzió és a séma ellenőrzése szükséges.',
@@ -54,6 +56,8 @@ def diagnostic(error):
     code = 'UNEXPECTED'
     if isinstance(error, StartupError):
         code = error.code if error.code in _MESSAGES else 'UNEXPECTED'
+    elif tls_code := tls_error_code(error):
+        code = tls_code
     else:
         original = error.orig if isinstance(error, DBAPIError) else error
         if isinstance(original, MySQLError):

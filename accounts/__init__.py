@@ -23,6 +23,7 @@ from joserfc.jwk import RSAKey
 
 from .models import db
 from .errors import StartupError
+from .database_tls import tls_connect_args
 
 
 def _bool(value):
@@ -97,7 +98,6 @@ def _configure_database(app):
         mode = url.query.get('ssl-mode')
         if mode is not None and mode != 'REQUIRED':
             raise ValueError('Unsupported SSL mode')
-        requires_tls = mode == 'REQUIRED'
         url = url.difference_update_query(['ssl-mode'])
     except (ValueError, TypeError, ArgumentError):
         raise StartupError('ACCOUNTS_DATABASE_URL', 'Check ACCOUNTS_DATABASE_URL; mysql:// and mysql+mysqlconnector:// with optional ssl-mode=REQUIRED are supported.') from None
@@ -107,15 +107,15 @@ def _configure_database(app):
     ca = (app.config.get('ACCOUNTS_DATABASE_CA_CERT') or '').strip()
     if ca:
         connect_args['ssl_ca'] = _mysql_ca_file(ca)
-        requires_tls = True
-    if requires_tls:
-        connect_args.update(ssl_disabled=False, ssl_verify_cert=True, ssl_verify_identity=True)
+    # A plain mysql:// URL is enough. No provider-specific TLS flags or CA file
+    # are needed when the server presents a certificate trusted by the OS.
+    connect_args.update(tls_connect_args())
     options.update(connect_args=connect_args)
     options.setdefault('pool_pre_ping', True)
     options.setdefault('hide_parameters', True)
     app.config['SQLALCHEMY_DATABASE_URI'] = url.render_as_string(hide_password=False)
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = options
-    app.config['ACCOUNTS_DATABASE_REQUIRE_TLS'] = requires_tls
+    app.config['ACCOUNTS_DATABASE_REQUIRE_TLS'] = True
 
 
 class AccountRequest(Request):
