@@ -21,6 +21,7 @@ _MESSAGES = {
     'ACCOUNTS_PROXY_HOPS': 'Az ACCOUNTS_PROXY_HOPS értéke 0, 1 vagy 2 legyen. A dokumentált DigitalOcean-beállítás: 1.',
     'ACCOUNTS_DATABASE_URL': 'Az ACCOUNTS_DATABASE_URL hiányzik, hibás vagy nem támogatott. A teljes MySQL-kapcsolati URL-t add meg, adatbázisnévvel; a jelszó speciális karaktereit URL-kódold. Támogatott: mysql://, mysql+mysqlconnector://, helyi használathoz sqlite://.',
     'ACCOUNTS_DATABASE_CA_CERT': 'Az ACCOUNTS_DATABASE_CA_CERT nem érvényes PEM-tanúsítvány. A letöltött adatbázis-CA teljes szövegét add meg, a BEGIN és END CERTIFICATE sorokkal együtt.',
+    'ACCOUNTS_DATABASE_TLS_MODE': 'Az ACCOUNTS_DATABASE_TLS_MODE értéke required vagy disabled lehet. Nethely TLS nélküli adatbázisához: disabled. Ez az adatbázis-kapcsolat titkosítását kikapcsolja.',
     'DATABASE_CA_FILE': 'Az adatbázis CA-tanúsítványának ideiglenes fájlja nem írható. Ellenőrizd az alkalmazás ideiglenes könyvtárának írhatóságát.',
     'ACCOUNTS_SIGNING_KEY_FILE': 'Az ACCOUNTS_SIGNING_KEY_FILE által megadott RSA-kulcsfájl nem olvasható vagy érvénytelen. Új, adatbázisban tárolt kulcsot használó telepítéshez ezt a változót nem kell megadni; meglévő kulcsfájlos telepítésnél az eredeti fájlt állítsd helyre.',
     'SIGNING_KEY': 'A tárolt aláírókulcs nem fejthető vissza. Ellenőrizd az eredeti ACCOUNTS_SECRET_KEY értékét és a hozzá tartozó adatbázist. Nem cseréltünk és nem töröltünk kulcsot.',

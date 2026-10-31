@@ -23,6 +23,11 @@ services:
       - key: ACCOUNTS_DATABASE_CA_CERT
         scope: RUN_TIME
         value: ""
+      - key: ACCOUNTS_DATABASE_TLS_MODE
+        scope: RUN_TIME
+        # For Nethely without TLS explicitly change to disabled.
+        # disabled overrides the old URL's ssl-mode=REQUIRED and skips CA setup.
+        value: "required"
       - key: ACCOUNTS_SECRET_KEY
         scope: RUN_TIME
         type: SECRET

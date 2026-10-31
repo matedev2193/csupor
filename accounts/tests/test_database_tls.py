@@ -14,9 +14,10 @@ import mysql.connector
 from mysql.connector.constants import ClientFlag
 from mysql.connector.errors import Error as MySQLError
 import pytest
+from sqlalchemy import event
 from sqlalchemy.exc import InterfaceError
 
-from accounts import create_app
+from accounts import create_app, _require_mysql_tls
 from accounts.models import db
 from accounts.database_tls import tls_error_code
 from accounts.errors import diagnostic
@@ -36,7 +37,9 @@ def connection_args(tmp_path, monkeypatch):
             'ACCOUNTS_ISSUER': 'https://accounts.example.invalid',
             'ACCOUNTS_SIGNING_KEY_FILE': str(key_file), 'ACCOUNTS_DATABASE_CA_CERT': ca,
         })
+        assert app.config['SESSION_COOKIE_SECURE'] is True
         with app.app_context():
+            assert event.contains(db.engine, 'connect', _require_mysql_tls) == app.config['ACCOUNTS_DATABASE_REQUIRE_TLS']
             args, kwargs = db.engine.dialect.create_connect_args(db.engine.url)
             assert not args
             kwargs.update(app.config['SQLALCHEMY_ENGINE_OPTIONS']['connect_args'])
@@ -92,9 +95,9 @@ def read_packet(stream):
 
 
 @contextmanager
-def mysql_peer(context):
+def mysql_peer(context, *, accept_login=False):
     """No DB or credentials required; stop after the authentication boundary."""
-    observed = {'plain': b'', 'encrypted': b'', 'errors': []}
+    observed = {'plain': b'', 'encrypted': b'', 'errors': [], 'commands': []}
     with socket.socket() as listener:
         listener.bind(('127.0.0.1', 0))
         listener.listen(1)
@@ -113,7 +116,21 @@ def mysql_peer(context):
                                 + b'\x00' * 10 + b'abcdefghijkl\x00mysql_native_password\x00')
                     stream.sendall(packet(greeting, 0))
                     observed['plain'] = read_packet(stream)
-                    if not observed['plain'] or context is None:
+                    if not observed['plain']:
+                        return
+                    if accept_login:
+                        # Minimal isolated MySQL command peer: authentication,
+                        # driver setup, ping and commit succeed without TLS.
+                        assert len(observed['plain']) > 32
+                        ok = b'\x00\x00\x00\x02\x00\x00\x00'
+                        stream.sendall(packet(ok, 2))
+                        while command := read_packet(stream):
+                            observed['commands'].append(command)
+                            if command[0] == 1:  # COM_QUIT
+                                return
+                            stream.sendall(packet(ok, 1))
+                        return
+                    if context is None:
                         return
                     with context.wrap_socket(stream, server_side=True) as secured:
                         observed['encrypted'] = read_packet(secured)
@@ -175,3 +192,27 @@ def test_tls_failure_never_sends_authentication_or_retries_in_plaintext(tmp_path
     message = diagnostic(error)
     assert f'[ACCOUNTS_STARTUP_{code}]' in message
     assert not any(secret in message for secret in ('PRIVATE_SQL', 'PRIVATE_PASSWORD', 'test_user', 'test_password'))
+
+
+@pytest.mark.parametrize('suffix', ['', '?ssl-mode=REQUIRED', '?ssl-mode=REQUIRED&ssl_disabled=false&ssl_verify_cert=true&ssl_ca=/missing.pem'])
+def test_explicit_nethely_mode_connects_without_tls_with_legacy_url_and_stale_ca(monkeypatch, connection_args, caplog, suffix):
+    monkeypatch.setenv('ACCOUNTS_DATABASE_TLS_MODE', 'disabled')
+    with mysql_peer(None, accept_login=True) as (port, observed):
+        kwargs = connection_args('localhost', port, ca='STALE_CA_PRIVATE_VALUE', suffix=suffix)
+        assert 'ssl_ca' not in kwargs
+        with mysql.connector.connect(**kwargs) as connection:
+            assert connection.is_connected()
+            connection.commit()
+    assert b'test_user\x00' in observed['plain']
+    assert observed['encrypted'] == b''
+    assert any(b'COMMIT' in command.upper() for command in observed['commands'])
+    assert '[ACCOUNTS_DATABASE_TLS_DISABLED]' in caplog.text
+    assert not any(secret in caplog.text for secret in ('STALE_CA_PRIVATE_VALUE', 'test_password', 'test_user'))
+
+
+def test_invalid_tls_mode_fails_without_exposing_value(monkeypatch, connection_args):
+    monkeypatch.setenv('ACCOUNTS_DATABASE_TLS_MODE', 'MISTAKEN_PRIVATE_SECRET')
+    with pytest.raises(RuntimeError) as failure:
+        connection_args('localhost', 3306)
+    assert '[ACCOUNTS_STARTUP_ACCOUNTS_DATABASE_TLS_MODE]' in diagnostic(failure.value)
+    assert 'MISTAKEN_PRIVATE_SECRET' not in diagnostic(failure.value)
