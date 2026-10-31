@@ -82,6 +82,10 @@ def _require_mysql_tls(connection, record):
 
 
 def _configure_database(app):
+    tls_mode = (app.config.get('ACCOUNTS_DATABASE_TLS_MODE') or 'required').strip().lower()
+    if tls_mode not in {'required', 'disabled'}:
+        raise StartupError('ACCOUNTS_DATABASE_TLS_MODE', 'ACCOUNTS_DATABASE_TLS_MODE must be required or disabled.')
+    app.config['ACCOUNTS_DATABASE_TLS_MODE'] = tls_mode
     value = app.config['SQLALCHEMY_DATABASE_URI']
     try:
         url = make_url(value)
@@ -104,18 +108,27 @@ def _configure_database(app):
     options = dict(app.config.get('SQLALCHEMY_ENGINE_OPTIONS', {}))
     connect_args = dict(options.get('connect_args', {}))
     connect_args.setdefault('connection_timeout', 5)
-    ca = (app.config.get('ACCOUNTS_DATABASE_CA_CERT') or '').strip()
-    if ca:
-        connect_args['ssl_ca'] = _mysql_ca_file(ca)
+    if tls_mode == 'disabled':
+        # The explicit environment setting wins over the old URL example's
+        # ssl-mode=REQUIRED and any stale CA/SSL parameters. No secret is logged.
+        ssl_keys = [key for key in url.query if key.startswith(('ssl_', 'tls_'))]
+        url = url.difference_update_query(ssl_keys)
+        connect_args = {key: value for key, value in connect_args.items()
+                        if not key.startswith(('ssl_', 'tls_'))}
+        app.logger.warning('[ACCOUNTS_DATABASE_TLS_DISABLED] Nethely-kompatibilis adatbázis-kapcsolat: az adatbázis-forgalom nincs TLS-sel titkosítva. A webes HTTPS ettől független.')
+    else:
+        ca = (app.config.get('ACCOUNTS_DATABASE_CA_CERT') or '').strip()
+        if ca:
+            connect_args['ssl_ca'] = _mysql_ca_file(ca)
     # A plain mysql:// URL is enough. No provider-specific TLS flags or CA file
     # are needed when the server presents a certificate trusted by the OS.
-    connect_args.update(tls_connect_args())
+    connect_args.update(tls_connect_args(tls_mode))
     options.update(connect_args=connect_args)
     options.setdefault('pool_pre_ping', True)
     options.setdefault('hide_parameters', True)
     app.config['SQLALCHEMY_DATABASE_URI'] = url.render_as_string(hide_password=False)
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = options
-    app.config['ACCOUNTS_DATABASE_REQUIRE_TLS'] = True
+    app.config['ACCOUNTS_DATABASE_REQUIRE_TLS'] = tls_mode == 'required'
 
 
 class AccountRequest(Request):
@@ -135,7 +148,7 @@ def create_app(test_config=None):
         'ACCOUNTS_DATABASE_URL', 'ACCOUNTS_SECRET_KEY', 'ACCOUNTS_ISSUER',
         'ACCOUNTS_SIGNING_KEY_FILE', 'ACCOUNTS_SMTP_HOST', 'ACCOUNTS_SMTP_PORT',
         'ACCOUNTS_SMTP_USERNAME', 'ACCOUNTS_SMTP_PASSWORD', 'ACCOUNTS_SMTP_FROM',
-        'ACCOUNTS_DATABASE_CA_CERT', 'ACCOUNTS_SETUP_TOKEN',
+        'ACCOUNTS_DATABASE_CA_CERT', 'ACCOUNTS_SETUP_TOKEN', 'ACCOUNTS_DATABASE_TLS_MODE',
     ):
         app.config[key] = os.getenv(key)
     app.config.update(

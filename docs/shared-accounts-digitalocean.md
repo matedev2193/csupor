@@ -73,6 +73,7 @@ Az **Environment Variables** mezőket **Run Time** hatókörrel töltsd ki:
 | Változó | Érték | Secret |
 | --- | --- | --- |
 | `ACCOUNTS_DATABASE_URL` | A saját adatbázis kapcsolati címe; Nethely-példa: `mysql://USER:PASSWORD@mysql.nethely.hu:3306/DATABASE` | igen |
+| `ACCOUNTS_DATABASE_TLS_MODE` | TLS nélküli Nethely-adatbázishoz: `disabled`. Más esetben kihagyható (alapérték: `required`). | nem |
 | `ACCOUNTS_SECRET_KEY` | Legalább 32 karakteres véletlen kulcs; új deploynál is őrizd meg változatlanul | igen |
 | `ACCOUNTS_SETUP_TOKEN` | Másik, legalább 32 karakteres véletlen kulcs az első beállításhoz | igen |
 | `ACCOUNTS_ISSUER` | `https://fiok.matedev.hu` | nem |
@@ -81,7 +82,21 @@ Az **Environment Variables** mezőket **Run Time** hatókörrel töltsd ki:
 A kulcsokat jelszókezelővel is generálhatod. Az adatbázis-URL-ben a speciális
 karakterek legyenek URL-kódolva.
 
-**Az adatbázis TLS-beállítása automatikus.** Egy sima `mysql://` kapcsolati cím
+**Nethely TLS nélküli adatbázisához egy beállítás szükséges:**
+
+```text
+ACCOUNTS_DATABASE_TLS_MODE=disabled
+```
+
+Ezt a **fiókkezelő app** Run Time változóihoz add hozzá, majd a javított forrásból
+indíts új deployt. Az adatbázis-URL-t és a titkos kulcsokat nem kell módosítani.
+A korábbi URL `?ssl-mode=REQUIRED` végződését és a régi CA-beállításokat ez a
+kifejezett kapcsoló felülírja; tanúsítványt nem kell feltölteni. A naplóban az
+`[ACCOUNTS_DATABASE_TLS_DISABLED]` tájékoztatás jelenik meg. Ez nem indulási hiba.
+Ebben a módban az alkalmazás és az adatbázis közötti forgalom titkosítatlan;
+a böngésző és az alkalmazás közötti HTTPS és a biztonságos munkamenetsütik megmaradnak.
+
+**Alapértelmezésben az adatbázis TLS-beállítása automatikus.** Egy sima `mysql://` kapcsolati cím
 elég: az alkalmazás betölti a futtatókörnyezet megbízható tanúsítványtárát,
 ellenőrzi a szerver tanúsítványát és kiszolgálónevét, és titkosítva csatlakozik.
 Nem kell SSL-módot választani vagy nyilvánosan hitelesített tanúsítványt másolni.
@@ -103,8 +118,9 @@ nem DigitalOcean-tanúsítvány kell.
 TLS nélküli szervert, lejárt, ismeretlen vagy más névre szóló tanúsítványt az
 alkalmazás nem fogad el automatikusan. Ilyenkor a napló külön hibakóddal jelzi
 a szolgáltatói akadályt, belépési adatok küldése és titkosítatlan újrapróbálás nélkül.
-Korábban TLS nélkül használt MySQL-címek is ellenőrzött TLS-t kapnak; ha a régi
-szolgáltató ezt nem támogatja, előbb TLS-képes adatbázis-végpont szükséges.
+TLS nélküli kapcsolat kizárólag a fenti `disabled` beállítással használható;
+hiba hatására az alkalmazás nem vált át automatikusan erre. A `required` érték
+visszaállítja az ellenőrzött TLS-kapcsolatot. Elírt értéknél az indulás leáll.
 
 A beállítások mentése után indíts új deployt. Most már a teljes fiókrendszer
 indul el, elkészülnek a táblák és az aláírókulcs. Új telepítéshez nem kell
@@ -241,7 +257,8 @@ Ezt a sort megoszthatod a hiba vizsgálatához; a titkos változók értékeit n
 | `ACCOUNTS_SECRET_KEY` | Legalább 32 karakter; meglévő adatbázisnál az eredeti kulcs |
 | `ACCOUNTS_DATABASE_URL` | Teljes MySQL-kapcsolati URL saját adatbázisnévvel, URL-kódolt jelszóval |
 | `ACCOUNTS_DATABASE_CA_CERT` | A megadott külön CA-tanúsítvány PEM-formátuma hibás |
-| `DATABASE_TLS_UNSUPPORTED` | A megadott adatbázis-végpont nem kínál TLS-t; a szolgáltatónál TLS-képes végpont szükséges |
+| `ACCOUNTS_DATABASE_TLS_MODE` | Csak `required` vagy `disabled` érték fogadható el |
+| `DATABASE_TLS_UNSUPPORTED` | A megadott végpont nem kínál TLS-t; Nethely-kompatibilitáshoz `ACCOUNTS_DATABASE_TLS_MODE=disabled`, vagy TLS-képes végpont használható |
 | `DATABASE_TLS_CERTIFICATE` | A szolgáltató teljes, hiteles tanúsítványlánca szükséges; saját CA esetén az opcionális CA-mező használható |
 | `DATABASE_TLS_HOSTNAME` | Az adatbázis-URL-ben a szolgáltató tanúsítványának megfelelő kiszolgálónevet használd |
 | `DATABASE_TLS_VALIDITY` | A szolgáltató tanúsítványa lejárt vagy még nem érvényes |

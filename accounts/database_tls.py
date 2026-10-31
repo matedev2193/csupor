@@ -5,7 +5,14 @@ from mysql.connector.errors import Error as MySQLError
 from sqlalchemy.exc import DBAPIError
 
 
-def tls_connect_args():
+def tls_connect_args(mode='required'):
+    if mode == 'disabled':
+        # Explicit deployment choice for legacy hosts such as Nethely. This is
+        # never selected in response to a network or certificate failure.
+        return {'use_pure': True, 'ssl_disabled': True,
+                'ssl_verify_cert': False, 'ssl_verify_identity': False}
+    if mode != 'required':
+        raise ValueError('Unsupported database TLS mode')
     # Connector/Python's pure implementation loads the OS trust store with
     # SSLContext.load_default_certs(). The C extension uses libmysql's separate
     # CA configuration and can reject public certificates without ssl_ca.
