@@ -11,9 +11,12 @@ from .models import db
 from .bootstrap import prepare_database
 from .errors import StartupError, diagnostic
 from .domain_setup import create_domain_setup_app, domain_setup_requested
+from .database_tls import tls_error_code
 
 
 def _retryable(error):
+    if tls_error_code(error):
+        return False
     if not isinstance(error, DBAPIError):
         return False
     # A rejected certificate or credential will not recover by waiting. Some

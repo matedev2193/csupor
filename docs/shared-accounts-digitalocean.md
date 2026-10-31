@@ -72,17 +72,39 @@ Az **Environment Variables** mezőket **Run Time** hatókörrel töltsd ki:
 
 | Változó | Érték | Secret |
 | --- | --- | --- |
-| `ACCOUNTS_DATABASE_URL` | Pl. `mysql://USER:PASSWORD@HOST:25060/fiok?ssl-mode=REQUIRED` | igen |
-| `ACCOUNTS_DATABASE_CA_CERT` | DigitalOcean Managed MySQL esetén a letöltött CA-tanúsítvány teljes PEM-szövege | nem |
+| `ACCOUNTS_DATABASE_URL` | A saját adatbázis kapcsolati címe; Nethely-példa: `mysql://USER:PASSWORD@mysql.nethely.hu:3306/DATABASE` | igen |
 | `ACCOUNTS_SECRET_KEY` | Legalább 32 karakteres véletlen kulcs; új deploynál is őrizd meg változatlanul | igen |
 | `ACCOUNTS_SETUP_TOKEN` | Másik, legalább 32 karakteres véletlen kulcs az első beállításhoz | igen |
 | `ACCOUNTS_ISSUER` | `https://fiok.matedev.hu` | nem |
 | `ACCOUNTS_PROXY_HOPS` | `1` | nem |
 
 A kulcsokat jelszókezelővel is generálhatod. Az adatbázis-URL-ben a speciális
-karakterek legyenek URL-kódolva. A MySQL CA-tanúsítvány a DigitalOcean
+karakterek legyenek URL-kódolva.
+
+**Az adatbázis TLS-beállítása automatikus.** Egy sima `mysql://` kapcsolati cím
+elég: az alkalmazás betölti a futtatókörnyezet megbízható tanúsítványtárát,
+ellenőrzi a szerver tanúsítványát és kiszolgálónevét, és titkosítva csatlakozik.
+Nem kell SSL-módot választani vagy nyilvánosan hitelesített tanúsítványt másolni.
+A korábbi `?ssl-mode=REQUIRED` végződés is megtartható.
+
+A [Nethely távoli MySQL-végpontja](https://www.nethely.hu/tudasbazis/adatbazis-tavoli-elerese)
+`mysql.nethely.hu:3306`; a saját adatbázisod távoli elérését a Nethely felületén
+engedélyezni kell. A dokumentált végpont önmagában nem igazolja a TLS-támogatást:
+az alkalmazás ezt a kapcsolat felépítésekor ellenőrzi. A weboldal HTTPS-e és az
+adatbázis TLS-e külön kapcsolat.
+
+**Kivétel:** saját, nem nyilvánosan hitelesített CA-val működő adatbázisnál
+az opcionális `ACCOUNTS_DATABASE_CA_CERT` mezőben a szolgáltató hiteles CA-jának
+teljes PEM-szövege adható meg. DigitalOcean Managed MySQL esetén ez a
 **Databases → adatbázis → Connection Details → Download CA certificate**
-lehetőségénél tölthető le. A kapcsolat tanúsítványt és kiszolgálónevet is ellenőriz.
+helyről tölthető le; a DigitalOceanön futó app mellé használt Nethely-adatbázishoz
+nem DigitalOcean-tanúsítvány kell.
+
+TLS nélküli szervert, lejárt, ismeretlen vagy más névre szóló tanúsítványt az
+alkalmazás nem fogad el automatikusan. Ilyenkor a napló külön hibakóddal jelzi
+a szolgáltatói akadályt, belépési adatok küldése és titkosítatlan újrapróbálás nélkül.
+Korábban TLS nélkül használt MySQL-címek is ellenőrzött TLS-t kapnak; ha a régi
+szolgáltató ezt nem támogatja, előbb TLS-képes adatbázis-végpont szükséges.
 
 A beállítások mentése után indíts új deployt. Most már a teljes fiókrendszer
 indul el, elkészülnek a táblák és az aláírókulcs. Új telepítéshez nem kell
@@ -218,11 +240,16 @@ Ezt a sort megoszthatod a hiba vizsgálatához; a titkos változók értékeit n
 | `ACCOUNTS_ISSUER` | `https://fiok.matedev.hu`, útvonal nélkül |
 | `ACCOUNTS_SECRET_KEY` | Legalább 32 karakter; meglévő adatbázisnál az eredeti kulcs |
 | `ACCOUNTS_DATABASE_URL` | Teljes MySQL-kapcsolati URL saját adatbázisnévvel, URL-kódolt jelszóval |
-| `ACCOUNTS_DATABASE_CA_CERT` / `DATABASE_TLS` | A megfelelő adatbázis-CA teljes PEM-szövege és a kapcsolat kiszolgálóneve |
+| `ACCOUNTS_DATABASE_CA_CERT` | A megadott külön CA-tanúsítvány PEM-formátuma hibás |
+| `DATABASE_TLS_UNSUPPORTED` | A megadott adatbázis-végpont nem kínál TLS-t; a szolgáltatónál TLS-képes végpont szükséges |
+| `DATABASE_TLS_CERTIFICATE` | A szolgáltató teljes, hiteles tanúsítványlánca szükséges; saját CA esetén az opcionális CA-mező használható |
+| `DATABASE_TLS_HOSTNAME` | Az adatbázis-URL-ben a szolgáltató tanúsítványának megfelelő kiszolgálónevet használd |
+| `DATABASE_TLS_VALIDITY` | A szolgáltató tanúsítványa lejárt vagy még nem érvényes |
+| `DATABASE_TLS` | Egyéb TLS-hiba; a szolgáltató TLS-végpontjának ellenőrzése szükséges |
 | `DATABASE_AUTH` | Az adatbázis-felhasználó belépési adatai |
 | `DATABASE_PERMISSION` | A felhasználó hozzáférése és tábla-/indexlétrehozási joga a saját adatbázisában |
 | `DATABASE_NAME` | A kapcsolatban megadott saját adatbázis létrehozása vagy nevének javítása |
-| `DATABASE_NETWORK` | Host, port, adatbázis elérhetősége és az alkalmazás engedélyezése a Trusted Sources alatt |
+| `DATABASE_NETWORK` | Host, port és a távoli adatbázis-elérés engedélyezése a szolgáltatónál |
 | `SIGNING_KEY` | Az eredeti `ACCOUNTS_SECRET_KEY` és a hozzá tartozó adatbázis helyreállítása; kulcsot ne cserélj találomra |
 | `ACCOUNTS_SIGNING_KEY_FILE` | Új, adatbázisos kulcstárolásnál ne add meg; meglévő kulcsfájlos telepítésnél az eredeti fájlt állítsd helyre |
 
