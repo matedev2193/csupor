@@ -13,6 +13,7 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 import pytest
+from sqlalchemy.exc import OperationalError
 from werkzeug.security import generate_password_hash
 
 from accounts import create_app
@@ -156,21 +157,24 @@ def test_setup_preserves_identity_password_and_only_grants_csupor(app, payload):
         assert value not in public
 
 
-@pytest.mark.parametrize('overrides,status', [
-    ({'setup_token': 'wrong-but-long-enough-setup-secret-for-this-test'}, 403),
-    ({'transfer_key': 'wrong-but-long-enough-transfer-secret-for-this-test'}, 400),
-    ({'admin_password': 'wrong-password'}, 400),
-    ({'admin_login': 'missing-account'}, 400),
-    ({'csupor_redirect_uri': 'http://csupor.example.invalid/auth/callback'}, 400),
-    ({'csupor_redirect_uri': 'https://csupor.example.invalid/wrong'}, 400),
-    ({'csupor_redirect_uri': CALLBACK + '?next=evil'}, 400),
-    ({'csupor_client_secret': 'short'}, 400),
+@pytest.mark.parametrize('overrides,status,code', [
+    ({'setup_token': 'wrong-but-long-enough-setup-secret-for-this-test'}, 403, 'TOKEN'),
+    ({'transfer_key': 'wrong-but-long-enough-transfer-secret-for-this-test'}, 400, 'TRANSFER_DECRYPT'),
+    ({'admin_password': 'wrong-password'}, 400, 'OWNER_LOGIN'),
+    ({'admin_login': 'missing-account'}, 400, 'OWNER_LOGIN'),
+    ({'csupor_redirect_uri': 'http://csupor.example.invalid/auth/callback'}, 400, 'CALLBACK'),
+    ({'csupor_redirect_uri': 'https://csupor.example.invalid/wrong'}, 400, 'CALLBACK'),
+    ({'csupor_redirect_uri': CALLBACK + '?next=evil'}, 400, 'CALLBACK'),
+    ({'csupor_client_secret': 'short'}, 400, 'CLIENT_SECRET'),
 ])
-def test_setup_bad_proofs_or_client_config_leave_no_partial_state(app, payload, overrides, status):
+def test_setup_bad_proofs_or_client_config_leave_no_partial_state(app, payload, overrides, status, code, caplog):
     response = submit_setup(app.test_client(), payload, **overrides)
     assert response.status_code == status
+    assert ('ACCOUNTS_SETUP_' + code).encode() in response.data
+    assert '[ACCOUNTS_SETUP_' + code + ']' in caplog.text
     for secret in (SETUP_TOKEN, TRANSFER_KEY, CLIENT_SECRET, OWNER_PASSWORD):
         assert secret.encode() not in response.data
+        assert secret not in caplog.text
     assert_unclaimed(app)
 
 
@@ -215,6 +219,54 @@ def test_invalid_encrypted_package_cannot_import(app, payload, invalid):
         content = encrypted(payload, plaintext=b'[' * 2000 + b'0' + b']' * 2000)
     response = submit_setup(app.test_client(), payload, transfer_file=(BytesIO(content), 'accounts.transfer'))
     assert response.status_code == 400
+    if invalid == 'expired':
+        assert b'ACCOUNTS_SETUP_TRANSFER_EXPIRED' in response.data
+    elif invalid == 'future':
+        assert b'ACCOUNTS_SETUP_TRANSFER_TIME' in response.data
+    assert_unclaimed(app)
+
+
+def test_setup_token_failure_never_reveals_export_diagnostics(app, payload, monkeypatch):
+    def must_not_decrypt(*args, **kwargs):
+        raise AssertionError('Untrusted request reached export decryption')
+    monkeypatch.setattr('accounts.admin.decrypt_transfer', must_not_decrypt)
+    response = submit_setup(app.test_client(), payload, setup_token='wrong-' + 'x' * 40)
+    assert response.status_code == 403
+    assert b'ACCOUNTS_SETUP_TOKEN' in response.data
+    assert b'ACCOUNTS_SETUP_TRANSFER_' not in response.data
+    assert_unclaimed(app)
+
+
+def test_issuer_error_is_actionable_without_echoing_export(app, payload, caplog):
+    payload['issuer'] = 'https://private-export-host.example.invalid'
+    response = submit_setup(app.test_client(), payload)
+    assert response.status_code == 400
+    assert b'ACCOUNTS_SETUP_EXPORT_ISSUER' in response.data
+    for private in (payload['issuer'], payload['users'][0]['email'], payload['users'][0]['password_hash']):
+        assert private.encode() not in response.data
+        assert private not in caplog.text
+    assert_unclaimed(app)
+
+
+def test_database_failure_logs_only_numeric_code_and_rolls_back_import(app, payload, monkeypatch, caplog):
+    from accounts.admin import apply_import
+
+    def fail_after_rows(*args, **kwargs):
+        apply_import(*args, **kwargs)
+        original = Exception('private database details ' + OWNER_PASSWORD)
+        original.errno = 1142
+        raise OperationalError('INSERT private_sql', {'secret': CLIENT_SECRET}, original)
+
+    monkeypatch.setattr('accounts.admin.apply_import', fail_after_rows)
+    response = submit_setup(app.test_client(), payload)
+    assert response.status_code == 400
+    assert b'ACCOUNTS_SETUP_DATABASE' in response.data
+    assert b'1142' in response.data
+    assert '[ACCOUNTS_SETUP_DATABASE] database_errno=1142' in caplog.text
+    for private in (SETUP_TOKEN, TRANSFER_KEY, CLIENT_SECRET, OWNER_PASSWORD,
+                    'private_sql', 'private database details', payload['users'][0]['password_hash']):
+        assert private.encode() not in response.data
+        assert private not in caplog.text
     assert_unclaimed(app)
 
 

@@ -173,6 +173,32 @@ importált fiók kap CSUPOR-hozzáférést, a többi alkalmazás külön engedé
 Hibás kulcs, jelszó, issuer vagy azonosítóütközés esetén a teljes beállítás
 visszavonódik, meglévő fiókot nem ír felül. A sikeres első beállítás egyszeri.
 
+### Ha az első beállítás nem sikerül
+
+A beállítóoldal konkrét magyar hibaüzenetet és `ACCOUNTS_SETUP_…` hibakódot
+mutat. Ugyanez a kód szerepel a fiókkezelő futási naplójában, titkos értékek
+és személyes fiókadatok nélkül. A részletes exportellenőrzés csak helyes
+egyszeri beállítási kulccsal indul el.
+
+| Hibakód vége | Teendő |
+| --- | --- |
+| `TOKEN` | A fiókkezelő app `ACCOUNTS_SETUP_TOKEN` értékét add meg. Csere után várd meg az új deployment befejezését. |
+| `TRANSFER_EXPIRED` | A titkosított export 24 órás érvényessége lejárt. A karbantartási módban maradó CSUPOR-ból készíts új exportot, és azt töltsd fel. |
+| `TRANSFER_DECRYPT` | Az átviteli kulcs nem illik a fájlhoz, vagy a fájl sérült. Az exportáláskor megadott átviteli kulcs kell ide. |
+| `TRANSFER_TIME` | Az export időbélyege a jövőbe mutat. Ellenőrizni kell a CSUPOR és a fiókkezelő szerveróráját. |
+| `EXPORT_ISSUER` | Az exportáláskor megadott fiókcím egyezzen a fiókkezelő `ACCOUNTS_ISSUER` értékével; a helyes címmel készíts új exportot. |
+| `EXPORT_EMAIL`, `EXPORT_PASSWORD`, `EXPORT_IDENTITY` | Az exportban javítandó vagy ütköző fiókadat van. A forrás CSUPOR-fiókokat kell ellenőrizni; ne szerkeszd a titkosított fájlt. |
+| `OWNER_LOGIN` | Saját, az exportban szereplő CSUPOR-fiókod belépési neve és az exportáláskor érvényes jelszava szükséges. |
+| `CALLBACK` | A CSUPOR visszatérési címe: `https://csupor.matedev.hu/auth/callback`. |
+| `CLIENT_SECRET` | A külön CSUPOR-összekapcsolási kulcs 32–1024 karakter legyen; a felület generáló gombja használható. |
+| `CLIENT_CONFLICT`, `ACCOUNT_CONFLICT` | Már meglévő központi adat ütközik az importtal. A korábbi beállítást kell egyeztetni; meglévő fiókot ne törölj az import kedvéért. |
+| `DATABASE` | Adatbázis-elérési, jogosultsági vagy adatütközési hiba történt. MySQL esetén a számszerű adatbázis-hibakód is megjelenik; kulcscsere ezt nem javítja. |
+
+A három kulcs külön szerepet tölt be: az `ACCOUNTS_SETUP_TOKEN` engedélyezi
+az első beállítást, az **átviteli kulcs** fejti vissza az exportot, az új
+**CSUPOR-összekapcsolási kulcs** pedig később az `OIDC_CLIENT_SECRET` értéke lesz.
+Hibakereséshez a hibaüzenetet és hibakódot oszd meg, ne a kulcsokat vagy az exportot.
+
 ## 5. A CSUPOR átkapcsolása
 
 Csak a sikeres import után módosítsd a **CSUPOR** környezeti változóit:
