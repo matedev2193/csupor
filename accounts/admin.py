@@ -9,13 +9,35 @@ from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from werkzeug.security import check_password_hash
 
-from .importing import MAX_TRANSFER_BYTES, apply_import, decrypt_transfer, validate_payload
+from .importing import ImportValidationError, MAX_TRANSFER_BYTES, apply_import, decrypt_transfer, validate_payload
 from .models import Account, AccessToken, AuthorizationCode, Client, Membership, db
 from .security import current_account, login_account, require_csrf, throttle
 
 admin = Blueprint('account_admin', __name__)
 _SETUP_KEY = 'initial-admin'
-_SETUP_ERROR = 'Az átvezetés nem sikerült. Ellenőrizd a kulcsokat, a meglévő fiókod belépési adatait és az exportfájlt. Nem módosítottunk fiókot.'
+
+
+class SetupValidationError(ValueError):
+    def __init__(self, code, message):
+        self.code = code
+        self.message = message
+        super().__init__(message)
+
+
+def _setup_failure(code, message, *, status=400, database_error=None):
+    """Only fixed diagnostics may leave the bootstrap boundary, never raw errors."""
+    diagnostic = 'ACCOUNTS_SETUP_' + code
+    # MySQL's numeric error identifies permission/schema/constraint failures
+    # without logging SQL, query parameters, accounts or credentials.
+    number = getattr(getattr(database_error, 'orig', None), 'errno', None)
+    if type(number) is int and 0 <= number <= 65535:
+        current_app.logger.warning('[%s] database_errno=%d', diagnostic, number)
+        message += f' Adatbázis-hibakód: {number}.'
+    else:
+        current_app.logger.warning('[%s]', diagnostic)
+    return render_template('setup.html', error=(
+        f'{message} Nem módosítottunk fiókot. Hibakód: {diagnostic}.'
+    )), status
 
 
 class AccountAdmin(db.Model):
@@ -128,26 +150,36 @@ def setup():
     expected = current_app.config['ACCOUNTS_SETUP_TOKEN']
     if (not 32 <= len(supplied) <= 1024
             or not compare_digest(supplied.encode('utf-8'), expected.encode('utf-8'))):
-        return render_template('setup.html', error=_SETUP_ERROR), 403
+        return _setup_failure('TOKEN', 'Az egyszeri beállítási kulcs nem egyezik a futó fiókkezelő '
+                              'ACCOUNTS_SETUP_TOKEN értékével. Kulcscsere után várd meg az új '
+                              'deployment befejezését, majd az új értéket másold ide.', status=403)
     try:
         from . import allowed_url
         uploaded = request.files.get('transfer_file')
         if uploaded is None:
-            raise ValueError('Missing encrypted transfer.')
+            raise SetupValidationError('TRANSFER_MISSING',
+                                       'Válaszd ki a CSUPOR fejlesztői felületéről letöltött titkosított exportfájlt.')
         data = decrypt_transfer(uploaded.stream.read(MAX_TRANSFER_BYTES + 1), request.form.get('transfer_key', ''))
         rows = validate_payload(data, current_app.config['ACCOUNTS_ISSUER'])
         matches = [row for row in rows if identifier.casefold() in {row['username'].casefold(), row['email'].casefold()}]
         password = request.form.get('admin_password', '')
         if (len(matches) != 1 or not 1 <= len(password) <= 1024
                 or not check_password_hash(matches[0]['password_hash'], password)):
-            raise ValueError('Invalid owner proof.')
+            raise SetupValidationError('OWNER_LOGIN', 'A belépési név vagy jelszó nem egyezik az exportban '
+                                       'szereplő fiókéval. A meglévő CSUPOR-fiókod adatait add meg; '
+                                       'az export után módosított jelszóhoz új export szükséges.')
         owner_subject = matches[0]['subject']
         callback = request.form.get('csupor_redirect_uri', '').strip()
         secret = request.form.get('csupor_client_secret', '')
         if (not allowed_url(callback, current_app.config['ACCOUNTS_ALLOW_HTTP'])
-                or urlsplit(callback).path != '/auth/callback' or urlsplit(callback).query
-                or not 32 <= len(secret) <= 1024):
-            raise ValueError('Invalid CSUPOR client configuration.')
+                or urlsplit(callback).path != '/auth/callback' or urlsplit(callback).query):
+            raise SetupValidationError('CALLBACK', 'A CSUPOR-visszatérési cím teljes HTTPS-cím legyen, '
+                                       '/auth/callback végződéssel, kérdőjel és # rész nélkül. '
+                                       'Például: https://csupor.matedev.hu/auth/callback')
+        if not 32 <= len(secret) <= 1024:
+            raise SetupValidationError('CLIENT_SECRET', 'Az új CSUPOR-összekapcsolási kulcs 32–1024 karakter '
+                                       'hosszú legyen. Használd a „Véletlen kulcs készítése” gombot, '
+                                       'és mentsd el az értékét a későbbi OIDC_CLIENT_SECRET beállításhoz.')
         _state()
         claimed = db.session.execute(update(AccountSetupState).where(
             AccountSetupState.key == _SETUP_KEY, AccountSetupState.completed.is_(False),
@@ -165,16 +197,31 @@ def setup():
             db.session.add(client)
             db.session.flush()
         elif not client.active or client.redirect_uris != [callback] or not client.check_client_secret(secret):
-            raise ValueError('Existing CSUPOR client must match; it will not be overwritten.')
+            raise SetupValidationError('CLIENT_CONFLICT', 'A fiókkezelőben már létezik CSUPOR-alkalmazás, '
+                                       'amelynek állapota, visszatérési címe vagy összekapcsolási kulcsa eltér. '
+                                       'A meglévő alkalmazás beállításaival folytasd az átvezetést.')
         apply_import(data, 'csupor', current_app.config['ACCOUNTS_ISSUER'])
         owner = db.session.get(Account, owner_subject)
         if owner is None or not owner.active:
-            raise ValueError('An active imported account is required.')
+            raise SetupValidationError('OWNER_INACTIVE', 'A kiválasztott fiók a központi fiókkezelőben '
+                                       'nem aktív, ezért nem kaphat adminisztrátori hozzáférést. '
+                                       'Aktív, az exportban is szereplő saját fiók szükséges.')
         db.session.add(AccountAdmin(account_subject=owner_subject))
         db.session.commit()
-    except (ValueError, TypeError, KeyError, SQLAlchemyError):
+    except (SetupValidationError, ImportValidationError) as exc:
         db.session.rollback()
-        return render_template('setup.html', error=_SETUP_ERROR), 400
+        return _setup_failure(exc.code, exc.message)
+    except SQLAlchemyError as exc:
+        db.session.rollback()
+        return _setup_failure('DATABASE', 'A fiókadatbázis nem tudta elmenteni az átvezetést. '
+                              'Ellenőrizni kell az adatbázis elérhetőségét, írási jogosultságait '
+                              'és az esetleges adatütközést. A kulcsok cseréje ezt a hibát nem oldja meg.',
+                              database_error=exc)
+    except (ValueError, TypeError, KeyError):
+        db.session.rollback()
+        return _setup_failure('VALIDATION', 'Az átvezetés egyik adata nem dolgozható fel. '
+                              'Készíts új exportot a CSUPOR aktuális verziójával; '
+                              'ha megismétlődik, a hibakód alapján további vizsgálat szükséges.')
     login_account(owner)
     flash('Az átvezetés elkészült. A korábbi fiókok és jelszavak megmaradtak; a központi fiókkezelő készen áll.', 'success')
     return redirect(url_for('account_admin.index'))

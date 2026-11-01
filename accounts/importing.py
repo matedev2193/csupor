@@ -3,6 +3,7 @@ import base64
 from hashlib import sha256
 import json
 import re
+import time
 from uuid import UUID
 
 from cryptography.fernet import Fernet, InvalidToken
@@ -15,6 +16,30 @@ TRANSFER_PREFIX = b'MICIMACKO-ACCOUNTS-TRANSFER-1\n'
 MAX_PLAINTEXT_BYTES = 20 * 1024 * 1024
 MAX_TRANSFER_BYTES = 28 * 1024 * 1024
 TRANSFER_TTL = 24 * 60 * 60
+
+_IMPORT_ERRORS = {
+    'TRANSFER_KEY': 'Az export átviteli kulcsa hiányzik vagy érvénytelen. Az exportáláskor megadott, legalább 32 karakteres átviteli kulcsot add meg.',
+    'TRANSFER_FORMAT': 'A feltöltött fájl nem támogatott titkosított CSUPOR-export, vagy túl nagy. A CSUPOR fiókexport oldaláról letöltött eredeti fájlt válaszd ki.',
+    'TRANSFER_DECRYPT': 'Az export nem fejthető vissza ezzel az átviteli kulccsal, vagy a fájl megsérült. Az exporthoz használt átviteli kulcsot add meg; szükség esetén készíts új exportot.',
+    'TRANSFER_EXPIRED': 'Az export 24 órás érvényessége lejárt. Készíts új exportot a CSUPOR-ban, majd azt töltsd fel az ahhoz tartozó átviteli kulccsal.',
+    'TRANSFER_TIME': 'Az export időbélyege a jövőben van. Ellenőrizd a két kiszolgáló óráját, majd készíts új exportot.',
+    'TRANSFER_CONTENT': 'Az export visszafejthető, de a tartalma hibás vagy túl nagy. Készíts új exportot a CSUPOR fiókexport oldalán.',
+    'EXPORT_FORMAT': 'Az export adatformátuma nem támogatott. A frissített CSUPOR fiókexport oldalán készíts új exportot.',
+    'EXPORT_ISSUER': 'Az exportban megadott fiókkezelő-cím eltér a fiókkezelő ACCOUNTS_ISSUER beállításától. Ugyanazzal a HTTPS-címmel készíts új exportot.',
+    'EXPORT_IDENTITY': 'Az export hibás vagy egymással ütköző fiókazonosítókat tartalmaz. A CSUPOR fiókadatait kell ellenőrizni az új export előtt.',
+    'EXPORT_EMAIL': 'Az export egyik e-mail-címe érvénytelen formátumú. Ellenőrizd a CSUPOR fiókadatait, majd készíts új exportot.',
+    'EXPORT_PASSWORD': 'Az export egyik jelszólenyomatának formátuma nem támogatott. A CSUPOR és a fiókkezelő verziójának, illetve a jelszóformátumnak az ellenőrzése szükséges.',
+    'ACCOUNT_CONFLICT': 'Az export egyik fiókja ütközik a központban már meglévő fiókadatokkal. Az érintett fiókok egyeztetése szükséges; a meglévő adatokat nem írjuk felül.',
+}
+
+
+class ImportValidationError(ValueError):
+    """A safe operator diagnostic; never include raw uploaded or database values."""
+
+    def __init__(self, code):
+        self.code = code
+        self.message = _IMPORT_ERRORS[code]
+        super().__init__(self.message)
 
 
 def valid_password_hash(value):
@@ -44,36 +69,40 @@ def valid_password_hash(value):
 
 def validate_payload(data, issuer):
     if (not isinstance(data, dict) or type(data.get('version')) is not int or data['version'] != 1
-            or data.get('source') != 'csupor' or data.get('issuer') != issuer):
-        raise ValueError('Invalid import source or issuer.')
+            or data.get('source') != 'csupor'):
+        raise ImportValidationError('EXPORT_FORMAT')
+    if data.get('issuer') != issuer:
+        raise ImportValidationError('EXPORT_ISSUER')
     rows = data.get('users')
     if not isinstance(rows, list) or len(rows) > 50000:
-        raise ValueError('Invalid import records.')
+        raise ImportValidationError('EXPORT_FORMAT')
     subjects, emails, names = set(), set(), set()
     identifiers = {}
     for row in rows:
         if not isinstance(row, dict) or set(row) != {'subject', 'username', 'email', 'password_hash'}:
-            raise ValueError('Invalid import fields.')
+            raise ImportValidationError('EXPORT_FORMAT')
         subject, username, email, password_hash = (row[k] for k in ('subject', 'username', 'email', 'password_hash'))
         if not isinstance(subject, str):
-            raise ValueError('Invalid account subject.')
+            raise ImportValidationError('EXPORT_IDENTITY')
         try:
             if str(UUID(subject)) != subject:
-                raise ValueError('Invalid account subject.')
+                raise ValueError()
         except (ValueError, AttributeError):
-            raise ValueError('Invalid account subject.') from None
+            raise ImportValidationError('EXPORT_IDENTITY') from None
         if (not isinstance(username, str) or not 1 <= len(username) <= 50 or username != username.strip()
                 or any(ord(c) < 32 or ord(c) == 127 for c in username)):
-            raise ValueError('Invalid account username.')
-        if not valid_email(email) or email != email.strip().lower() or not valid_password_hash(password_hash):
-            raise ValueError('Invalid email or password hash.')
+            raise ImportValidationError('EXPORT_IDENTITY')
+        if not valid_email(email) or email != email.strip().lower():
+            raise ImportValidationError('EXPORT_EMAIL')
+        if not valid_password_hash(password_hash):
+            raise ImportValidationError('EXPORT_PASSWORD')
         if subject in subjects or email.casefold() in emails or username.casefold() in names:
-            raise ValueError('Duplicate identity.')
+            raise ImportValidationError('EXPORT_IDENTITY')
         subjects.add(subject); emails.add(email.casefold()); names.add(username.casefold())
         for identifier in {email.casefold(), username.casefold()}:
             owner = identifiers.setdefault(identifier, subject)
             if owner != subject:
-                raise ValueError('Ambiguous account identifiers.')
+                raise ImportValidationError('EXPORT_IDENTITY')
     return rows
 
 
@@ -88,18 +117,40 @@ def _json_object(pairs):
 
 def decrypt_transfer(data, transfer_key):
     if (not isinstance(transfer_key, str) or not 32 <= len(transfer_key) <= 1024
-            or any(ord(c) < 32 or ord(c) == 127 for c in transfer_key)
-            or not isinstance(data, bytes) or len(data) > MAX_TRANSFER_BYTES
+            or any(ord(c) < 32 or ord(c) == 127 for c in transfer_key)):
+        raise ImportValidationError('TRANSFER_KEY')
+    if (not isinstance(data, bytes) or len(data) > MAX_TRANSFER_BYTES
             or not data.startswith(TRANSFER_PREFIX)):
-        raise ValueError('Invalid transfer package.')
-    key = base64.urlsafe_b64encode(sha256(b'micimacko-account-transfer-v1\0' + transfer_key.encode('utf-8')).digest())
+        raise ImportValidationError('TRANSFER_FORMAT')
     try:
-        plaintext = Fernet(key).decrypt(data[len(TRANSFER_PREFIX):], ttl=TRANSFER_TTL)
+        key = base64.urlsafe_b64encode(sha256(b'micimacko-account-transfer-v1\0' + transfer_key.encode('utf-8')).digest())
+    except UnicodeError:
+        raise ImportValidationError('TRANSFER_KEY') from None
+    cipher = Fernet(key)
+    token = data[len(TRANSFER_PREFIX):]
+    try:
+        plaintext = cipher.decrypt(token, ttl=TRANSFER_TTL)
+    except InvalidToken:
+        # extract_timestamp verifies the signature: never trust an unauthenticated
+        # timestamp to report expiry, and never decrypt without the original TTL.
+        try:
+            timestamp = cipher.extract_timestamp(token)
+        except InvalidToken:
+            raise ImportValidationError('TRANSFER_DECRYPT') from None
+        now = int(time.time())
+        if timestamp + TRANSFER_TTL < now:
+            raise ImportValidationError('TRANSFER_EXPIRED') from None
+        if timestamp > now:
+            # Fernet has already rejected the timestamp using its clock-skew
+            # allowance; this diagnostic does not change that acceptance policy.
+            raise ImportValidationError('TRANSFER_TIME') from None
+        raise ImportValidationError('TRANSFER_DECRYPT') from None
+    try:
         if len(plaintext) > MAX_PLAINTEXT_BYTES:
-            raise ValueError('Transfer package is too large.')
+            raise ValueError()
         return json.loads(plaintext.decode('utf-8'), object_pairs_hook=_json_object)
-    except (InvalidToken, UnicodeError, ValueError, TypeError, RecursionError):
-        raise ValueError('The transfer key, package or its 24-hour validity is invalid.') from None
+    except (UnicodeError, ValueError, TypeError, RecursionError):
+        raise ImportValidationError('TRANSFER_CONTENT') from None
 
 
 def apply_import(data, client_id, issuer):
@@ -113,7 +164,7 @@ def apply_import(data, client_id, issuer):
     for account in existing:
         for identifier in {account.email.casefold(), account.username.casefold()}:
             if identifiers.setdefault(identifier, account.subject) != account.subject:
-                raise ValueError('Ambiguous existing identity.')
+                raise ImportValidationError('ACCOUNT_CONFLICT')
     for row in rows:
         subject, email, name = row['subject'], row['email'], row['username']
         matches = {a.subject: a for a in (by_subject.get(subject), by_email.get(email.casefold()), by_name.get(name.casefold())) if a}
@@ -121,10 +172,10 @@ def apply_import(data, client_id, issuer):
             account = matches.get(subject)
             if (len(matches) != 1 or account is None or account.email != email
                     or account.username != name or account.password_hash != row['password_hash']):
-                raise ValueError('An imported account conflicts with an existing identity.')
+                raise ImportValidationError('ACCOUNT_CONFLICT')
         for identifier in {email.casefold(), name.casefold()}:
             if identifiers.setdefault(identifier, subject) != subject:
-                raise ValueError('Ambiguous account identifiers.')
+                raise ImportValidationError('ACCOUNT_CONFLICT')
     imported = 0
     memberships = set(db.session.execute(select(Membership.account_subject).where(Membership.client_id == client_id)).scalars())
     for row in rows:
