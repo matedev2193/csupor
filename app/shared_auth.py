@@ -6,12 +6,13 @@ from hashlib import sha256
 import logging
 import os
 import re
-from secrets import token_urlsafe
+from secrets import compare_digest, token_urlsafe
 from urllib.parse import urlsplit
 
 from cryptography.fernet import Fernet
 from flask import Blueprint, abort, current_app, g, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_user, logout_user
+import requests
 
 from . import db
 from .shared_auth_models import ExternalIdentity, ExternalLoginSession
@@ -69,8 +70,38 @@ def clear_local_session():
         ))
         db.session.commit()
     logout_user()
-    for key in ("shared_login", "shared_delete_grant", "shared_delete_intent"):
+    for key in ("shared_login", "shared_delete_grant", "shared_delete_intent", "shared_logout_csrf"):
         session.pop(key, None)
+
+
+def logout_csrf_token():
+    return session.setdefault("shared_logout_csrf", token_urlsafe(32))
+
+
+def require_logout_csrf():
+    expected, actual = session.get("shared_logout_csrf"), request.form.get("csrf_token", "")
+    if not isinstance(expected, str) or not compare_digest(expected.encode(), actual.encode()):
+        abort(400, description="A munkamenet lejárt. Frissítsd az oldalt, majd próbáld újra.")
+
+
+def end_shared_session():
+    """Revoke this account's shared sessions using the server-held bearer only."""
+    identity = session.get("_user_id", "")
+    match = _HANDLE.fullmatch(identity) if isinstance(identity, str) else None
+    saved = db.session.get(ExternalLoginSession, sha256(match[1].encode()).hexdigest()) if match else None
+    if saved is None or saved.identity.issuer != current_app.config["OIDC_ISSUER"]:
+        return False
+    try:
+        token = _cipher().decrypt(saved.access_token.encode()).decode()
+        # Fixed configured endpoint, no token in a browser URL, no redirects
+        # that could forward an Authorization header to another service.
+        response = requests.post(provider_url("/end-session"),
+                                 headers={"Authorization": "Bearer " + token},
+                                 timeout=5, allow_redirects=False)
+        return response.status_code == 204
+    except Exception:
+        current_app.logger.warning("Shared account sign-out could not be completed.")
+        return False
 
 
 def load_oidc_user(identity):
@@ -282,7 +313,8 @@ def init_shared_auth(app):
     app.config["AUTH_ALLOW_HTTP"] = allow_http
     app.register_blueprint(shared_auth)
     app.context_processor(lambda: {"shared_accounts_enabled": oidc_enabled(),
-                                  "shared_account_url": provider_url("/account") if oidc_enabled() else None})
+                                  "shared_account_url": provider_url("/account") if oidc_enabled() else None,
+                                  "shared_logout_csrf": logout_csrf_token})
     if mode == "local":
         return
     issuer = os.getenv("OIDC_ISSUER", "").rstrip("/")

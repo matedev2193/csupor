@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Kijelentkezés · CSUPOR{% endblock %}
+{% block content %}
+<section class="card">
+  <h1>Kijelentkezés</h1>
+  {% if incomplete %}
+  <p>A CSUPOR-ból kiléptél. A közös fiókból történő kijelentkezést most nem sikerült befejezni.</p>
+  <a class="button" href="{{ account_logout_url }}">Kijelentkezés befejezése a fiókkezelőben</a>
+  {% else %}
+  <p>Kilépés a CSUPOR-ból és a közös fiókból.</p>
+  <form method="post" action="{{ url_for('logout') }}">
+    <input type="hidden" name="csrf_token" value="{{ shared_logout_csrf() }}">
+    <button type="submit">Kijelentkezés</button>
+  </form>
+  {% endif %}
+</section>
+{% endblock %}

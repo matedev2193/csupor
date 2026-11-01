@@ -25,19 +25,22 @@ from accounts import create_app as create_accounts_app
 from accounts.models import Account, Client, Membership, db as accounts_db
 from app import create_app, db
 from app.models import User, UserPrivilege, UserProfile
-from app.shared_auth_models import ExternalIdentity
+from app.shared_auth_models import ExternalIdentity, ExternalLoginSession
 
 
 class _HiddenInputs(HTMLParser):
     def __init__(self, html):
         super().__init__()
         self.values = {}
+        self.continuation = None
         self.feed(html)
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
         if tag == "input" and attrs.get("type") == "hidden" and attrs.get("name"):
             self.values[attrs["name"]] = attrs.get("value", "")
+        if tag == "a" and attrs.get("id") == "login-continuation":
+            self.continuation = attrs["href"]
 
 
 class _QuietHandler(WSGIRequestHandler):
@@ -171,16 +174,27 @@ class SharedAccountsEndToEndTests(unittest.TestCase):
         form.update(login="existing-worker", password=self.password)
         response = self.request("POST", response.url, data=form, allow_redirects=False)
         self.assertEqual(response.status_code, 302, response.text[:500])
-        # Follow the central /authorize step but leave the RP callback untouched
-        # when a test needs to alter its state or replay the returned code.
-        while response.is_redirect:
-            destination = urljoin(response.url, response.headers["Location"])
-            if destination.startswith(self.callback) and not finish:
-                return destination
-            response = self.request("GET", destination, allow_redirects=False)
+        response = self.continue_sign_in(response, finish=finish)
+        if not finish:
+            return response
         self.assertEqual(response.status_code, 200, response.text[:700])
         self.assertEqual(urlsplit(response.url).netloc, urlsplit(self.rp_url).netloc)
         return response
+
+    def continue_sign_in(self, response, *, finish=True):
+        # Simulate the same-origin continuation page's normal JS navigation.
+        # Real Chromium coverage separately verifies its CSP/browser behaviour.
+        # Follow the central /authorize step but leave the RP callback untouched
+        # when a test needs to alter its state or replay the returned code.
+        for _ in range(12):
+            target = response.headers["Location"] if response.is_redirect else _HiddenInputs(response.text).continuation
+            if not target:
+                return response
+            destination = urljoin(response.url, target)
+            if destination.startswith(self.callback) and not finish:
+                return destination
+            response = self.request("GET", destination, allow_redirects=False)
+        self.fail("Sign-in redirect loop")
 
     def other_authorization(self, *, challenge_verifier=None, **overrides):
         verifier = challenge_verifier or secrets.token_urlsafe(48)
@@ -229,6 +243,46 @@ class SharedAccountsEndToEndTests(unittest.TestCase):
         for private_field in ("password_hash", "privilege", "contracts", "full_name", "tax_number"):
             self.assertNotIn(private_field, info.json())
 
+    def test_one_post_logs_out_csupor_and_shared_account(self):
+        page = self.sign_in()
+        csrf = _HiddenInputs(page.text).values['csrf_token']
+        response = self.request('POST', self.rp_url + '/logout', data={'csrf_token': csrf})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(urlsplit(response.url).netloc, urlsplit(self.issuer).netloc)
+        self.assertEqual(urlsplit(response.url).path, '/login')
+        self.assertNotIn('Kijelentkezés a közös fiókból', response.text)
+        with self.provider.app_context():
+            self.assertEqual(accounts_db.session.get(Account, self.subject).version, 2)
+        with self.app.app_context():
+            self.assertEqual(ExternalLoginSession.query.count(), 0)
+        response = self.request('GET', self.rp_url + '/login')
+        self.assertEqual(urlsplit(response.url).path, '/login')
+        self.assertEqual(urlsplit(response.url).netloc, urlsplit(self.issuer).netloc)
+
+    def test_get_and_bad_csrf_cannot_log_out_shared_account(self):
+        self.sign_in()
+        self.assertEqual(self.request('GET', self.rp_url + '/logout').status_code, 200)
+        denied = self.request('POST', self.rp_url + '/logout', data={'csrf_token': 'wrong'})
+        self.assertEqual(denied.status_code, 400)
+        with self.provider.app_context():
+            self.assertEqual(accounts_db.session.get(Account, self.subject).version, 1)
+        with self.app.app_context():
+            self.assertEqual(ExternalLoginSession.query.count(), 1)
+        self.assertEqual(self.request('GET', self.rp_url + '/dashboard').status_code, 200)
+
+    def test_logout_outage_clears_local_session_and_reports_incomplete_global_logout(self):
+        page = self.sign_in()
+        csrf = _HiddenInputs(page.text).values['csrf_token']
+        with patch('app.shared_auth.requests.post', side_effect=requests.ConnectionError('private-bearer')):
+            response = self.request('POST', self.rp_url + '/logout', data={'csrf_token': csrf})
+        self.assertEqual(response.status_code, 503)
+        self.assertIn('Kijelentkezés befejezése a fiókkezelőben', response.text)
+        self.assertNotIn('private-bearer', response.text)
+        with self.app.app_context():
+            self.assertEqual(ExternalLoginSession.query.count(), 0)
+        with self.provider.app_context():
+            self.assertEqual(accounts_db.session.get(Account, self.subject).version, 1)
+
     def test_new_registration_grants_only_the_requested_application(self):
         with self.provider.app_context():
             accounts_db.session.get(Client, "csupor").allow_registration = True
@@ -239,7 +293,7 @@ class SharedAccountsEndToEndTests(unittest.TestCase):
         form = _HiddenInputs(response.text).values
         form.update(username="new-worker", email="new-worker@example.invalid",
                     password="New-central-password-123", password_confirm="New-central-password-123")
-        response = self.request("POST", response.url, data=form)
+        response = self.continue_sign_in(self.request("POST", response.url, data=form))
         self.assertEqual(response.status_code, 200, response.text[:500])
         self.assertEqual(urlsplit(response.url).netloc, urlsplit(self.rp_url).netloc)
         with self.app.app_context():
@@ -343,7 +397,7 @@ class SharedAccountsEndToEndTests(unittest.TestCase):
             self.assertIsNotNone(db.session.get(User, target_id))
         form = _HiddenInputs(response.text).values
         form.update(login="existing-worker", password=self.password)
-        response = self.request("POST", response.url, data=form)
+        response = self.continue_sign_in(self.request("POST", response.url, data=form))
         self.assertEqual(response.status_code, 200, response.text[:700])
         self.assertEqual(urlsplit(response.url).path, "/auth/callback")
         self.assertIn("target-worker", response.text)
@@ -424,7 +478,7 @@ class SharedAccountsEndToEndTests(unittest.TestCase):
         response = self.request("GET", self.rp_url + "/login")
         form = _HiddenInputs(response.text).values
         form.update(login="existing-worker", password=self.password)
-        response = self.request("POST", response.url, data=form)
+        response = self.continue_sign_in(self.request("POST", response.url, data=form))
         self.assertEqual(response.status_code, 403, response.text[:500])
         with self.app.app_context():
             self.assertEqual(User.query.count(), 1)

@@ -219,12 +219,22 @@ nem módosítja egy másik alkalmazás kódját.
 
 ## Kijelentkezés, visszavonás és fiókmódosítás
 
-- A CSUPOR kiléptet, majd a közös fiók kijelentkezési megerősítésére vezet.
-  A központi kijelentkezés POST-megerősítése visszavonja a központi
-  munkameneteket és tokeneket. A többi rendszernek is ellenőriznie kell a
+- A CSUPOR kijelentkezési gombja CSRF-védett POST-tal a közös fiókból is
+  kiléptet, újabb kattintás nélkül. A kiszolgáló a titkosítva tárolt bearerrel
+  meghívja a fiókkezelő saját `POST /end-session` végpontját. Ez a token
+  tulajdonosának központi munkameneteit és tokenjeit vonja vissza; a verzióhoz
+  kötött atomi módosítás megakadályozza az ismételt visszavonást. A böngésző
+  ezután a fiókkezelőben automatikusan eldobja az érvénytelen sütijét.
+  Érvényes, eltérő központi fiókot nem jelentkeztetünk ki egy GET kérésre.
+  Ez saját szerverközi API, nem az OIDC szabványos front-channel logout
+  végpontja; a discovery ezért nem hirdeti `end_session_endpoint` néven.
+  A többi rendszernek is ellenőriznie kell a
   token állapotát, hogy ezt észrevegye. A CSUPOR minden hitelesített
   kéréskor meghívja a `/userinfo` végpontot; elérhetetlenség vagy visszavonás
   esetén nem enged hozzáférést.
+- Frissítéskor a fiókkezelőt telepítsd először, majd a CSUPOR-t. Ha a
+  szerverközi kijelentkezés nem sikerül, a CSUPOR lezárja a helyi munkamenetet,
+  és külön jelzi a még befejezendő központi kijelentkezést.
 - A CSUPOR böngészős sütijében csak véletlen munkamenet-azonosító van;
   a hozzáférési token a CSUPOR adatbázisában titkosítva tárolódik. A
   fiókszolgáltatás csak a bearer token lenyomatát tárolja. A jelszócsere és
@@ -263,6 +273,23 @@ Külön portot, SQLite-fájlt és titkos kulcsot használj mindkét alkalmazásh
 python -m pytest tests/test_account_migration.py tests/test_shared_auth.py tests/test_shared_accounts_e2e.py accounts/tests -q
 python -m pytest tests -q
 ```
+
+A böngészős CSP-visszatérési hibákat a sima HTTP-kliens nem érzékeli.
+A külön Chromium-tesztcsomag ugyanazokkal az izolált alkalmazásokkal
+ellenőrzi az egyszeri belépési kattintást, a regisztrációt és a közös
+kijelentkezést. Opcionális fejlesztői függőségei nem részei az éles buildnek:
+
+```bash
+python -m pip install -r requirements-browser.txt
+python -m playwright install chromium
+python -m pytest tests/test_shared_accounts_browser.py -q
+```
+
+A fiókkezelő megtartja a `form-action 'self'` védelmet. Belépés/regisztráció
+után a form POST-ja egy saját címen visszaadott HTTP 200 folytatóoldalon
+ér véget; csak ezután indul új navigáció az OIDC-engedélyezéshez. A cél
+munkamenethez és egyszer használatos, rövid életű nonce-hoz kötött. Így
+a böngésző nem kezeli a másik alkalmazásba visszatérést külső űrlapbeküldésként.
 
 A tesztek ideiglenes adatbázisokkal és helyi HTTP-szerverrel futnak, éles
 felhasználói adatok nélkül. A MySQL indulási séma a meglévő signed/unsigned
