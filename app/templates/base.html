@@ -95,7 +95,12 @@
       </nav>
       <div class="sidebar-footer">
         {{ nav_item('change_password', _('Change password'), 'lock') }}
-        {{ nav_item('logout', _('Logout'), 'logout') }}
+        {% if shared_accounts_enabled %}
+        <form class="sidebar-logout-form" action="{{ url_for('logout') }}" method="post">
+          <input type="hidden" name="csrf_token" value="{{ shared_logout_csrf() }}">
+          <button type="submit" class="nav-link">{{ icon('logout') }}<span>{{ _('Logout') }}</span></button>
+        </form>
+        {% else %}{{ nav_item('logout', _('Logout'), 'logout') }}{% endif %}
         {% set account_photo_url = profile_photo_url(current_user) %}
         {% set account_profile_link = can_access_endpoint('edit_profile') %}
         {% if account_profile_link %}<a class="sidebar-account" href="{{ url_for('edit_profile') }}" title="{{ _('My profile') }}"{% if request.endpoint == 'edit_profile' %} aria-current="page"{% endif %}>{% else %}<div class="sidebar-account">{% endif %}

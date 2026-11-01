@@ -219,6 +219,13 @@ Deploy után a `https://csupor.matedev.hu/login` a közös fiókoldalra vezet.
 Próbáld ki a saját és egy munkatársi fiók belépését a meglévő jelszóval;
 ellenőrizd a szerepköröket, profilokat és személyügyi adatokat.
 
+A CSUPOR **Kijelentkezés** gombja a közös fiókból is kiléptet, külön
+megerősítő kattintás nélkül. Ehhez a belépési/kijelentkezési javítás
+telepítésekor **előbb a fiókkezelőt, majd a CSUPOR-t frissítsd**. Új
+környezeti változó vagy ismételt fiókimport nem szükséges. A fiókkezelő
+átmeneti elérhetetlenségénél a CSUPOR-ból a kilépés megtörténik, az oldal
+pedig külön jelzi, hogy a közös kijelentkezést még be kell fejezni.
+
 A webes átvezetés nem törli a régi helyi jelszólenyomatokat. A központi
 jelszó- és e-mail-módosítások ezután a fiókrendszerben érvényesek. Ne indítsd
 újra párhuzamosan a régi helyi bejelentkezést: az `AUTH_MODE=local` önmagában

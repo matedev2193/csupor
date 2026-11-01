@@ -5,6 +5,13 @@
   <span class="eyebrow">CSUPOR</span>
   <h1>{{ _('No pages available') }}</h1>
   <p>{{ _('Your current privilege does not have access to any pages. Ask a developer to check the page access settings.') }}</p>
-  <div class="button-row"><a class="button button-secondary" href="{{ url_for('logout') }}">{{ _('Logout') }}</a></div>
+  <div class="button-row">
+    {% if shared_accounts_enabled %}
+    <form action="{{ url_for('logout') }}" method="post">
+      <input type="hidden" name="csrf_token" value="{{ shared_logout_csrf() }}">
+      <button class="button button-secondary" type="submit">{{ _('Logout') }}</button>
+    </form>
+    {% else %}<a class="button button-secondary" href="{{ url_for('logout') }}">{{ _('Logout') }}</a>{% endif %}
+  </div>
 </section>
 {% endblock %}

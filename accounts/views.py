@@ -2,13 +2,13 @@
 
 from functools import wraps
 from hashlib import sha256
-from secrets import token_urlsafe
+from secrets import compare_digest, token_urlsafe
 from time import time
 from urllib.parse import parse_qs, urlsplit
 from uuid import uuid4
 import unicodedata
 
-from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, url_for
+from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, session, url_for
 from sqlalchemy import func, or_, update
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -81,6 +81,38 @@ def _registration_client(next_url):
     return client if client and client.active and client.allow_registration else None
 
 
+def _after_login(next_url):
+    if urlsplit(next_url).path != '/authorize':
+        return redirect(next_url)
+    # A form POST must end on this origin before OIDC redirects to another
+    # application. Chromium otherwise applies form-action 'self' to the entire
+    # redirect chain and leaves a successfully submitted login form on screen.
+    nonce = token_urlsafe(24)
+    session['login_continuation'] = {
+        'nonce': nonce, 'next': next_url, 'issued_at': int(time()),
+    }
+    return redirect(url_for('web.login_continue', flow=nonce))
+
+
+@web.get('/login/continue')
+def login_continue():
+    account = current_account()
+    pending = session.get('login_continuation')
+    supplied = request.args.get('flow', '')
+    valid = (account is not None and isinstance(pending, dict)
+             and isinstance(pending.get('nonce'), str)
+             and compare_digest(pending['nonce'].encode(), supplied.encode())
+             and type(pending.get('issued_at')) is int
+             and 0 <= int(time()) - pending['issued_at'] <= 300)
+    if not valid:
+        return redirect(url_for('web.account_page' if account else 'web.login'))
+    session.pop('login_continuation', None)
+    # The destination comes from this browser's signed session, never a query
+    # string. Keep the same local-only redirect validation at consumption time.
+    next_url = safe_next(pending.get('next'))
+    return render_template('login_continue.html', next_url=next_url)
+
+
 @web.get("/")
 def index():
     return redirect(url_for("web.account_page" if current_account() else "web.login"))
@@ -109,7 +141,7 @@ def login():
                 error = "Hibás bejelentkezési adatokat adtál meg."
             else:
                 login_account(account)
-                return redirect(next_url)
+                return _after_login(next_url)
     return render_template("login.html", error=error, next_url=next_url, registration_client=registration_client)
 
 
@@ -160,7 +192,7 @@ def register():
                 else:
                     login_account(account)
                     flash("Elkészült a Micimackó-fiókod.", "success")
-                    return redirect(next_url)
+                    return _after_login(next_url)
     return render_template("register.html", error=error, client=client, next_url=next_url)
 
 
@@ -330,6 +362,13 @@ def logout():
             db.session.execute(update(Account).where(Account.subject == account.subject)
                                .values(version=Account.version + 1))
             db.session.commit()
+        logout_account()
+        flash("Kijelentkeztél a Micimackó-fiókodból.", "success")
+        return redirect(url_for("web.login"))
+    if current_account() is None:
+        # A connected app may already have revoked this session over the
+        # authenticated backchannel. Remove its stale cookie without asking for
+        # a second click. A valid browser account still requires the POST below.
         logout_account()
         flash("Kijelentkeztél a Micimackó-fiókodból.", "success")
         return redirect(url_for("web.login"))

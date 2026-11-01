@@ -5,6 +5,7 @@ from pathlib import Path
 from time import time
 import unittest
 from unittest.mock import patch
+from urllib.parse import parse_qs, urlsplit
 from uuid import uuid4
 
 from flask import Flask
@@ -74,6 +75,57 @@ class AccountPageTests(unittest.TestCase):
             self.assertEqual(session["account_subject"], self.subject)
             self.assertNotIn("Original-password-123", str(dict(session)))
 
+    def test_oidc_login_ends_form_chain_before_cross_origin_authorization(self):
+        target = '/authorize?client_id=csupor&state=single-browser-flow'
+        response = self.login(next_url=target)
+        self.assertEqual(urlsplit(response.location).path, '/login/continue')
+        with self.browser.session_transaction() as session:
+            self.assertEqual(session['login_continuation']['next'], target)
+            self.assertEqual(session['login_continuation']['nonce'],
+                             parse_qs(urlsplit(response.location).query)['flow'][0])
+        handoff = self.browser.get(response.location)
+        self.assertEqual(handoff.status_code, 200)
+        self.assertNotIn('Location', handoff.headers)
+        self.assertIn(b'id="login-continuation"', handoff.data)
+        self.assertIn(b'/authorize?client_id=csupor&amp;state=single-browser-flow', handoff.data)
+        self.assertIn(b'login_continue.js', handoff.data)
+        with self.browser.session_transaction() as session:
+            self.assertNotIn('login_continuation', session)
+        self.assertEqual(self.browser.get(response.location).location, '/account')
+
+    def test_login_handoff_is_session_bound_and_does_not_accept_query_destination(self):
+        response = self.login(next_url='/authorize?client_id=csupor&state=private-flow')
+        other = self.app.test_client()
+        self.assertEqual(other.get(response.location).location, '/login')
+        wrong = self.browser.get('/login/continue?flow=wrong&next=https://evil.example.invalid')
+        self.assertEqual(wrong.location, '/account')
+        with self.browser.session_transaction() as session:
+            self.assertIn('login_continuation', session)
+        handoff = self.browser.get(response.location + '&next=https://evil.example.invalid')
+        self.assertEqual(handoff.status_code, 200)
+        self.assertNotIn(b'evil.example.invalid', handoff.data)
+        self.assertIn(b'state=private-flow', handoff.data)
+
+    def test_expired_handoff_does_not_repeat_the_authorization_flow(self):
+        response = self.login(next_url='/authorize?client_id=csupor&state=old-flow')
+        with self.browser.session_transaction() as session:
+            pending = dict(session['login_continuation'])
+            pending['issued_at'] = int(time()) - 301
+            session['login_continuation'] = pending
+        self.assertEqual(self.browser.get(response.location).location, '/account')
+
+    def test_reauthentication_marker_survives_login_handoff(self):
+        token = self.csrf(self.browser)
+        with self.browser.session_transaction() as session:
+            session['reauth_request'] = 'bound-reauthentication-marker'
+        response = self.browser.post('/login', data={
+            'csrf_token': token, 'login': 'mate', 'password': 'Original-password-123',
+            'next': '/authorize?client_id=csupor&prompt=login&max_age=0',
+        })
+        self.assertEqual(self.browser.get(response.location).status_code, 200)
+        with self.browser.session_transaction() as session:
+            self.assertEqual(session['reauth_completed'], 'bound-reauthentication-marker')
+
     def test_unknown_and_ambiguous_identifiers_never_authenticate(self):
         token = self.csrf(self.browser)
         response = self.browser.post("/login", data={"csrf_token": token, "login": "unknown", "password": "Original-password-123"})
@@ -98,6 +150,20 @@ class AccountPageTests(unittest.TestCase):
             self.assertTrue(user.check_password("Strong-new-password-123"))
             memberships = db.session.execute(db.select(Membership).where(Membership.account_subject == user.subject)).scalars().all()
             self.assertEqual([m.client_id for m in memberships], ["csupor"])
+
+    def test_registration_uses_same_origin_handoff_for_oidc_authorization(self):
+        token = self.csrf(self.browser, '/register?client_id=csupor')
+        response = self.browser.post('/register', data={
+            'csrf_token': token, 'client_id': 'csupor', 'username': 'new-worker',
+            'email': 'new-worker@example.invalid', 'password': 'Strong-new-password-123',
+            'password_confirm': 'Strong-new-password-123',
+            'next': '/authorize?client_id=csupor&state=register-flow',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(urlsplit(response.location).path, '/login/continue')
+        handoff = self.browser.get(response.location)
+        self.assertEqual(handoff.status_code, 200)
+        self.assertIn(b'state=register-flow', handoff.data)
 
     def test_registration_rejects_email_used_as_another_legacy_username(self):
         with self.app.app_context():

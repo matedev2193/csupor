@@ -11,7 +11,8 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from werkzeug.security import generate_password_hash
 
 from . import SUPPORTED_LOCALES, db, get_locale
-from .shared_auth import begin_login, clear_local_session, deletion_reauthenticated, oidc_enabled, provider_url
+from .shared_auth import (begin_login, clear_local_session, deletion_reauthenticated,
+                          end_shared_session, oidc_enabled, provider_url, require_logout_csrf)
 
 from .working_calendar import HungaryCalendar
 from .i18n import enum_label
@@ -1341,12 +1342,20 @@ def init_routes(app):
 
         return render_template("login.html")
 
-    @app.route("/logout")
-    @login_required
+    @app.route("/logout", methods=["GET", "POST"])
     def logout():
         if oidc_enabled():
+            if request.method == "GET":
+                return render_template("shared_logout.html", incomplete=False)
+            require_logout_csrf()
+            completed = end_shared_session()
             clear_local_session()
-            return redirect(provider_url("/logout"))
+            if completed:
+                return redirect(provider_url("/logout"))
+            return render_template("shared_logout.html", incomplete=True,
+                                   account_logout_url=provider_url("/logout")), 503
+        if not current_user.is_authenticated:
+            return redirect(url_for("login"))
         logout_user()
         flash(_("Logged out."), "success")
         return redirect(url_for("login"))

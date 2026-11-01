@@ -9,7 +9,7 @@ from authlib.oauth2.rfc6750 import BearerTokenValidator
 from authlib.oauth2.rfc7636 import CodeChallenge
 from authlib.oidc.core import grants as oidc_grants, UserInfo
 from flask import Blueprint, abort, current_app, jsonify, redirect, request, session, url_for
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from .models import Account, AccessToken, AuthorizationCode, Client, Membership, db
 from .security import current_account, throttle
@@ -196,6 +196,26 @@ def init_provider(app):
     def userinfo():
         account = db.session.get(Account, current_token.account_subject)
         return jsonify(dict(user_info(account, current_token.scope)))
+
+    @bp.post('/end-session')
+    @protect('openid')
+    def end_session():
+        # Only a valid application's bearer selects the account. Browser cookies
+        # and request parameters cannot authorise or redirect this operation.
+        # The version condition makes concurrent logout requests idempotent and
+        # prevents an old bearer from invalidating a later authenticated session.
+        try:
+            db.session.execute(db.update(Account).where(
+                Account.subject == current_token.account_subject,
+                Account.version == current_token.version,
+                Account.active.is_(True),
+            ).values(version=Account.version + 1))
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            current_app.logger.warning('Shared account logout could not be completed.')
+            return jsonify(error='temporarily_unavailable'), 503
+        return '', 204
 
     app.register_blueprint(bp)
     app.extensions['accounts_oauth'] = server

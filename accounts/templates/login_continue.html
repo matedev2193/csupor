@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Belépés folyamatban · Micimackó-fiók{% endblock %}
+{% block content %}
+<span class="eyebrow">Sikeres bejelentkezés</span>
+<h2 id="page-title">Visszairányítunk az alkalmazásba</h2>
+<p class="lead" role="status">A bejelentkezés folytatása folyamatban.</p>
+<p><a id="login-continuation" href="{{ next_url }}">Tovább az alkalmazásba →</a></p>
+<noscript><p>A böngésződben a JavaScript ki van kapcsolva. A fenti hivatkozással folytathatod a belépést.</p></noscript>
+<script src="{{ url_for('static', filename='login_continue.js') }}" defer></script>
+{% endblock %}
