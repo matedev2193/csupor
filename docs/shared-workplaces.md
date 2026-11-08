@@ -38,7 +38,7 @@ A CSUPOR a meglévő `OIDC_ISSUER`, `OIDC_CLIENT_ID=csupor` és
 végpontra. Monoton növekvő generáció akadályozza meg, hogy egy később beérő
 régi kérés felülírja az újabb listát.
 
-A `/api/workplaces` végpont csak a `munkavedelem` kliens érvényes,
+A `/api/workplaces` végpont csak a `munkavedelem` vagy `tuzesmunkavedelem` kliens érvényes,
 `openid profile` jogosultságú hozzáférési tokenjével olvasható. A safety
 alkalmazás ezt a meglévő szerveroldali bejelentkezéséből veszi. A kérés
 a beállított fiókkezelőre megy, átirányítást nem követ. A lista legfeljebb

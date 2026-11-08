@@ -13,21 +13,23 @@ from accounts.tests.test_end_session import app, pem, bearer, TOKENS, ISSUER
 
 ROWS = [{'id': 17, 'name': 'Óvoda – Első utca 1.', 'address': 'Első utca 1.'}]
 SAFETY_TOKEN = 'workplace-reader-token'
+SAFETY_TOKENS = {'munkavedelem': SAFETY_TOKEN, 'tuzesmunkavedelem': 'live-safety-client-reader-token'}
 
 
 @pytest.fixture
 def configured(app):
     with app.app_context():
         db.session.get(Client, 'csupor').set_secret('existing-secret')
-        safety = Client(client_id='munkavedelem', name='Tűz- és munkavédelem',
-                        redirect_uris=['https://safety.example.invalid/auth/callback'])
-        safety.set_secret('safety-secret')
-        db.session.add(safety)
-        db.session.flush()
-        db.session.add(Membership(account_subject=app.config['TEST_OWNER'], client_id='munkavedelem'))
-        db.session.add(AccessToken(token_hash=sha256(SAFETY_TOKEN.encode()).hexdigest(),
-            account_subject=app.config['TEST_OWNER'], client_id='munkavedelem', version=1,
-            scope='openid profile', expires_at=int(time.time()) + 300))
+        for client_id, token in SAFETY_TOKENS.items():
+            safety = Client(client_id=client_id, name='Tűz- és munkavédelem',
+                            redirect_uris=['https://safety.example.invalid/auth/callback'])
+            safety.set_secret('safety-secret')
+            db.session.add(safety)
+            db.session.flush()
+            db.session.add(Membership(account_subject=app.config['TEST_OWNER'], client_id=client_id))
+            db.session.add(AccessToken(token_hash=sha256(token.encode()).hexdigest(),
+                account_subject=app.config['TEST_OWNER'], client_id=client_id, version=1,
+                scope='openid profile', expires_at=int(time.time()) + 300))
         db.session.commit()
     return app
 
@@ -46,8 +48,9 @@ def read(app, token=SAFETY_TOKEN):
     return app.test_client().get('/api/workplaces', base_url=ISSUER, headers=bearer(token))
 
 
-def test_published_catalogue_is_minimal_and_readable_only_by_safety(configured):
-    assert read(configured).status_code == 503
+@pytest.mark.parametrize('client_id', SAFETY_TOKENS)
+def test_published_catalogue_is_minimal_and_readable_only_by_safety(configured, client_id):
+    assert read(configured, SAFETY_TOKENS[client_id]).status_code == 503
     response = publish(configured)
     assert response.status_code == 200
     assert set(response.json) == {'source', 'revision', 'published_at', 'workplaces'}
@@ -55,14 +58,15 @@ def test_published_catalogue_is_minimal_and_readable_only_by_safety(configured):
     assert len(response.json['revision']) == 64
     assert response.json['published_at'].endswith('+00:00')
     assert response.json['workplaces'] == ROWS
-    assert read(configured).json == response.json
+    assert read(configured, SAFETY_TOKENS[client_id]).json == response.json
     assert read(configured, TOKENS['csupor']).status_code == 403
     assert read(configured, TOKENS['safety']).status_code == 403
     assert read(configured, 'invalid-token').status_code == 401
 
 
 @pytest.mark.parametrize('header', [{}, bearer(TOKENS['csupor']), basic(secret='wrong'),
-                                   basic(client='munkavedelem', secret='safety-secret')])
+                                   basic(client='munkavedelem', secret='safety-secret'),
+                                   basic(client='tuzesmunkavedelem', secret='safety-secret')])
 def test_publication_requires_exact_csupor_service_credentials(configured, header):
     assert publish(configured, headers=header).status_code == 401
     assert read(configured).status_code == 503
@@ -112,22 +116,23 @@ def test_generation_order_and_idempotency_preserve_latest_snapshot(configured):
 
 
 @pytest.mark.parametrize('reason', ['profile-scope', 'openid-scope', 'inactive', 'membership', 'expired'])
-def test_safety_requires_live_membership_and_both_scopes(configured, reason):
+@pytest.mark.parametrize('client_id', SAFETY_TOKENS)
+def test_safety_requires_live_membership_and_both_scopes(configured, reason, client_id):
     publish(configured)
     with configured.app_context():
-        token = db.session.get(AccessToken, sha256(SAFETY_TOKEN.encode()).hexdigest())
+        token = db.session.get(AccessToken, sha256(SAFETY_TOKENS[client_id].encode()).hexdigest())
         if reason == 'profile-scope':
             token.scope = 'openid'
         elif reason == 'openid-scope':
             token.scope = 'profile'
         elif reason == 'inactive':
-            db.session.get(Client, 'munkavedelem').active = False
+            db.session.get(Client, client_id).active = False
         elif reason == 'membership':
-            db.session.delete(db.session.get(Membership, (configured.config['TEST_OWNER'], 'munkavedelem')))
+            db.session.delete(db.session.get(Membership, (configured.config['TEST_OWNER'], client_id)))
         else:
             token.expires_at = int(time.time()) - 1
         db.session.commit()
-    assert read(configured).status_code in {401, 403}
+    assert read(configured, SAFETY_TOKENS[client_id]).status_code in {401, 403}
 
 
 def test_body_limit_allows_valid_unicode_directory_and_blocks_larger_requests(configured):

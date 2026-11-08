@@ -137,7 +137,8 @@ def register_workplace_api(bp, protect):
     @bp.get('/api/workplaces')
     @protect('openid')
     def read_workplaces():
-        if current_token.client_id != 'munkavedelem' or 'profile' not in current_token.scope.split():
+        if (current_token.client_id not in {'munkavedelem', 'tuzesmunkavedelem'}
+                or 'profile' not in current_token.scope.split()):
             abort(403)
         saved = db.session.get(WorkplaceCatalogue, 1)
         if saved is None:

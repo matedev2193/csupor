@@ -113,3 +113,29 @@ def test_local_auth_and_other_clients_never_publish(live):
         assert publish_workplaces(force=True) is None
         post.assert_not_called()
         assert db.session.get(SharedWorkplaceExport, 1) is None
+
+
+def test_pasted_unicode_formatting_does_not_block_publication_or_change_source(live):
+    original_name = '\ufeffŐzike\u200b óvoda\u202e'
+    original_address = ' Első\u200b utca\n1.\ufeff '
+    with live.app.app_context():
+        db.session.get(LegalEntity, live.entity_id).name = original_name
+        db.session.get(PlaceOfWork, live.place_id).address = original_address
+        # Normalisation may make different originals have identical labels.
+        duplicate = PlaceOfWork(legal_entity_id=live.entity_id, address='Első utca 1.')
+        db.session.add(duplicate)
+        db.session.commit()
+        duplicate_id = duplicate.id
+    live.sign_in()
+    generation, revision, rows = saved(live)
+    assert generation == 1
+    assert {row['id'] for row in rows} == {live.place_id, duplicate_id}
+    assert {row['address'] for row in rows} == {'Első utca 1.'}
+    assert all(row['name'].startswith('Őzike óvoda – Első utca 1.') for row in rows)
+    assert validate_workplaces(rows) == rows
+    assert len({row['name'].casefold() for row in rows}) == 2
+    with live.app.app_context():
+        assert db.session.get(LegalEntity, live.entity_id).name == original_name
+        assert db.session.get(PlaceOfWork, live.place_id).address == original_address
+        assert publish_workplaces(force=True) is True
+    assert saved(live) == (generation, revision, rows)
