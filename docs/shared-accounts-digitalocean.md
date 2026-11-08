@@ -8,12 +8,20 @@ ha ahhoz hozzáférést engedélyezel.
 | Rendszer | Saját adatok |
 | --- | --- |
 | CSUPOR | Meglévő felhasználóazonosítók, személyügyi rekordok és helyi jogosultságok |
-| Micimackó-fiók | Belépési név, e-mail, jelszó és alkalmazás-hozzáférések |
+| Micimackó-fiók | Belépési név, e-mail, jelszó, személyes profil, profilkép és alkalmazás-hozzáférések |
 | Tűz- és munkavédelem | Telephelyek, tananyagok, PDF-ek, haladás és helyi adminjog |
 
 Mindegyik külön alkalmazás és adatbázis. Az `accounts/` forrás a CSUPOR
 repóban van, de a külön Docker-image csak a fiókszolgáltatást tartalmazza.
 A fiókszolgáltatás nem olvassa a CSUPOR adatbázisát.
+
+Már működő közös belépésnél a profilszerkesztő frissítéséhez nem kell új
+setupkulcs, fiókimport vagy környezeti változó. Először a fiókkezelőt,
+utána a CSUPOR-t telepítsd az elfogadott verzióból. A profiladatok és képek
+új táblái induláskor automatikusan létrejönnek. A meglévő személyes profil
+a felhasználó következő CSUPOR-látogatásakor kerül át a közös fiókba;
+a helyi munkaügyi rekordok megmaradnak. Részletek:
+[központi profil](central-profile.md).
 
 ## 1. Az új fiókalkalmazás telepítése
 

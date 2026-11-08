@@ -5,6 +5,7 @@
 <h2 id="page-title">Szia, {{ account.username }}!</h2>
 <p class="lead">Ezeket a belépési adatokat használod a csatlakoztatott rendszerekben.</p>
 <div class="account-details"><span>Felhasználónév</span><strong>{{ account.username }}</strong></div>
+<a class="button" href="/profile">Profil szerkesztése és profilkép</a>
 <h3>Elérhető rendszerek</h3>
 <ul class="applications">{% for client in memberships %}<li><span class="detail-dot" aria-hidden="true"></span>{{ client.name }}</li>{% else %}<li>Még nincs hozzád rendelt rendszer. Kérj hozzáférést az üzemeltetőtől.</li>{% endfor %}</ul>
 <div class="divider"></div>

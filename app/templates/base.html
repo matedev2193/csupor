@@ -147,6 +147,9 @@
         </div>
       </header>
       <main id="main-content" class="main-content" tabindex="-1">
+        {% if shared_profile_cache_stale %}
+        <div class="flash flash-error" role="status">A közös profiladatok frissítése most nem érhető el. A CSUPOR a korábban mentett adatokat mutatja; később újrapróbálja a frissítést.</div>
+        {% endif %}
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
           <div class="flash-stack">

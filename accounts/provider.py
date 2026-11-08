@@ -217,5 +217,9 @@ def init_provider(app):
             return jsonify(error='temporarily_unavailable'), 503
         return '', 204
 
+    from .profile import register_profile_api
+    from .profile_photos import register_photo_api
+    register_profile_api(bp, protect)
+    register_photo_api(bp, protect)
     app.register_blueprint(bp)
     app.extensions['accounts_oauth'] = server

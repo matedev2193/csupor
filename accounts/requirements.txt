@@ -4,3 +4,4 @@ Authlib==1.9.1
 cryptography==46.0.0
 mysql-connector-python==9.0.0
 gunicorn==23.0.0
+Pillow==12.3.0

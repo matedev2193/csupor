@@ -14,7 +14,8 @@ kap hozzáférést a személyügyi adatbázishoz.
 | --- | --- |
 | Felhasználónév, belépési e-mail, jelszó, jelszó-visszaállítás | Micimackó-fiók |
 | Állandó fiókazonosító és alkalmazáshoz való hozzáférés | Micimackó-fiók |
-| Dolgozói profil, szerződések, szabadság, munkaidő, dokumentumok | CSUPOR |
+| Saját személyes profil és profilkép szerkesztése | Micimackó-fiók |
+| Szerződések, szabadság, munkaidő, dokumentumok; a profil munkaügyi másolata | CSUPOR |
 | CSUPOR employee / HR / igazgató / fejlesztő jogosultság | CSUPOR |
 | Másik alkalmazás saját szerepkörei és adatai | Az adott alkalmazás |
 
@@ -241,8 +242,10 @@ nem módosítja egy másik alkalmazás kódját.
   jelszó-visszaállítás érvényteleníti a régi központi munkameneteket.
 - A fiókbeállításokat és a jelszót a központi felületen lehet módosítani.
   OIDC módban a CSUPOR helyi belépési, regisztrációs és reset végpontjai nem
-  fogadnak el helyi hitelesítő adatokat. A személyügyi profil továbbra is
-  a CSUPOR-ban szerkeszthető.
+  fogadnak el helyi hitelesítő adatokat. A teljes saját profilszerkesztő és
+  a profilkép szerkesztője a központi fiókoldalon érhető el. A meglévő
+  profiladatok átvezetését és a CSUPOR-másolat frissítését a
+  [központi profil útmutatója](central-profile.md) részletezi.
 - A CSUPOR az értesítési e-mail másolatát a következő sikeres központi
   belépéskor frissíti. A központi e-mailcsere után lépj vissza a CSUPOR-ba;
   addig a háttérértesítések a korábban tárolt címre mehetnek. Ez nem valós

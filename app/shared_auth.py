@@ -127,6 +127,10 @@ def load_oidc_user(identity):
         return None
     g.shared_account_claims = claims
     g.shared_login_session = saved
+    from .shared_profile import sync_own_profile, sync_report_profiles
+    if not sync_own_profile(link.user, link.subject, token):
+        g.shared_profile_cache_stale = True
+    sync_report_profiles(link.user)
     return link.user
 
 
@@ -314,7 +318,8 @@ def init_shared_auth(app):
     app.register_blueprint(shared_auth)
     app.context_processor(lambda: {"shared_accounts_enabled": oidc_enabled(),
                                   "shared_account_url": provider_url("/account") if oidc_enabled() else None,
-                                  "shared_logout_csrf": logout_csrf_token})
+                                  "shared_logout_csrf": logout_csrf_token,
+                                  "shared_profile_cache_stale": getattr(g, "shared_profile_cache_stale", False)})
     if mode == "local":
         return
     issuer = os.getenv("OIDC_ISSUER", "").rstrip("/")

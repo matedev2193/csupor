@@ -6,6 +6,7 @@
   <meta name="color-scheme" content="light">
   <title>{% block title %}Micimackó-fiók{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='accounts.css') }}">
+  {% block extra_head %}{% endblock %}
 </head>
 <body>
   <header class="site-header">
@@ -17,7 +18,7 @@
       <span class="eyebrow">Egy helyen kapcsolódunk</span>
       <h1>Egy fiók.<br>Közös belépés.</h1>
       <p>A Micimackó-fiókoddal eléred a számodra engedélyezett rendszereket. A bejelentkezési adataidat itt, egy helyen kezelheted.</p>
-      <div class="intro-detail"><span class="detail-dot" aria-hidden="true"></span>A személyügyi adataidat továbbra is a CSUPOR-ban találod.</div>
+      <div class="intro-detail"><span class="detail-dot" aria-hidden="true"></span>A profilodat itt szerkesztheted. A munkaidőt, szabadságokat és szerződéseket továbbra is a CSUPOR kezeli.</div>
     </aside>
     <section class="card" aria-labelledby="page-title">
       {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="notice {{ category }}" role="status">{{ message }}</div>{% endfor %}{% endwith %}
