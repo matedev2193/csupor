@@ -43,7 +43,7 @@ munkavédelmi alkalmazás nem kapja meg ezeket az adatokat.
 A képforrást csak a tulajdonos szerkesztheti. A CSUPOR a megjelenítéshez
 a kis profilkép másolatát használja.
 
-## A menük ajánlott felelőse
+## A menük felelőse
 
 | Funkció | Rendszer |
 | --- | --- |
@@ -57,5 +57,22 @@ a kis profilkép másolatát használja.
 | Fiók-helyreállítási levélküldés | Fiókkezelő |
 | Tűz- és munkavédelmi telephelyek, tananyagok és haladás | Tűz- és munkavédelem |
 
-Az aloldalak besorolása javaslat: a profil áthelyezése nem mozgatja át
-a többi felsorolt modult vagy a hozzájuk tartozó munkaügyi rekordokat.
+A fiókkezelőben a **Fiókok és hozzáférések kezelése** alatt új közös fiók
+hozható létre, alkalmazás-hozzáférés adható, illetve egy fiók letiltható és
+újraaktiválható. A letiltás lezárja a korábbi bejelentkezéseket, a személyügyi
+adatokat megőrzi. Újraaktiváláskor új bejelentkezés szükséges. Saját adminfiók
+nem tiltható le, és az utolsó aktív központi adminisztrátor védett.
+
+A **Fiókom → Elérhető rendszerek** listában az alkalmazás neve kattintható.
+A hivatkozás az alkalmazás adminisztrátor által regisztrált címére vezet;
+a belépéshez továbbra is az adott alkalmazásra szóló hozzáférés szükséges.
+
+A **Fiókrendszer e-mail-beállításai** alatt a jelszó-visszaállításhoz
+használt SMTP-kiszolgáló is kezelhető. A mentett jelszó titkosított, nem
+jelenik meg újra. Üres jelszómező mentéskor megtartja a korábbi jelszót.
+A CSUPOR-ban maradó e-mail-beállítások a személyügyi levelekhez tartoznak.
+
+A munkaügyi modulok és rekordjaik a CSUPOR-ban maradnak. A munkahelyek
+neve és címe külön, korlátozott katalógusként átvehető az oktatórendszerbe;
+az átadás nem tartalmaz munkatársi adatot vagy automatikus dolgozói beosztást.
+Lásd: [telephelyek átvétele](shared-workplaces.md).

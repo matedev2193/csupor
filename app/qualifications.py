@@ -15,7 +15,9 @@ from flask_babel import gettext as _
 from flask_login import current_user, login_required
 from PIL import Image, UnidentifiedImageError
 from sqlalchemy import or_, select, update
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload, selectinload, undefer
+from sqlalchemy.orm.exc import StaleDataError
 from werkzeug.datastructures import MultiDict
 from werkzeug.utils import secure_filename
 
@@ -23,7 +25,7 @@ from . import db
 from .models import User, UserProfile
 from .page_access import can_access_page
 from .people import local_today
-from .qualification_models import QualificationDocument, QualificationRecord
+from .qualification_models import QualificationDocument, QualificationLegacyDeletion, QualificationRecord
 from .qualification_taxonomy import (
     ATTENDANCE_MODES, AWARD_CATEGORIES, COMPLETION_STATES, FUNDING_TYPES,
     KINDS, ORGANISER_TYPES, STUDY_CATEGORIES, TRAINING_TOPICS, taxonomy_context,
@@ -407,6 +409,52 @@ def edit(record_id):
     if record is None:
         abort(404)
     return _save_record(record) if request.method == "POST" else _edit_response(record)
+
+
+@qualifications.route("/qualifications/manage/<int:record_id>/delete", methods=["GET", "POST"])
+@manager_required
+def delete(record_id):
+    record = db.session.get(QualificationRecord, record_id)
+    if record is None:
+        abort(404)
+    if request.method == "GET":
+        return render_template("delete_qualification.html", record=record, **_context())
+
+    _check_csrf()
+    revision_values = request.form.getlist("revision")
+    revision = _positive_id(revision_values[0]) if len(revision_values) == 1 else None
+    if request.form.getlist("confirmation") != ["delete"] or revision is None:
+        abort(400, description=_("Review and confirm the qualification before deleting it."))
+    owner_id, status = record.user_id, record.status
+    try:
+        # Use the same employee lock as edits and refresh the record using a
+        # locking read, so an older confirmation cannot remove a newer revision.
+        db.session.execute(select(User.id).where(User.id == owner_id).with_for_update()).scalar_one_or_none()
+        record = db.session.execute(select(QualificationRecord).where(
+            QualificationRecord.id == record_id,
+        ).with_for_update().execution_options(populate_existing=True)).scalar_one_or_none()
+        if record is None:
+            db.session.rollback()
+            abort(404)
+        if record.revision != revision:
+            db.session.rollback()
+            abort(409, description=_("This qualification changed in another window. Review it again before deleting."))
+        if record.legacy_source and record.legacy_id is not None:
+            # The archived tables are imported on every startup. Persist this
+            # marker in the deletion transaction to prevent re-importing it.
+            key = (record.legacy_source, record.legacy_id)
+            if db.session.get(QualificationLegacyDeletion, key) is None:
+                db.session.add(QualificationLegacyDeletion(legacy_source=key[0], legacy_id=key[1]))
+        db.session.delete(record)  # Includes only this record's private documents.
+        db.session.commit()
+    except StaleDataError:
+        db.session.rollback()
+        abort(409, description=_("This qualification changed in another window. Review it again before deleting."))
+    except SQLAlchemyError:
+        db.session.rollback()
+        abort(503, description=_("The qualification could not be deleted. No changes were saved. Please try again."))
+    flash(_("Qualification and its attached documents deleted."), "success")
+    return redirect(url_for("qualifications.manage", status=status, user_id=owner_id))
 
 
 @qualifications.route("/qualifications/documents/<int:document_id>")

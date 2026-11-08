@@ -12,6 +12,14 @@ See also the [shared accounts deployment and migration guide](docs/shared-accoun
 before enabling `AUTH_MODE=oidc`. The account service can be deployed from this
 repository without importing or accessing CSUPOR's personnel application.
 
+Central administrators can create or deactivate accounts, assign application
+access and configure recovery email through the account service. Application
+names on the account page open their registered sites. See the
+[central profile and administration guide](docs/central-profile.md).
+The [shared workplace catalogue](docs/shared-workplaces.md) lets the independent
+safety application import CSUPOR workplace names and addresses while keeping
+training records and permissions in its own database.
+
 ## Features
 
 - Login using **e-mail or username + password**.

@@ -71,5 +71,12 @@
   .qualification-editor-actions .button-row > * { flex: 1 1 auto; }
 }
 .qualification-flow .status-pill { white-space: nowrap; overflow-wrap: normal; }
+.qualification-record-actions { margin: 0; flex-wrap: wrap; }
+.qualification-flow .qualification-delete-link { color: #a52828; border-color: #d8a7a7; }
+.qualification-flow .qualification-delete-button { background: #a52828; border-color: #a52828; color: #fff; }
+.qualification-flow .qualification-delete-button:hover { background: #872020; }
+.qualification-delete-confirmation { max-width: 780px; }
+.qualification-delete-confirmation .card { overflow-wrap: anywhere; }
+.qualification-delete-confirmation .button-row { flex-wrap: wrap; }
 .qualification-processing-table td:nth-child(5), .qualification-processing-table td:nth-child(6), .qualification-own-table td:nth-child(3) { white-space: nowrap; }
 .qualification-processing-table td:nth-child(5) .qualification-flow-note, .qualification-own-table td:nth-child(3) .qualification-flow-note { white-space: normal; }

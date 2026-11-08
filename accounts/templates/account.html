@@ -7,7 +7,7 @@
 <div class="account-details"><span>Felhasználónév</span><strong>{{ account.username }}</strong></div>
 <a class="button" href="/profile">Profil szerkesztése és profilkép</a>
 <h3>Elérhető rendszerek</h3>
-<ul class="applications">{% for client in memberships %}<li><span class="detail-dot" aria-hidden="true"></span>{{ client.name }}</li>{% else %}<li>Még nincs hozzád rendelt rendszer. Kérj hozzáférést az üzemeltetőtől.</li>{% endfor %}</ul>
+<ul class="applications">{% for client in memberships %}{% set launch_url = application_url(client) %}<li><span class="detail-dot" aria-hidden="true"></span>{% if launch_url %}<a href="{{ launch_url }}" class="application-link">{{ client.name }} <span aria-hidden="true">→</span></a>{% else %}{{ client.name }}{% endif %}</li>{% else %}<li>Még nincs hozzád rendelt rendszer. Kérj hozzáférést az üzemeltetőtől.</li>{% endfor %}</ul>
 <div class="divider"></div>
 <h3>E-mail-cím módosítása</h3>
 <form method="post">

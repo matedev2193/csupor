@@ -102,6 +102,14 @@ PREPARE csupor_qual_migration FROM @csupor_qual_ddl;
 EXECUTE csupor_qual_migration;
 DEALLOCATE PREPARE csupor_qual_migration;
 
+-- Keep intentional deletions out of repeat imports without changing archives.
+CREATE TABLE IF NOT EXISTS qualification_legacy_deletions (
+  legacy_source VARCHAR(40) NOT NULL,
+  legacy_id INT NOT NULL,
+  deleted_at DATETIME NOT NULL,
+  PRIMARY KEY (legacy_source, legacy_id)
+) ENGINE=InnoDB;
+
 START TRANSACTION;
 INSERT INTO qualification_records (
   user_id, status, kind, qualification_name, level_or_type, institution_name,
@@ -115,7 +123,9 @@ SELECT q.user_id, 'processed', 'qualification', q.qualification_name,
 FROM educational_qualifications q
 LEFT JOIN qualification_records r
   ON r.legacy_source = 'educational_qualifications' AND r.legacy_id = q.id
-WHERE r.id IS NULL;
+LEFT JOIN qualification_legacy_deletions d
+  ON d.legacy_source = 'educational_qualifications' AND d.legacy_id = q.id
+WHERE r.id IS NULL AND d.legacy_id IS NULL;
 INSERT INTO qualification_records (
   user_id, status, kind, qualification_name, degree_number, year_obtained,
   date_obtained, completion_state, award_categories, created_at, updated_at,
@@ -127,7 +137,9 @@ SELECT e.user_id, 'processed', 'exam', e.qualification_name, e.degree_number,
 FROM professional_exams e
 LEFT JOIN qualification_records r
   ON r.legacy_source = 'professional_exams' AND r.legacy_id = e.id
-WHERE r.id IS NULL;
+LEFT JOIN qualification_legacy_deletions d
+  ON d.legacy_source = 'professional_exams' AND d.legacy_id = e.id
+WHERE r.id IS NULL AND d.legacy_id IS NULL;
 COMMIT;
 SET @csupor_qual_user_type = NULL;
 SET @csupor_qual_record_type = NULL;

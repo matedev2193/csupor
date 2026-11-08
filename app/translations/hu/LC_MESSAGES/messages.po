@@ -5639,3 +5639,27 @@ msgstr "A pedagógusminősítéseket külön számoljuk; a KSH képesítési és
 
 msgid "Open an employee to see their qualifications, exams, courses, teacher assessments and documents awaiting processing."
 msgstr "Nyisd meg a munkavállaló adatlapját a képesítései, szakvizsgái, tanfolyamai, pedagógusminősítései és feldolgozásra váró dokumentumai megtekintéséhez."
+
+msgid "Delete qualification"
+msgstr "Képesítés törlése"
+
+msgid "Permanently delete qualification"
+msgstr "Képesítés végleges törlése"
+
+msgid "The following attached documents will also be deleted:"
+msgstr "Az alábbi csatolt dokumentumok is törlődnek:"
+
+msgid "This permanently removes this qualification from the register and reports, together with its attached documents. This cannot be undone."
+msgstr "A képesítés és a hozzá csatolt dokumentumok végleg törlődnek a nyilvántartásból, és a képesítés a kimutatásokban sem jelenik meg többé. A törlés nem vonható vissza."
+
+msgid "Review and confirm the qualification before deleting it."
+msgstr "A törlés előtt ellenőrizd a képesítést, és erősítsd meg a törlést."
+
+msgid "This qualification changed in another window. Review it again before deleting."
+msgstr "Ezt a képesítést időközben egy másik ablakban módosították. A törlés előtt ellenőrizd újra."
+
+msgid "The qualification could not be deleted. No changes were saved. Please try again."
+msgstr "A képesítést nem sikerült törölni. Nem mentettünk módosítást. Kérjük, próbáld újra."
+
+msgid "Qualification and its attached documents deleted."
+msgstr "A képesítést és a hozzá csatolt dokumentumokat töröltük."

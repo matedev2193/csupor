@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Delete qualification') }} · {{ _('CSUPOR Portal') }}{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/qualification_workflow.css') }}">
+<div class="qualification-flow qualification-delete-confirmation">
+  <header class="qualification-flow-heading section-heading"><div><span class="eyebrow">{{ _('Qualification processing') }}</span><h1>{{ _('Delete qualification') }}</h1></div></header>
+  <section class="card" aria-labelledby="delete-qualification-name">
+    <h2 id="delete-qualification-name">{{ record.qualification_name or (record.documents[0].filename if record.documents else _('Qualification document')) }}</h2>
+    <p><strong>{{ _('Employee') }}:</strong> {{ record.user.profile.full_name if record.user.profile and record.user.profile.full_name else record.user.username }} ({{ record.user.username }})</p>
+    {% if record.degree_number %}<p><strong>{{ _('Document number') }}:</strong> {{ record.degree_number }}</p>{% endif %}
+    {% if record.documents %}<p>{{ _('The following attached documents will also be deleted:') }}</p><ul>{% for document in record.documents %}<li>{{ document.filename }}</li>{% endfor %}</ul>{% endif %}
+    <p id="delete-qualification-warning">{{ _('This permanently removes this qualification from the register and reports, together with its attached documents. This cannot be undone.') }}</p>
+    <form method="post" action="{{ url_for('qualifications.delete', record_id=record.id) }}" aria-describedby="delete-qualification-warning">
+      <input type="hidden" name="csrf_token" value="{{ qualification_csrf_token }}">
+      <input type="hidden" name="revision" value="{{ record.revision }}">
+      <div class="button-row"><a class="button button-secondary" href="{{ url_for('qualifications.manage', status=record.status, user_id=record.user_id) }}">{{ _('Cancel') }}</a><button type="submit" name="confirmation" value="delete" class="qualification-delete-button">{{ _('Permanently delete qualification') }}</button></div>
+    </form>
+  </section>
+</div>
+{% endblock %}
