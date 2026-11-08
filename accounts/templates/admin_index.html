@@ -3,10 +3,11 @@
 {% block content %}
 <span class="eyebrow">Központi adminisztráció</span><h2 id="page-title">Fiókok és alkalmazások</h2>
 <p class="lead">{{ account_count }} közös fiók. Itt adhatod meg, ki melyik rendszerbe léphet be.</p>
+{% include '_integration_notices.html' %}
 <p><a href="{{ url_for('account_admin.accounts') }}">Fiókok és hozzáférések kezelése →</a></p>
 <p><a href="{{ url_for('account_admin.account_new') }}">Új közös fiók létrehozása →</a></p>
 <p><a href="{{ url_for('account_mail.settings') }}">Fiókrendszer e-mail-beállításai →</a></p>
-<p><a href="{{ url_for('account_admin.client_new', client_id='munkavedelem') }}">Tűz- és munkavédelmi alkalmazás hozzáadása →</a></p>
+{% if integration_settings.safety.client_id %}<p><a href="{{ url_for('account_admin.client_edit', client_id=integration_settings.safety.client_id) if integration_settings.safety.client_id in client_ids else url_for('account_admin.client_new', integration_role='safety') }}">Tűz- és munkavédelmi alkalmazás {{ 'beállítása' if integration_settings.safety.client_id in client_ids else 'hozzáadása' }} →</a></p>{% endif %}
 <p><a href="{{ url_for('account_admin.client_new') }}">Másik alkalmazás hozzáadása →</a></p>
 <h3>Kapcsolódó alkalmazások</h3>
 {% for client in clients %}<section><h3><a href="{{ url_for('account_admin.client_edit', client_id=client.client_id) }}">{{ client.name }}</a></h3><p>{{ client.client_id }} · {{ 'Aktív' if client.active else 'Szüneteltetve' }}</p>{% set launch_url = application_url(client) %}{% if launch_url %}<p><a href="{{ launch_url }}">Alkalmazás megnyitása →</a></p>{% endif %}<p>{{ client.redirect_uris|join(' · ') }}</p></section>{% else %}<p>Még nincs regisztrált alkalmazás.</p>{% endfor %}

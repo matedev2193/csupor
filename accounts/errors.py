@@ -14,7 +14,7 @@ class StartupError(RuntimeError):
 
 
 _MESSAGES = {
-    'ACCOUNTS_ISSUER': 'Az ACCOUNTS_ISSUER hiányzik vagy hibás. Teljes HTTPS-alapcímet adj meg, például https://fiok.matedev.hu, útvonal nélkül.',
+    'ACCOUNTS_ISSUER': 'Az ACCOUNTS_ISSUER hiányzik vagy hibás. Teljes HTTPS-alapcímet adj meg, például https://fiok.example.hu, útvonal nélkül.',
     'ACCOUNTS_SECRET_KEY': 'Az ACCOUNTS_SECRET_KEY hiányzik vagy 32 karakternél rövidebb. Meglévő adatbázisnál az eredeti kulcsot állítsd vissza.',
     'ACCOUNTS_SETUP_TOKEN': 'Az ACCOUNTS_SETUP_TOKEN megadott értékének 32–1024 karakteresnek kell lennie.',
     'ACCOUNTS_TOKEN_TTL': 'Az ACCOUNTS_TOKEN_TTL egész szám legyen 60 és 3600 között; az alapérték 3600.',

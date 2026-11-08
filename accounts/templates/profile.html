@@ -9,12 +9,19 @@
   {% if manager_mode %}<p class="help">Fiók: {{ owner.username }} · {{ owner.email }}</p>{% endif %}
   {% if pending_import %}
     <div class="notice" role="status">
+      {% if integration_problem %}
+      <strong>A profilszerkesztéshez a CSUPOR-kapcsolat beállítása szükséges.</strong>
+      <p>{{ integration_problem.message }}</p>
+      <p>A korábbi profiladatok védelmében a szerkesztés a kapcsolat beállításáig és az adatok betöltéséig szünetel. Kérd az üzemeltető segítségét.</p>
+      <p class="help">Hibakód: {{ integration_problem.code }}</p>
+      {% else %}
       <strong>A korábbi profiladatok betöltése szükséges.</strong>
       {% if manager_mode %}
       <p>A felhasználó következő CSUPOR-belépésekor a meglévő adatai automatikusan átkerülnek ide. Ezt követően itt szerkeszthetők.</p>
       {% else %}
       <p>Nyisd meg egyszer a CSUPOR profiloldalát. A meglévő adataid automatikusan betöltődnek, majd visszatérsz ide.</p>
       {% if csupor_url %}<a class="button" href="{{ csupor_url }}">Meglévő adataim betöltése</a>{% else %}<p>Az alkalmazás eléréséhez kérd az üzemeltető segítségét.</p>{% endif %}
+      {% endif %}
       {% endif %}
     </div>
   {% else %}

@@ -155,6 +155,7 @@ def create_app(test_config=None):
         'ACCOUNTS_SIGNING_KEY_FILE', 'ACCOUNTS_SMTP_HOST', 'ACCOUNTS_SMTP_PORT',
         'ACCOUNTS_SMTP_USERNAME', 'ACCOUNTS_SMTP_PASSWORD', 'ACCOUNTS_SMTP_FROM',
         'ACCOUNTS_DATABASE_CA_CERT', 'ACCOUNTS_SETUP_TOKEN', 'ACCOUNTS_DATABASE_TLS_MODE',
+        'OIDC_CLIENT_ID', 'SAFETY_OIDC_CLIENT_ID',
     ):
         app.config[key] = os.getenv(key)
     app.config.update(
@@ -169,6 +170,8 @@ def create_app(test_config=None):
     )
     if test_config:
         app.config.update(test_config)
+    from .integration_config import init_integration_config
+    init_integration_config(app)
     app.config['SECRET_KEY'] = app.config.get('SECRET_KEY') or app.config['ACCOUNTS_SECRET_KEY']
     app.config['SQLALCHEMY_DATABASE_URI'] = app.config.get('SQLALCHEMY_DATABASE_URI') or app.config['ACCOUNTS_DATABASE_URL']
     issuer = (app.config.get('ACCOUNTS_ISSUER') or '').rstrip('/')

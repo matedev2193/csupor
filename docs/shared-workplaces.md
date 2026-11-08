@@ -33,14 +33,28 @@ munkahelyeit, és a katalógus küldését későbbi látogatáskor újrapróbá
 
 ## Kapcsolat és verziózás
 
-A CSUPOR a meglévő `OIDC_ISSUER`, `OIDC_CLIENT_ID=csupor` és
+A CSUPOR a meglévő `OIDC_ISSUER`, `OIDC_CLIENT_ID` és
 `OIDC_CLIENT_SECRET` beállításaival publikál a `/api/csupor/workplaces`
 végpontra. Monoton növekvő generáció akadályozza meg, hogy egy később beérő
 régi kérés felülírja az újabb listát.
 
-A `/api/workplaces` végpont csak a `munkavedelem` vagy `tuzesmunkavedelem` kliens érvényes,
+A `/api/workplaces` végpont csak a fiókkezelő `SAFETY_OIDC_CLIENT_ID`
+változójában megadott kliens érvényes,
 `openid profile` jogosultságú hozzáférési tokenjével olvasható. A safety
 alkalmazás ezt a meglévő szerveroldali bejelentkezéséből veszi. A kérés
 a beállított fiókkezelőre megy, átirányítást nem követ. A lista legfeljebb
 1000 helyet és 2 MiB adatot tartalmazhat. Az első publikálás előtt a
 felület jelzi, hogy előbb a frissített CSUPOR-t kell megnyitni.
+
+A fiókkezelő saját DigitalOcean Run Time változói között is add meg az
+`OIDC_CLIENT_ID` (CSUPOR) és `SAFETY_OIDC_CLIENT_ID` (oktatórendszer) értékét,
+pontosan a kapcsolódó alkalmazás ugyanilyen nevű változójából. Ezt a
+frissített fiókkezelő telepítése előtt végezd el. A külön alkalmazások nem
+osztják meg az env-beállításaikat. Nincs beégetett azonosító vagy tartalékérték;
+a két azonosító nem egyezhet meg. A már regisztrált klienseket és titkokat
+tartsd meg, új setup vagy adatmigráció nem szükséges.
+
+Hibás vagy hiányzó azonosítónál a fiókkezelő megnevezi a szükséges env-kulcsot
+az adminfelületen; az érintett integráció 503-as gépi hibát ad, de a normál
+belépés működik. A telephelyátvétel ezt helyben olvasható beállítási
+útmutatóként mutatja, nem a tárhely általános hibaoldalaként.

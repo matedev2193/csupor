@@ -44,6 +44,7 @@ def app(tmp_path, pem):
         'ACCOUNTS_SECRET_KEY': 'independent-test-account-service-secret',
         'ACCOUNTS_ISSUER': ISSUER, 'ACCOUNTS_SIGNING_KEY_FILE': str(key),
         'ACCOUNTS_SETUP_TOKEN': SETUP_TOKEN,
+        'OIDC_CLIENT_ID': 'csupor', 'SAFETY_OIDC_CLIENT_ID': 'munkavedelem',
     })
     with value.app_context():
         db.create_all()

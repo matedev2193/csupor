@@ -105,11 +105,11 @@ def test_generated_labels_are_bounded_unique_and_snapshots_are_stable(live):
         assert first['workplaces'][-1]['address'] == 'Több soros cím'
 
 
-def test_local_auth_and_other_clients_never_publish(live):
+def test_local_auth_and_missing_client_never_publish(live):
     with live.app.app_context(), patch('app.shared_workplaces.requests.post') as post:
         live.app.config['AUTH_MODE'] = 'local'
         assert publish_workplaces(force=True) is None
-        live.app.config.update(AUTH_MODE='oidc', OIDC_CLIENT_ID='another-client')
+        live.app.config.update(AUTH_MODE='oidc', OIDC_CLIENT_ID='')
         assert publish_workplaces(force=True) is None
         post.assert_not_called()
         assert db.session.get(SharedWorkplaceExport, 1) is None

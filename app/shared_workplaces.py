@@ -23,6 +23,9 @@ _FAILURES = {
     'STALE_SNAPSHOT': 'A fiókkezelő újabb telephelyváltozatot tárol; a régebbi lista nem írta felül.',
     'RATE_LIMITED': 'A fiókkezelő átmenetileg korlátozta a telephelylista küldését.',
     'UPSTREAM_UNAVAILABLE': 'A fiókkezelő telephelyfogadó szolgáltatása átmenetileg nem működik.',
+    'CONFIG_MISSING': 'A fiókkezelőn hiányzik az OIDC_CLIENT_ID környezeti változó; állítsd a CSUPOR alkalmazás beállított azonosítójára.',
+    'CONFIG_INVALID': 'A fiókkezelőn hibás az OIDC_CLIENT_ID környezeti változó; a CSUPOR alkalmazás beállított azonosítóját add meg.',
+    'CONFIG_CONFLICT': 'A fiókkezelő OIDC_CLIENT_ID és SAFETY_OIDC_CLIENT_ID változói nem azonosíthatják ugyanazt az alkalmazást.',
     'UPSTREAM_REJECTED': 'A fiókkezelő nem fogadta el a telephelylista küldését.',
     'TIMEOUT': 'A fiókkezelő nem válaszolt időben a telephelylista küldésekor.',
     'NETWORK': 'A telephelylista küldésekor megszakadt vagy nem jött létre a kapcsolat.',
@@ -68,6 +71,27 @@ def _upstream_error(status):
     if 500 <= status <= 599:
         return 'UPSTREAM_UNAVAILABLE'
     return 'UPSTREAM_REJECTED'
+
+
+def _configuration_error(response):
+    """Recognise only this integration's fixed, bounded configuration codes."""
+    raw = bytearray()
+    for chunk in response.iter_content(1024):
+        raw.extend(chunk)
+        if len(raw) > 4096:
+            return None
+    try:
+        value = json.loads(raw)
+    except (ValueError, UnicodeError, RecursionError):
+        return None
+    if (not isinstance(value, dict) or value.get('error') != 'integration_not_configured'
+            or not isinstance(value.get('code'), str)):
+        return None
+    return {
+        'ACCOUNTS_INTEGRATION_CSUPOR_MISSING': 'CONFIG_MISSING',
+        'ACCOUNTS_INTEGRATION_CSUPOR_INVALID': 'CONFIG_INVALID',
+        'ACCOUNTS_INTEGRATION_CSUPOR_CONFLICT': 'CONFIG_CONFLICT',
+    }.get(value['code'])
 
 
 class SharedWorkplaceExport(db.Model):
@@ -141,7 +165,7 @@ def _allocate_snapshot():
 
 
 def publish_workplaces(*, force=False):
-    if current_app.config.get('AUTH_MODE') != 'oidc' or current_app.config.get('OIDC_CLIENT_ID') != 'csupor':
+    if current_app.config.get('AUTH_MODE') != 'oidc' or not current_app.config.get('OIDC_CLIENT_ID'):
         return None
     state = current_app.extensions['shared_workplace_publisher']
     now = monotonic()
@@ -160,7 +184,10 @@ def publish_workplaces(*, force=False):
                            headers={'Accept': 'application/json', 'Content-Type': 'application/json'}, timeout=3,
                            allow_redirects=False, stream=True) as response:
             if response.status_code != 200:
-                raise WorkplacePublishError(_upstream_error(response.status_code))
+                code = _upstream_error(response.status_code)
+                if response.status_code == 503:
+                    code = _configuration_error(response) or code
+                raise WorkplacePublishError(code)
             raw = bytearray()
             for chunk in response.iter_content(16384):
                 raw.extend(chunk)

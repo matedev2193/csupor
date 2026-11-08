@@ -1,5 +1,6 @@
 """Publisher diagnostics reveal failure classes without leaking private data."""
 from unittest.mock import Mock
+import json
 
 from flask import Flask
 import pytest
@@ -49,14 +50,52 @@ def assert_diagnostic(app, caplog, code):
     (500, 'UPSTREAM_UNAVAILABLE'), (502, 'UPSTREAM_UNAVAILABLE'), (503, 'UPSTREAM_UNAVAILABLE'),
     (400, 'UPSTREAM_REJECTED'), (302, 'UPSTREAM_REJECTED'),
 ])
-def test_http_failures_have_fixed_codes_and_never_read_private_error_bodies(app, monkeypatch, caplog, status, code):
+def test_http_failures_have_fixed_codes_and_never_log_private_error_bodies(app, monkeypatch, caplog, status, code):
     reply = response(status)
     post = Mock(return_value=reply)
     monkeypatch.setattr(publisher.requests, 'post', post)
     assert_diagnostic(app, caplog, code)
-    reply.iter_content.assert_not_called()
+    if status == 503:
+        reply.iter_content.assert_called_once_with(1024)
+    else:
+        reply.iter_content.assert_not_called()
     assert post.call_args.kwargs['allow_redirects'] is False
     assert post.call_args.kwargs['timeout'] == 3
+
+
+@pytest.mark.parametrize('category', ['MISSING', 'INVALID', 'CONFLICT'])
+def test_central_configuration_errors_name_the_required_env_without_echoing_remote_text(app, monkeypatch, caplog, category):
+    body = json.dumps({'error': 'integration_not_configured',
+                      'code': 'ACCOUNTS_INTEGRATION_CSUPOR_' + category,
+                      'message': PRIVATE}).encode()
+    monkeypatch.setattr(publisher.requests, 'post', Mock(return_value=response(503, body)))
+    assert_diagnostic(app, caplog, 'CONFIG_' + category)
+    assert 'OIDC_CLIENT_ID' in caplog.text
+    if category == 'CONFLICT':
+        assert 'SAFETY_OIDC_CLIENT_ID' in caplog.text
+
+
+@pytest.mark.parametrize('body', [
+    b'not-json-' + PRIVATE.encode(), b'\xff', b'null', b'[]', b'[' * 1100 + b']' * 1100,
+    json.dumps({'error': 'other_error', 'code': 'ACCOUNTS_INTEGRATION_CSUPOR_MISSING', 'message': PRIVATE}).encode(),
+    json.dumps({'error': 'integration_not_configured', 'code': 'ACCOUNTS_INTEGRATION_SAFETY_MISSING', 'message': PRIVATE}).encode(),
+    json.dumps({'error': 'integration_not_configured', 'code': PRIVATE}).encode(),
+    json.dumps({'error': 'integration_not_configured', 'code': {'private': PRIVATE}}).encode(),
+])
+def test_unknown_or_malformed_503_body_stays_unavailable_and_private(app, monkeypatch, caplog, body):
+    monkeypatch.setattr(publisher.requests, 'post', Mock(return_value=response(503, body)))
+    assert_diagnostic(app, caplog, 'UPSTREAM_UNAVAILABLE')
+
+
+def test_503_configuration_body_reader_stops_at_4096_bytes(app, monkeypatch, caplog):
+    reply = response(503)
+    def chunks():
+        yield b' ' * 4096
+        yield b' '
+        raise AssertionError('An oversized upstream error must not be read further')
+    reply.iter_content.side_effect = lambda size: chunks()
+    monkeypatch.setattr(publisher.requests, 'post', Mock(return_value=reply))
+    assert_diagnostic(app, caplog, 'UPSTREAM_UNAVAILABLE')
 
 
 @pytest.mark.parametrize(('error', 'code'), [
@@ -85,6 +124,15 @@ def test_invalid_source_is_detected_before_network(app, monkeypatch, caplog):
     monkeypatch.setattr(publisher.requests, 'post', post)
     assert_diagnostic(app, caplog, 'INVALID_SOURCE')
     post.assert_not_called()
+
+
+def test_configured_writer_id_is_used_without_literal_client_restriction(app, monkeypatch):
+    app.config['OIDC_CLIENT_ID'] = 'staff-tenant-17'
+    post = Mock(return_value=response(200, b'{"source":"csupor","revision":"' + b'a' * 64 + b'"}'))
+    monkeypatch.setattr(publisher.requests, 'post', post)
+    with app.app_context():
+        assert publisher.publish_workplaces(force=True) is True
+    assert post.call_args.kwargs['auth'] == ('staff-tenant-17', PRIVATE)
 
 
 def test_normalisation_keeps_visible_unicode_and_separates_whitespace():

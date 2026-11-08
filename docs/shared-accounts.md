@@ -190,6 +190,16 @@ használták és ott megváltoztatták a jelszavakat, a régi mentés visszatöl
 nem őrzi meg ezeket a változásokat; ilyenkor külön egyeztetett helyreállítás
 szükséges.
 
+## Integrációs szerepek a környezetből
+
+A fiókkezelő saját környezetében az `OIDC_CLIENT_ID` választja ki a CSUPOR,
+a `SAFETY_OIDC_CLIENT_ID` pedig az oktatórendszer már regisztrált kliensét.
+A kapcsolódó alkalmazások ugyanilyen nevű változóival egyező, egymástól eltérő
+értékek szükségesek. Egyiknek sincs kódba rögzített alapértéke. Az alábbi
+parancsok kliensnevei példák; mindig a telepítéshez választott azonosítót használd.
+A központi fiókkezelő frissítése előtt ezeket a saját Run Time beállításaiban
+is add meg; a meglévő klienskulcsokat és regisztrált callbackeket tartsd meg.
+
 ## Másik rendszer csatlakoztatása
 
 Hozz létre új klienst külön titokkal és az adott rendszer pontos callback

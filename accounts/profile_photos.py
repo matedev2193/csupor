@@ -19,6 +19,7 @@ from sqlalchemy.orm import undefer
 from werkzeug.exceptions import RequestEntityTooLarge
 
 from .models import Account, Client, Membership, db
+from .integration_config import require_integration_client
 from .photo_models import AccountPhoto as ProfilePhoto, AccountPhotoSource as ProfilePhotoSource
 from .security import current_account, require_csrf
 from .views import authenticated
@@ -346,9 +347,10 @@ def show_photo():
 
 def _require_csupor_token():
     # The existing OAuth validator checks expiry, account version, active client
-    # and membership. Only the fixed CSUPOR client may exchange this private
+    # and membership. Only the configured CSUPOR client may exchange this private
     # cache; an account's safety bearer grants no access to HR profile material.
-    if (current_token.client_id != 'csupor'
+    client_id = require_integration_client('csupor')
+    if (current_token.client_id != client_id
             or not request.headers.get('Authorization', '').lower().startswith('bearer ')):
         abort(403)
     return current_token.account_subject
@@ -396,6 +398,7 @@ def register_photo_api(bp, protect):
     @protect('profile')
     def import_profile_photo():
         subject = _require_csupor_token()
+        client_id = require_integration_client('csupor')
         photo = db.session.get(ProfilePhoto, subject)
         if photo is not None:
             return _private_json({'sub': subject, 'version': photo.version})
@@ -427,7 +430,7 @@ def register_photo_api(bp, protect):
             Membership, Membership.account_subject == Account.subject,
         ).join(Client, Client.client_id == Membership.client_id).where(
             Account.subject == subject, Account.active.is_(True),
-            Account.version == current_token.version, Client.client_id == 'csupor',
+            Account.version == current_token.version, Client.client_id == client_id,
             Client.active.is_(True),
         ).with_for_update()).scalar_one_or_none()
         if current_token.is_expired():

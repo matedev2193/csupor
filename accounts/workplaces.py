@@ -14,6 +14,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from .models import Client, db
 from .security import throttle
+from .integration_config import require_integration_client
 
 
 class WorkplaceCatalogue(db.Model):
@@ -69,11 +70,12 @@ def catalogue_response(payload):
 def register_workplace_api(bp, protect):
     @bp.post('/api/csupor/workplaces')
     def publish_workplaces():
+        client_id = require_integration_client('csupor')
         if not throttle('workplace-publish', request.remote_addr or '', limit=120, window=60):
             return jsonify(error='temporarily_unavailable'), 429
         auth = request.authorization
-        client = db.session.get(Client, 'csupor')
-        if (auth is None or auth.type != 'basic' or auth.username != 'csupor'
+        client = db.session.get(Client, client_id)
+        if (auth is None or auth.type != 'basic' or auth.username != client_id
                 or client is None or not client.check_client_secret(auth.password)):
             response = jsonify(error='invalid_client')
             response.status_code = 401
@@ -94,7 +96,7 @@ def register_workplace_api(bp, protect):
         try:
             # Recheck the client under a current locking read after parsing.
             permitted = db.session.execute(select(Client.client_id).where(
-                Client.client_id == 'csupor', Client.active.is_(True),
+                Client.client_id == client_id, Client.active.is_(True),
                 Client.secret_hash == observed_hash,
             ).with_for_update()).scalar_one_or_none()
             if permitted is None:
@@ -137,7 +139,8 @@ def register_workplace_api(bp, protect):
     @bp.get('/api/workplaces')
     @protect('openid')
     def read_workplaces():
-        if (current_token.client_id not in {'munkavedelem', 'tuzesmunkavedelem'}
+        client_id = require_integration_client('safety')
+        if (current_token.client_id != client_id
                 or 'profile' not in current_token.scope.split()):
             abort(403)
         saved = db.session.get(WorkplaceCatalogue, 1)
