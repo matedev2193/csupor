@@ -219,7 +219,9 @@ def init_provider(app):
 
     from .profile import register_profile_api
     from .profile_photos import register_photo_api
+    from .workplaces import register_workplace_api
     register_profile_api(bp, protect)
     register_photo_api(bp, protect)
+    register_workplace_api(bp, protect)
     app.register_blueprint(bp)
     app.extensions['accounts_oauth'] = server

@@ -69,7 +69,7 @@ for _parent, _children in {
     "qualification_reports.index": ("qualification_reports.employees", "qualification_reports.employee"),
     "manage_dependents": ("add_dependent", "edit_dependent"),
     "add_qualification": ("qualifications.index", "edit_qualification", "professional_exam"),
-    "qualifications.manage": ("qualifications.new", "qualifications.edit"),
+    "qualifications.manage": ("qualifications.new", "qualifications.edit", "qualifications.delete"),
     "manage_contracts": ("select_contract_employee", "create_contract", "edit_contract"),
     "manage_legal_entities": ("create_legal_entity", "edit_legal_entity"),
     "manage_places_of_work": ("create_place_of_work", "edit_place_of_work"),

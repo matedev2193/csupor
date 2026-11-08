@@ -131,6 +131,10 @@ def create_app() -> Flask:
 
     init_page_access(app)
 
+    from .shared_workplaces import init_shared_workplaces
+
+    init_shared_workplaces(app)
+
     with app.app_context():
         from .bootstrap import initialise_database
 

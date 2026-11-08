@@ -60,8 +60,10 @@ változatlan marad. A központi szolgáltatásé `ACCOUNTS_DATABASE_URL`.
    ACCOUNTS_ALLOW_HTTP=false
    ```
 
-   A jelszó-visszaállításhoz itt is be kell állítani a saját SMTP-változókat
-   (`ACCOUNTS_SMTP_*`). A CSUPOR-ban tárolt SMTP-beállításokat a külön
+   A jelszó-visszaállításhoz a központi adminfelület
+   **Fiókrendszer e-mail-beállításai** oldalán állítható be a levélküldés;
+   a saját SMTP-változók (`ACCOUNTS_SMTP_*`) továbbra is támogatottak.
+   A CSUPOR-ban tárolt SMTP-beállításokat a külön
    szolgáltatás nem olvassa. A közös fiókhoz tartozó levelek innen indulnak,
    a személyügyi értesítések továbbra is a CSUPOR-ból.
 

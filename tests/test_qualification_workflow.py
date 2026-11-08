@@ -10,13 +10,15 @@ from unittest.mock import patch
 from flask import g
 from flask_babel import force_locale
 from PIL import Image
+from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.datastructures import FileStorage, MultiDict
 
 from app import create_app, db
-from app.models import User, UserPrivilege, UserProfile
+from app.models import EducationalQualification, User, UserPrivilege, UserProfile
 from app.page_access import invalidate_access_cache
 from app.page_access_models import PageRolePermission
-from app.qualification_models import QualificationDocument, QualificationRecord
+from app.qualification_migration import migrate_legacy_qualifications
+from app.qualification_models import QualificationDocument, QualificationLegacyDeletion, QualificationRecord
 from app.qualifications import MAX_UPLOAD_BYTES, QualificationValidationError, parse_metadata, validate_document
 
 
@@ -329,6 +331,129 @@ class QualificationWorkflowTests(unittest.TestCase):
         self.assertNotIn(other.qualification_name, filtered)
         self.assertEqual(self.client.get("/qualifications/manage?status=bogus").status_code, 400)
         self.assertEqual(self.client.get("/qualifications/manage?user_id=bogus").status_code, 400)
+
+    def test_delete_confirmation_is_read_only_and_shows_selected_record(self):
+        self.upload()
+        record = QualificationRecord.query.one()
+        self.login("hr")
+        url = f"/qualifications/manage/{record.id}/delete"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        html = response.get_data(as_text=True)
+        self.assertIn("Alpha Employee", html)
+        self.assertIn("Diploma.pdf", html)
+        self.assertIn('name="csrf_token"', html)
+        self.assertIn('name="revision"', html)
+        self.assertIn('value="delete"', html)
+        self.assertIn("This cannot be undone.", html)
+        self.assertEqual(QualificationRecord.query.count(), 1)
+        self.assertEqual(QualificationDocument.query.count(), 1)
+        self.assertIn(url, self.client.get("/qualifications/manage").get_data(as_text=True))
+
+    def test_hr_and_director_can_delete_selected_records_and_owned_documents(self):
+        other = self.seed(user="other", processed=True)
+        other.documents.append(QualificationDocument(filename="other.pdf", mime_type="application/pdf",
+                                                      size_bytes=len(PDF), data=PDF))
+        db.session.commit()
+        other_document_id = other.documents[0].id
+        for role, processed in (("hr", False), ("ceo", True)):
+            with self.subTest(role=role, processed=processed):
+                record = self.seed(processed=processed)
+                record.documents.append(QualificationDocument(filename="selected.pdf", mime_type="application/pdf",
+                                                               size_bytes=len(PDF), data=PDF))
+                db.session.commit()
+                record_id, document_id = record.id, record.documents[0].id
+                self.login(role)
+                response = self.client.post(f"/qualifications/manage/{record_id}/delete", data={
+                    "csrf_token": "test-token", "revision": str(record.revision), "confirmation": "delete",
+                })
+                self.assertEqual(response.status_code, 302)
+                self.assertIsNone(db.session.get(QualificationRecord, record_id))
+                self.assertIsNone(db.session.get(QualificationDocument, document_id))
+                self.assertIsNotNone(db.session.get(QualificationRecord, other.id))
+                self.assertEqual(db.session.get(QualificationDocument, other_document_id).data, PDF)
+        self.assertEqual(QualificationLegacyDeletion.query.count(), 0)
+
+    def test_delete_requires_processing_role_and_page_access(self):
+        record = self.seed()
+        url = f"/qualifications/manage/{record.id}/delete"
+        data = {"csrf_token": "test-token", "revision": "1", "confirmation": "delete"}
+        for role in ("employee", "other", "developer"):
+            self.login(role)
+            self.assertEqual(self.client.get(url).status_code, 403)
+            self.assertEqual(self.client.post(url, data=data).status_code, 403)
+        self.login("hr")
+        self.grant("qualifications.manage", "hr", False)
+        self.assertEqual(self.client.post(url, data=data).status_code, 403)
+        self.assertEqual(QualificationRecord.query.count(), 1)
+
+    def test_delete_requires_csrf_explicit_confirmation_and_single_revision(self):
+        record = self.seed()
+        self.login("hr")
+        url = f"/qualifications/manage/{record.id}/delete"
+        valid = {"csrf_token": "test-token", "revision": "1", "confirmation": "delete"}
+        for invalid in ({"csrf_token": ""}, {"csrf_token": ["test-token", "test-token"]},
+                        {"confirmation": ""}, {"confirmation": ["delete", "delete"]},
+                        {"revision": ""}, {"revision": ["1", "1"]}, {"revision": "not-a-number"}):
+            with self.subTest(invalid=invalid):
+                self.assertEqual(self.client.post(url, data={**valid, **invalid}).status_code, 400)
+                self.assertIsNotNone(db.session.get(QualificationRecord, record.id))
+
+    def test_delete_rejects_stale_confirmation_and_missing_record(self):
+        record = self.seed()
+        self.login("hr")
+        record_id, old_revision = record.id, record.revision
+        self.assertEqual(self.save(record, qualification_name="Updated record").status_code, 302)
+        response = self.client.post(f"/qualifications/manage/{record_id}/delete", data={
+            "csrf_token": "test-token", "revision": str(old_revision), "confirmation": "delete",
+        })
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(db.session.get(QualificationRecord, record_id).qualification_name, "Updated record")
+        self.assertEqual(self.client.get("/qualifications/manage/999999/delete").status_code, 404)
+        self.assertEqual(self.client.post("/qualifications/manage/999999/delete", data={
+            "csrf_token": "test-token", "revision": "1", "confirmation": "delete",
+        }).status_code, 404)
+
+    def test_deleted_legacy_qualification_is_not_restored_on_restart(self):
+        legacy = EducationalQualification(user_id=self.users["employee"].id, level_or_type="BA",
+                                            qualification_name="Incorrect legacy record", institution_name="School",
+                                            degree_number="EDU-1", year_obtained=2020)
+        db.session.add(legacy)
+        db.session.commit()
+        legacy_id = legacy.id
+        migrate_legacy_qualifications(db.engine)
+        record = QualificationRecord.query.one()
+        self.login("hr")
+        self.assertEqual(self.client.post(f"/qualifications/manage/{record.id}/delete", data={
+            "csrf_token": "test-token", "revision": str(record.revision), "confirmation": "delete",
+        }).status_code, 302)
+        self.assertIsNotNone(db.session.get(EducationalQualification, legacy_id))
+        self.assertIsNotNone(db.session.get(QualificationLegacyDeletion, ("educational_qualifications", legacy_id)))
+        db.session.remove()
+        migrate_legacy_qualifications(db.engine)
+        self.assertEqual(QualificationRecord.query.count(), 0)
+
+    def test_failed_delete_rolls_back_record_documents_and_legacy_marker(self):
+        record = self.seed()
+        record.legacy_source, record.legacy_id = "educational_qualifications", 500
+        record.documents.append(QualificationDocument(filename="keep.pdf", mime_type="application/pdf",
+                                                      size_bytes=len(PDF), data=PDF))
+        db.session.commit()
+        record_id, document_id, revision = record.id, record.documents[0].id, record.revision
+        self.login("hr")
+        def fail_after_flush():
+            db.session.flush()
+            raise SQLAlchemyError("private database details")
+
+        with patch.object(db.session, "commit", side_effect=fail_after_flush):
+            response = self.client.post(f"/qualifications/manage/{record_id}/delete", data={
+                "csrf_token": "test-token", "revision": str(revision), "confirmation": "delete",
+            })
+        self.assertEqual(response.status_code, 503)
+        self.assertNotIn("private database details", response.get_data(as_text=True))
+        self.assertIsNotNone(db.session.get(QualificationRecord, record_id))
+        self.assertEqual(db.session.get(QualificationDocument, document_id).data, PDF)
+        self.assertEqual(QualificationLegacyDeletion.query.count(), 0)
 
     def test_validation_exact_date_implies_year_and_classification_parent_categories(self):
         values, errors = self.parse(MultiDict(self.form(

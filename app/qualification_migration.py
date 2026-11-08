@@ -3,7 +3,7 @@
 from sqlalchemy import JSON, and_, insert, literal, select
 
 from .models import EducationalQualification, ProfessionalExam
-from .qualification_models import QualificationRecord, utc_now
+from .qualification_models import QualificationLegacyDeletion, QualificationRecord, utc_now
 
 
 def migrate_legacy_qualifications(engine):
@@ -11,7 +11,8 @@ def migrate_legacy_qualifications(engine):
 
     Both imports share a transaction. The unique source/ID pair prevents a
     second import, and existing records are never updated: subsequent HR edits
-    therefore survive every restart. MySQL callers hold the bootstrap lock.
+    therefore survive every restart. Deletion markers keep intentionally removed
+    records out of subsequent imports. MySQL callers hold the bootstrap lock.
     A year-only record remains year-only, without guessing a day or category.
     """
     target = QualificationRecord.__table__
@@ -51,8 +52,12 @@ def migrate_legacy_qualifications(engine):
             # MySQL allows the INSERT target in the main SELECT's FROM clause,
             # but rejects it in a NOT EXISTS subquery (error 1093).
             imported = target.alias("imported")
+            deleted = QualificationLegacyDeletion.__table__
             pending = select(*values.values()).select_from(source.outerjoin(imported, and_(
                 imported.c.legacy_source == source_name,
                 imported.c.legacy_id == source.c.id,
-            ))).where(imported.c.id.is_(None))
+            )).outerjoin(deleted, and_(
+                deleted.c.legacy_source == source_name,
+                deleted.c.legacy_id == source.c.id,
+            ))).where(imported.c.id.is_(None), deleted.c.legacy_id.is_(None))
             connection.execute(insert(target).from_select(list(values), pending))

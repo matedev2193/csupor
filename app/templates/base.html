@@ -60,7 +60,7 @@
             {{ icon('briefcase', 'nav-group-icon') }}<span>{{ _('Management') }}</span>{{ icon('chevron', 'nav-group-chevron') }}
           </summary>
           <div class="nav-group-menu" id="management-menu" aria-labelledby="management-trigger">
-            {{ nav_item('manage_user_profiles', _('User profiles'), 'users', ['edit_user_profile']) }}
+            {{ nav_item('manage_user_profiles', 'Dolgozói nyilvántartás' if shared_accounts_enabled else _('User profiles'), 'users', ['edit_user_profile']) }}
             {{ nav_item('qualifications.manage', _('Qualification processing'), 'graduate', ['qualifications.edit', 'qualifications.new']) }}
             {{ nav_item('qualification_reports.index', _('Qualification reports'), 'graduate', ['qualification_reports.employees', 'qualification_reports.employee']) }}
             {{ nav_item('manage_contracts', _('Contracts'), 'briefcase', ['create_contract', 'edit_contract', 'select_contract_employee']) }}
@@ -85,7 +85,7 @@
           <div class="nav-group-menu" id="settings-menu" aria-labelledby="settings-trigger">
             {{ nav_item('manage_privileges', _('Privileges'), 'lock') }}
             {{ nav_item('page_access.settings', _('Page access'), 'lock') }}
-            {{ nav_item('mail_settings.settings', _('Email settings'), 'settings', ['mail_settings.initialise_key']) }}
+            {{ nav_item('mail_settings.settings', 'CSUPOR e-mail-beállításai' if shared_accounts_enabled else _('Email settings'), 'settings', ['mail_settings.initialise_key']) }}
             {% if accounts_transfer_available and current_user.privilege.value == 'developer' %}
             {{ nav_item('account_transfer.settings', 'Közös fiókok átállítása', 'lock') }}
             {% endif %}
@@ -94,7 +94,7 @@
         {% endif %}
       </nav>
       <div class="sidebar-footer">
-        {{ nav_item('change_password', _('Change password'), 'lock') }}
+        {% if shared_accounts_enabled %}<a class="nav-link" href="{{ shared_account_url }}">{{ icon('user') }}<span>Közös fiók és alkalmazások</span></a>{% else %}{{ nav_item('change_password', _('Change password'), 'lock') }}{% endif %}
         {% if shared_accounts_enabled %}
         <form class="sidebar-logout-form" action="{{ url_for('logout') }}" method="post">
           <input type="hidden" name="csrf_token" value="{{ shared_logout_csrf() }}">

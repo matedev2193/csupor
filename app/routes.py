@@ -2086,6 +2086,8 @@ def init_routes(app):
                 entity.om_id, entity.tax_number = om_id, tax_number
                 db.session.add(entity)
                 db.session.commit()
+                from .shared_workplaces import publish_workplaces
+                publish_workplaces(force=True)
                 flash(_("Legal entity updated.") if editing else _("Legal entity saved."), "success")
                 return redirect(url_for("manage_legal_entities"))
         return render_template(
@@ -2126,6 +2128,8 @@ def init_routes(app):
                 place.legal_entity_id, place.address = legal_entity_id, address
                 db.session.add(place)
                 db.session.commit()
+                from .shared_workplaces import publish_workplaces
+                publish_workplaces(force=True)
                 flash(_("Place of work updated.") if editing else _("Place of work saved."), "success")
                 return redirect(url_for("manage_places_of_work"))
         entities = LegalEntity.query.order_by(LegalEntity.name.asc()).all()

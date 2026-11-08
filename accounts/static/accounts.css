@@ -24,4 +24,6 @@ button[data-generate-secret],button[data-copy-input],button[data-copy-value]{dis
 button[data-generate-secret]:hover,button[data-copy-input]:hover,button[data-copy-value]:hover{background:#e8eee2;border-color:#9eafa0}
 [data-copy-status]{font-size:12px;line-height:1.5;color:var(--muted)}
 [data-copy-status]:empty{margin:0}
+.application-link{display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:44px;flex:1;font-weight:650}
+.application-link:hover{text-decoration:underline}
 @media(max-width:650px){.site-header{flex-wrap:wrap;row-gap:18px}.site-header nav{flex-wrap:wrap;gap:12px 18px;width:100%}.card fieldset{padding:14px 13px 17px}.card legend{font-size:15px}textarea,select{font-size:16px}}

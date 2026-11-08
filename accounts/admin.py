@@ -3,11 +3,12 @@ from functools import wraps
 from secrets import compare_digest
 import re
 from urllib.parse import urlsplit
+from uuid import uuid4
 
-from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, url_for
-from sqlalchemy import select, update
+from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, session, url_for
+from sqlalchemy import func, or_, select, update
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from .importing import ImportValidationError, MAX_TRANSFER_BYTES, apply_import, decrypt_transfer, validate_payload
 from .models import Account, AccessToken, AuthorizationCode, Client, Membership, db
@@ -299,6 +300,136 @@ def accounts():
     return render_template('admin_accounts.html', accounts=Account.query.order_by(Account.username).all(),
                            clients=Client.query.order_by(Client.name).all(),
                            memberships={(m.account_subject, m.client_id) for m in Membership.query.all()})
+
+
+def _lock_current_admin():
+    """Recheck authority under the same lock as administrative mutations."""
+    actor = current_account()
+    if actor is None:
+        abort(401)
+    valid = db.session.execute(select(Account.subject).join(
+        AccountAdmin, AccountAdmin.account_subject == Account.subject,
+    ).where(Account.subject == actor.subject, Account.active.is_(True),
+            Account.version == session.get('account_version')).with_for_update()).scalar_one_or_none()
+    if valid is None:
+        db.session.rollback()
+        abort(403)
+    return actor
+
+
+@admin.route('/admin/accounts/new', methods=['GET', 'POST'])
+@admin_required
+def account_new():
+    from .views import _email_valid, _password_valid, _username_valid
+    clients = Client.query.filter_by(active=True).order_by(Client.name).all()
+    error, status = None, 200
+    if request.method == 'POST':
+        actor = current_account()
+        if not throttle('admin-account-create', actor.subject, limit=30, window=900):
+            return render_template('admin_account_new.html', clients=clients,
+                                   error='Túl sok próbálkozás. Próbáld újra 15 perc múlva.'), 429
+        username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        chosen = set(request.form.getlist('client_ids'))
+        if not _username_valid(username):
+            error = 'A felhasználónév 1–50 betűt, számot, pontot, kötőjelet vagy aláhúzást tartalmazhat.'
+        elif not _email_valid(email):
+            error = 'Adj meg egy érvényes, legfeljebb 120 karakteres e-mail-címet.'
+        elif not _password_valid(password):
+            error = 'A jelszó hossza 12–1024 karakter lehet.'
+        elif password != request.form.get('password_confirm', ''):
+            error = 'A két jelszó nem egyezik.'
+        elif not chosen <= {client.client_id for client in clients}:
+            error = 'Csak aktív, regisztrált alkalmazáshoz adhatsz hozzáférést.'
+        elif db.session.execute(select(Account.subject).where(or_(
+            func.lower(Account.email) == email,
+            func.lower(Account.username) == username.lower(),
+            func.lower(Account.username) == email,
+        ))).first():
+            error = 'Ez a felhasználónév vagy e-mail-cím már használatban van.'
+        else:
+            password_hash = generate_password_hash(password)
+            try:
+                _lock_current_admin()
+                # Recheck applications after the password KDF: a concurrent
+                # admin may have paused an application while the form saved.
+                available = set(db.session.execute(select(Client.client_id).where(
+                    Client.client_id.in_(chosen), Client.active.is_(True),
+                ).with_for_update()).scalars()) if chosen else set()
+                if available != chosen:
+                    db.session.rollback()
+                    error = 'Az alkalmazások állapota közben változott. Frissítsd az oldalt.'
+                    status = 409
+                else:
+                    account = Account(subject=str(uuid4()), username=username, email=email,
+                                      password_hash=password_hash, active=True, version=1,
+                                      email_verified=False)
+                    db.session.add(account)
+                    db.session.flush()
+                    for client_id in chosen:
+                        db.session.add(Membership(account_subject=account.subject, client_id=client_id))
+                    db.session.commit()
+                    flash('Az új közös fiókot létrehoztuk.', 'success')
+                    return redirect(url_for('account_admin.accounts'))
+            except IntegrityError:
+                db.session.rollback()
+                error = 'Ez a felhasználónév vagy e-mail-cím már használatban van.'
+                status = 409
+            except SQLAlchemyError:
+                db.session.rollback()
+                error = 'A fiók létrehozása nem sikerült. Nem mentettünk új fiókot.'
+                status = 503
+        if error and status == 200:
+            status = 400
+    return render_template('admin_account_new.html', clients=clients, error=error), status
+
+
+@admin.post('/admin/accounts/<subject>/status')
+@admin_required
+def account_status(subject):
+    actor = current_account()
+    active = request.form.get('active')
+    try:
+        revision = int(request.form.get('account_version', ''))
+    except (ValueError, TypeError):
+        abort(400, description='Frissítsd a fiókok listáját, majd próbáld újra.')
+    if active not in {'true', 'false'} or revision < 1:
+        abort(400, description='Érvénytelen fiókállapot.')
+    enabled = active == 'true'
+    if actor.subject == subject and not enabled:
+        abort(400, description='A saját fiókodat nem tilthatod le.')
+    try:
+        # All status changes lock administrators in one consistent order,
+        # preventing two simultaneous requests from removing the final admin.
+        administrators = db.session.execute(select(Account.subject).join(
+            AccountAdmin, AccountAdmin.account_subject == Account.subject,
+        ).where(Account.active.is_(True)).order_by(Account.subject).with_for_update()).scalars().all()
+        _lock_current_admin()
+        target = db.session.execute(select(Account).where(Account.subject == subject)
+                                    .with_for_update().execution_options(populate_existing=True)).scalar_one_or_none()
+        if target is None:
+            abort(404)
+        if target.version != revision:
+            abort(409, description='A fiók közben megváltozott. Frissítsd a listát.')
+        if not enabled and subject in administrators and len(administrators) <= 1:
+            abort(400, description='Az utolsó aktív központi adminisztrátor nem tiltható le.')
+        if target.active != enabled:
+            changed = db.session.execute(update(Account).where(
+                Account.subject == subject, Account.version == revision,
+            ).values(active=enabled, version=Account.version + 1)
+              .execution_options(synchronize_session=False))
+            if changed.rowcount != 1:
+                db.session.rollback()
+                abort(409, description='A fiók közben megváltozott. Frissítsd a listát.')
+            db.session.execute(db.delete(AccessToken).where(AccessToken.account_subject == subject))
+            db.session.execute(db.delete(AuthorizationCode).where(AuthorizationCode.account_subject == subject))
+        db.session.commit()
+    except SQLAlchemyError:
+        db.session.rollback()
+        abort(503, description='A fiók állapotát nem sikerült menteni. Próbáld újra később.')
+    flash('A fiókot újraaktiváltuk.' if enabled else 'A fiókot letiltottuk; az adatai megmaradtak.', 'success')
+    return redirect(url_for('account_admin.accounts'))
 
 
 @admin.post('/admin/accounts/<subject>/access')

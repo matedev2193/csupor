@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Fiók e-mail-beállítások · Micimackó-fiók{% endblock %}
+{% block content %}
+<span class="eyebrow">Központi adminisztráció</span>
+<h2 id="page-title">Fiók e-mail-beállítások</h2>
+<p class="lead">A közös fiók jelszó-visszaállító leveleinek küldését itt állíthatod be.</p>
+<p>A CSUPOR munkaügyi értesítéseinek levélküldése külön beállítás marad.</p>
+<p class="help">Aktív beállítás: {{ 'az itt mentett adatok' if using_database else 'az alkalmazás környezeti beállításai' }}.</p>
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="revision" value="{{ revision }}">
+  <label for="host">SMTP-kiszolgáló</label>
+  <input id="host" name="host" maxlength="255" value="{{ values.host }}" required>
+  <label for="port">Port</label>
+  <input id="port" name="port" type="number" min="1" max="65535" value="{{ values.port }}" required>
+  <label for="security">Kapcsolat titkosítása</label>
+  <select id="security" name="security" required>
+    {% if values.security == 'plain' %}<option value="" selected>Válassz titkosított kapcsolatot az új beállításhoz</option>{% endif %}
+    <option value="starttls" {% if values.security == 'starttls' %}selected{% endif %}>STARTTLS (általában 587)</option>
+    <option value="ssl" {% if values.security == 'ssl' %}selected{% endif %}>TLS (általában 465)</option>
+  </select>
+  <label for="sender">Feladói e-mail-cím</label>
+  <input id="sender" name="sender" type="email" maxlength="120" value="{{ values.sender }}" required>
+  <label for="username">SMTP-felhasználónév</label>
+  <input id="username" name="username" maxlength="255" autocomplete="off" value="{{ values.username }}">
+  <label for="password">SMTP-jelszó</label>
+  <input id="password" name="password" type="password" maxlength="4096" autocomplete="new-password" value="">
+  <p class="help">{{ 'Van mentett jelszó. Üresen hagyva megmarad.' if password_saved else 'Még nincs mentett jelszó.' }}</p>
+  <label><input type="checkbox" name="clear_password" value="1"> Mentett SMTP-jelszó törlése</label>
+  <button type="submit" name="action" value="save">Levélküldési beállítások mentése</button>
+</form>
+{% if using_database %}
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="revision" value="{{ revision }}">
+  <button type="submit" name="action" value="use_environment">Visszatérés a környezeti beállításokhoz</button>
+</form>
+{% endif %}
+<p class="form-footer"><a href="{{ url_for('account_admin.index') }}">Vissza a fiókkezeléshez</a></p>
+{% endblock %}

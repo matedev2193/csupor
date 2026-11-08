@@ -23,6 +23,21 @@ a felhasználó következő CSUPOR-látogatásakor kerül át a közös fiókba;
 a helyi munkaügyi rekordok megmaradnak. Részletek:
 [központi profil](central-profile.md).
 
+### Már működő rendszer frissítése: fiókkezelés és telephelyek
+
+A mostani bővítéshez sem kell új kulcs, környezeti változó vagy konzolparancs.
+Az elfogadott változatból először a **fiókkezelőt**, majd a **CSUPOR-t**, végül
+a külön repóból a **tűz- és munkavédelmi alkalmazást** frissítsd. Az új
+táblák induláskor automatikusan létrejönnek. A korábbi fiók-setupot és
+fiókimportot nem kell megismételni.
+
+Nyisd meg bejelentkezve a frissített CSUPOR-t: ez elküldi a munkahelyek
+nevét és címét a közös fiókkezelőnek. A munkavédelmi alkalmazásban ezután
+**Telephelyek → Átvétel / frissítés a CSUPOR-ból**. Az előnézetben a már
+létező helyi telephelyeket hozzárendelheted a megfelelő CSUPOR-munkahelyhez,
+majd jóváhagyhatod az átvételt. A tananyagok és teljesítések megmaradnak.
+Részletek: [telephelykatalógus](shared-workplaces.md).
+
 ## 1. Az új fiókalkalmazás telepítése
 
 A fejlesztési PR célága `develop`. Az alábbi éles lépéseket az elfogadott
@@ -272,9 +287,12 @@ A telephelyek és tananyagok továbbra is az oktatórendszerhez tartoznak.
 
 ## Levelezés és további üzemeltetés
 
-A közös jelszó-visszaállításhoz töltsd ki a fiókalkalmazás `ACCOUNTS_SMTP_*`
-változóit is. A CSUPOR levélküldése továbbra is a személyügyi értesítéseket
-kezeli. Az első sikeres beállítás után az `ACCOUNTS_SETUP_TOKEN` törölhető;
+A közös jelszó-visszaállítás levélküldését a fiókkezelőben a
+**Fiókok és alkalmazások → Fiókrendszer e-mail-beállításai** oldalon
+állíthatod be. Az eddigi `ACCOUNTS_SMTP_*` környezeti változók is működnek,
+amíg a felületen nem mentesz saját beállítást; a környezeti beállításokhoz
+ugyanott vissza lehet térni. A CSUPOR levélküldése továbbra is a személyügyi
+értesítéseket kezeli. Az első sikeres beállítás után az `ACCOUNTS_SETUP_TOKEN` törölhető;
 ez nem nyitja újra az adminbeállítást.
 
 Az issuer az állandó fiókazonosság része; később ne nevezd át egyszerű

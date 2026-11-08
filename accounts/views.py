@@ -25,7 +25,9 @@ _RESET_REPLY = "Ha a megadott e-mail-címhez aktív fiók tartozik, elküldtük 
 
 @web.app_context_processor
 def account_template_context():
-    return {"account": current_account(), "csrf_token": csrf_token}
+    from .application_links import application_url
+    return {"account": current_account(), "csrf_token": csrf_token,
+            "application_url": application_url}
 
 
 def authenticated(view):

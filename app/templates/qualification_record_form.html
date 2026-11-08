@@ -71,6 +71,7 @@
     </section>
     <div class="card qualification-editor-actions"><div><strong>{{ _('Processing status') }}</strong><p class="help-text">{{ _('Changes keep this record in Processed status.') if record and record.status == 'processed' else _('Saving a draft keeps the record in Uploaded status. Marking it as processed makes its recorded details available in reports.') }}</p></div><div class="button-row">{% if not record or record.status != 'processed' %}<button type="submit" name="action" value="save_draft" class="button button-secondary">{{ _('Save draft') }}</button>{% endif %}<button type="submit" name="action" value="process">{{ _('Save changes') if record and record.status == 'processed' else _('Save as processed') }}</button></div></div>
   </form>
+  {% if record %}<div><a class="button button-secondary qualification-delete-link" href="{{ url_for('qualifications.delete', record_id=record.id) }}">{{ _('Delete qualification') }}</a></div>{% endif %}
 </div>
 <script src="{{ url_for('static', filename='js/qualification_record_form.js') }}" defer></script>
 {% endblock %}

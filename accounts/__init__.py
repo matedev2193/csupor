@@ -142,6 +142,8 @@ class AccountRequest(Request):
             return 5 * 1024 * 1024 + 64 * 1024
         if self.endpoint == 'oidc.import_profile_photo':
             return 14 * 1024 * 1024
+        if self.endpoint == 'oidc.publish_workplaces':
+            return 2 * 1024 * 1024
         return super().max_content_length
 
 
@@ -195,6 +197,8 @@ def create_app(test_config=None):
     from .admin import admin
     from .profile import profile
     from .profile_photos import profile_photos
+    from .mail_settings import mail_settings
+    from . import workplaces
     from .bootstrap import key_id, prepare_database
     db.init_app(app)
     if app.config.get('ACCOUNTS_DATABASE_REQUIRE_TLS'):
@@ -229,6 +233,7 @@ def create_app(test_config=None):
     app.register_blueprint(admin)
     app.register_blueprint(profile)
     app.register_blueprint(profile_photos)
+    app.register_blueprint(mail_settings)
     from .cli import register_cli
     register_cli(app)
 

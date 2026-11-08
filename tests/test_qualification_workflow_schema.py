@@ -245,9 +245,9 @@ class QualificationWorkflowMySQLSchemaTests(unittest.TestCase):
                     for key, value in compiled.params.items()
                 }
                 converted = [converter.to_mysql(value) for value in parameters.values()]
-                # Both the inserted legacy_source and the duplicate guard must
-                # keep their original value while becoming driver-compatible.
-                self.assertEqual(converted.count(source_name.encode("utf-8")), 2)
+                # The inserted source, duplicate guard and deletion guard all
+                # retain their value while becoming driver-compatible.
+                self.assertEqual(converted.count(source_name.encode("utf-8")), 3)
 
     def test_import_avoids_mysql_target_table_subquery_restriction(self):
         # MySQL permits self INSERT ... SELECT joins, but rejects selecting the
@@ -260,12 +260,15 @@ class QualificationWorkflowMySQLSchemaTests(unittest.TestCase):
             sql = str(call.args[0].compile(dialect=mysql.dialect()))
             self.assertIn("LEFT OUTER JOIN qualification_records AS imported ON", sql)
             self.assertIn("WHERE imported.id IS NULL", sql)
+            self.assertIn("qualification_legacy_deletions.legacy_id IS NULL", sql)
             self.assertNotIn("EXISTS", sql)
         manual = (Path(__file__).resolve().parents[1] / "sql" / "migrations" /
                   "2026-10-07-unify-qualification-documents.sql").read_text()
         imports = manual.split("START TRANSACTION;", 1)[1]
         self.assertEqual(imports.count("LEFT JOIN qualification_records r"), 2)
         self.assertEqual(imports.count("WHERE r.id IS NULL"), 2)
+        self.assertEqual(imports.count("LEFT JOIN qualification_legacy_deletions d"), 2)
+        self.assertEqual(imports.count("AND d.legacy_id IS NULL"), 2)
         self.assertNotIn("EXISTS", imports)
 
     def test_signed_unsigned_and_bigint_user_foreign_keys_match_and_blobs_are_durable(self):

@@ -13,6 +13,14 @@ Managers can save incomplete work as a draft, mark a validated record as process
 and subsequently correct the data. Concurrent edits are checked using a revision
 number. Managers can also record historical qualifications without a document.
 
+The **Delete** action on the processing list and editor opens a confirmation
+showing the employee, qualification and attached documents. Confirmation removes
+that record and its documents together. A stale confirmation cannot delete a
+record changed in another window. The action requires the same processing-page
+permission as editing. Deletion markers prevent archived legacy records from
+reappearing during the next automatic or manual import; startup creates the
+marker table without a console command.
+
 ### Teacher assessments
 
 The **Teacher assessment** record type stores assessment documents such as
