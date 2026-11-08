@@ -3,7 +3,7 @@ from functools import wraps
 from secrets import compare_digest, token_urlsafe
 from urllib.parse import urlsplit
 
-from flask import abort, current_app, flash, redirect, render_template, request, session, url_for
+from flask import abort, current_app, flash, g, redirect, render_template, request, session, url_for
 from flask_babel import _
 from flask_login import current_user, login_required, login_user, logout_user
 from sqlalchemy.orm import joinedload
@@ -1718,6 +1718,12 @@ def init_routes(app):
     @app.route("/profile", methods=["GET", "POST"])
     @login_required
     def edit_profile():
+        if oidc_enabled():
+            if request.method == "POST":
+                abort(403, description="A személyes adataidat a közös fiókban szerkesztheted.")
+            if not getattr(g, "shared_profile_ready", False):
+                return render_template("shared_auth_error.html", message="A közös profilszerkesztő jelenleg nem érhető el. A meglévő adataid megmaradtak. Próbáld újra később."), 503
+            return redirect(provider_url("/profile"))
         profile = current_user.profile or UserProfile(user_id=current_user.id)
         if request.method == "POST":
             if oidc_enabled():
@@ -1936,6 +1942,17 @@ def init_routes(app):
             return redirect(url_for("manage_user_profiles"))
 
         profile = target_user.profile or UserProfile(user_id=target_user.id)
+        if oidc_enabled():
+            if request.method == "POST":
+                abort(403, description="A személyes adatokat a közös fiókkezelőben lehet módosítani.")
+            from .shared_auth_models import ExternalIdentity
+            identity = ExternalIdentity.query.filter_by(
+                user_id=target_user.id, issuer=current_app.config["OIDC_ISSUER"], disabled=False,
+            ).first()
+            from urllib.parse import quote
+            account_profile_url = provider_url("/admin/accounts/" + quote(identity.subject, safe="") + "/profile") if identity else None
+            return render_template("profile_readonly.html", target_user=target_user, profile=profile,
+                                   account_profile_url=account_profile_url)
         if request.method == "POST":
             errors = _save_profile_from_form(profile)
             if errors:

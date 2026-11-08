@@ -138,6 +138,10 @@ class AccountRequest(Request):
         # before_request assignment would not reliably cover multipart parsing.
         if self.endpoint == 'account_admin.setup':
             return 30 * 1024 * 1024
+        if self.endpoint == 'account_photos.upload_photo':
+            return 5 * 1024 * 1024 + 64 * 1024
+        if self.endpoint == 'oidc.import_profile_photo':
+            return 14 * 1024 * 1024
         return super().max_content_length
 
 
@@ -189,6 +193,8 @@ def create_app(test_config=None):
     app.config['OAUTH2_TOKEN_EXPIRES_IN'] = {'authorization_code': app.config['ACCOUNTS_TOKEN_TTL']}
     # Import every independent account model before preparing fresh schemas.
     from .admin import admin
+    from .profile import profile
+    from .profile_photos import profile_photos
     from .bootstrap import key_id, prepare_database
     db.init_app(app)
     if app.config.get('ACCOUNTS_DATABASE_REQUIRE_TLS'):
@@ -221,6 +227,8 @@ def create_app(test_config=None):
     from .views import web
     app.register_blueprint(web)
     app.register_blueprint(admin)
+    app.register_blueprint(profile)
+    app.register_blueprint(profile_photos)
     from .cli import register_cli
     register_cli(app)
 
@@ -245,6 +253,10 @@ def create_app(test_config=None):
         response.headers['X-Content-Type-Options'] = 'nosniff'
         response.headers['X-Frame-Options'] = 'DENY'
         response.headers['Content-Security-Policy'] = "default-src 'self'; style-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'"
+        if request.endpoint == 'account_profile.edit':
+            # The crop editor previews the user's local image through an object
+            # URL. No external images or scripts are permitted.
+            response.headers['Content-Security-Policy'] += "; img-src 'self' blob:; script-src 'self'; connect-src 'self'"
         if app.config['SESSION_COOKIE_SECURE']:
             response.headers['Strict-Transport-Security'] = 'max-age=31536000'
         return response
