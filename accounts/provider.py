@@ -2,6 +2,7 @@
 import hashlib
 import re
 import time
+import unicodedata
 
 from authlib.integrations.flask_oauth2 import AuthorizationServer, ResourceProtector, current_token
 from authlib.oauth2.rfc6749 import grants, OAuth2Error, InvalidRequestError
@@ -12,6 +13,7 @@ from flask import Blueprint, abort, current_app, jsonify, redirect, request, ses
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from .models import Account, AccessToken, AuthorizationCode, Client, Membership, db
+from .profile_models import AccountProfile
 from .security import current_account, throttle
 
 
@@ -23,6 +25,12 @@ def user_info(account, scope):
     info = UserInfo(sub=account.subject)
     if 'profile' in scope.split():
         info['preferred_username'] = account.username
+        profile = db.session.get(AccountProfile, account.subject)
+        name = profile.fields.get('full_name') if profile and isinstance(profile.fields, dict) else None
+        if (isinstance(name, str) and 1 <= len(name.strip()) <= 120
+                and not any(unicodedata.category(char).startswith('C') for char in name)):
+            # Share only the display name, never the private personnel profile.
+            info['name'] = name.strip()
     if 'email' in scope.split():
         info.update(email=account.email, email_verified=account.email_verified)
     return info
@@ -148,7 +156,7 @@ def init_provider(app):
             'code_challenge_methods_supported': ['S256'],
             'scopes_supported': ['openid', 'profile', 'email'],
             'claims_supported': ['sub', 'iss', 'aud', 'iat', 'exp', 'auth_time', 'nonce',
-                                 'preferred_username', 'email', 'email_verified'],
+                                 'preferred_username', 'name', 'email', 'email_verified'],
         })
 
     @bp.get('/jwks')

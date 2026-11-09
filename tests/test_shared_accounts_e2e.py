@@ -239,6 +239,7 @@ class SharedAccountsEndToEndTests(unittest.TestCase):
                             headers={"Authorization": "Bearer " + token.json()["access_token"]})
         self.assertEqual(info.status_code, 200, info.text)
         self.assertEqual(info.json()["sub"], self.subject)
+        self.assertEqual(info.json()["name"], "Meglévő Munkatárs")
         self.assertEqual(info.json()["email"], "worker@example.invalid")
         self.assertFalse(info.json().get("email_verified", False))
         for private_field in ("password_hash", "privilege", "contracts", "full_name", "tax_number"):
