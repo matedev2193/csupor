@@ -36,8 +36,12 @@ A CSUPOR a már összekapcsolt munkatársak központi profilját külön,
 legfeljebb 100 azonosítót fogadó olvasási végponton frissítheti a
 meglévő saját kliensazonosítójával és titkával. Ez nem enged írást.
 
-A személyes mezők, TAJ-, adó-, bankszámla- és egészségügyi adatok nem
-kerülnek az OIDC tokenbe vagy az általános `/userinfo` válaszába.
+A teljes név a szabványos OIDC `name` mezőben elérhető a `profile` scope-ot
+kérő alkalmazásoknak. A név forrása a központi profil; a `/userinfo` mindig
+az aktuális értéket adja vissza. Üres vagy hibás névnél ez a mező kimarad,
+a felhasználónév és az állandó fiókazonosító változatlan marad.
+A további személyes mezők, TAJ-, adó-, bankszámla- és egészségügyi adatok
+nem kerülnek az OIDC tokenbe vagy az általános `/userinfo` válaszába.
 A profil API kizárólag a fiókkezelő `OIDC_CLIENT_ID` környezeti változójával
 kijelölt kliens számára érhető el; a tűz- és
 munkavédelmi alkalmazás nem kapja meg ezeket az adatokat.

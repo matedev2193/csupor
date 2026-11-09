@@ -49,13 +49,14 @@ def test_factory_registers_new_profile_tables_before_bootstrap(tmp_path):
         db.engine.dispose()
 
 
-def test_profile_data_never_enters_generic_oidc_claims(app):
+def test_only_display_name_from_profile_enters_generic_oidc_claims(app):
     imported(app, full_name='Meglévő dolgozó', social_security_number='123456789',
              bank_account_number='12345678-12345678', disability='Személyes adat')
     browser = app.test_client()
     for name in ('csupor', 'safety'):
         response = browser.get('/userinfo', base_url=ISSUER, headers=bearer(TOKENS[name]))
         assert response.status_code == 200
+        assert response.json['name'] == 'Meglévő dolgozó'
         assert not set(FIELDS).intersection(response.json)
         assert '123456789' not in response.get_data(as_text=True)
 
