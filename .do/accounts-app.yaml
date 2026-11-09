@@ -41,6 +41,14 @@ services:
         # First deploy starts the domain-setup page. After adding the domain,
         # set its permanent HTTPS origin here, then deploy the account service.
         value: ""
+      # Copy each exact registered ID from the corresponding app before deploy.
+      # App environments are separate; no default identity is trusted.
+      - key: OIDC_CLIENT_ID
+        scope: RUN_TIME
+        value: ""
+      - key: SAFETY_OIDC_CLIENT_ID
+        scope: RUN_TIME
+        value: ""
       - key: ACCOUNTS_PROXY_HOPS
         scope: RUN_TIME
         value: "1"

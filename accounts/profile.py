@@ -15,6 +15,7 @@ from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 
 from .admin import AccountAdmin, admin_required
+from .integration_config import integration_client_id, integration_status, require_integration_client
 from .models import Account, AccessToken, Client, Membership, db
 from .profile_models import AccountProfile
 from .security import current_account, require_csrf, throttle
@@ -86,7 +87,10 @@ def validate_fields(values, *, complete=False):
 def csupor_profile_url():
     """Use only an active, administrator-registered callback origin."""
     from . import allowed_url
-    client = db.session.get(Client, 'csupor')
+    client_id = integration_client_id('csupor')
+    if client_id is None:
+        return None
+    client = db.session.get(Client, client_id)
     if client and client.active:
         for callback in client.redirect_uris or []:
             if allowed_url(callback, current_app.config.get('ACCOUNTS_ALLOW_HTTP', False)):
@@ -95,9 +99,38 @@ def csupor_profile_url():
     return None
 
 
-def _needs_import(subject, saved):
-    return (db.session.get(Membership, (subject, 'csupor')) is not None
-            and (saved is None or not saved.legacy_imported))
+def _import_configuration_problem(saved, *, lock=False):
+    """Protect unimported profiles when their configured source is unavailable."""
+    if saved is not None and saved.legacy_imported:
+        return None
+    status = integration_status('csupor')
+    if status['code']:
+        return status
+    if lock:
+        client = db.session.execute(select(Client).where(Client.client_id == status['client_id'])
+                                    .with_for_update().execution_options(populate_existing=True)).scalar_one_or_none()
+    else:
+        client = db.session.get(Client, status['client_id'])
+    if client is None:
+        return {**status, 'code': 'ACCOUNTS_INTEGRATION_CSUPOR_UNREGISTERED',
+                'message': 'A fiókkezelő OIDC_CLIENT_ID beállításához nem található regisztrált alkalmazás. '
+                           'Az értéknek a CSUPOR regisztrált kliensazonosítójával kell egyeznie.'}
+    if not client.active:
+        return {**status, 'code': 'ACCOUNTS_INTEGRATION_CSUPOR_INACTIVE',
+                'message': 'A beállított CSUPOR-alkalmazás inaktív a fiókkezelőben. '
+                           'Az üzemeltető ellenőrizze az OIDC_CLIENT_ID értékét és aktiválja a megfelelő alkalmazást.'}
+    return None
+
+
+def _needs_import(subject, saved, *, lock=False):
+    if saved is not None and saved.legacy_imported:
+        return False
+    if _import_configuration_problem(saved, lock=lock):
+        return True
+    client_id = integration_client_id('csupor')
+    # Missing role configuration cannot prove that legacy data does not exist.
+    # Never turn an unimported profile into an editable blank replacement.
+    return client_id is None or db.session.get(Membership, (subject, client_id)) is not None
 
 
 def _save_fields(subject, values, revision):
@@ -117,6 +150,9 @@ def _save_fields(subject, values, revision):
         abort(403)
     saved = db.session.execute(select(AccountProfile).where(AccountProfile.subject == subject)
                                .with_for_update().execution_options(populate_existing=True)).scalar_one_or_none()
+    if _needs_import(subject, saved, lock=True):
+        db.session.rollback()
+        return False
     if (saved.revision if saved else '') != revision:
         db.session.rollback()
         return False
@@ -141,12 +177,14 @@ def _editor(owner, *, manager=False):
     from .profile_photos import browser_template_context
     saved = db.session.get(AccountProfile, owner.subject)
     pending = _needs_import(owner.subject, saved)
+    integration_problem = _import_configuration_problem(saved) if pending else None
     values = dict(saved.fields) if saved else {}
     error, status = None, 200
     if request.method == 'POST':
         require_csrf()
         if pending:
-            error = 'A korábbi profiladatok betöltése még nem történt meg. Előbb nyisd meg a CSUPOR profiloldalát.'
+            error = (integration_problem['message'] if integration_problem else
+                     'A korábbi profiladatok betöltése még nem történt meg. Előbb nyisd meg a CSUPOR profiloldalát.')
             status = 409
         else:
             values = {name: request.form.get(name, '') for name in FIELDS}
@@ -170,6 +208,7 @@ def _editor(owner, *, manager=False):
         displayed_revision = request.form.get('profile_version', '')
     return render_template('profile.html', owner=owner, manager_mode=manager, profile_values=values,
                            profile_version=displayed_revision, pending_import=pending,
+                           integration_problem=integration_problem,
                            csupor_url=csupor_profile_url(), fields=FIELDS, genders=GENDERS,
                            marital_statuses=MARITAL_STATUSES, error=error, **photo_context), status
 
@@ -199,12 +238,14 @@ def profile_payload(subject):
 
 
 def require_csupor_profile_token():
-    if current_token.client_id != 'csupor' or 'profile' not in current_token.scope.split():
+    client_id = require_integration_client('csupor')
+    if current_token.client_id != client_id or 'profile' not in current_token.scope.split():
         abort(403)
     return current_token.account_subject
 
 
 def import_fields(subject, fields):
+    client_id = require_integration_client('csupor')
     owner = db.session.execute(select(Account).where(Account.subject == subject).with_for_update()
                                .execution_options(populate_existing=True)).scalar_one()
     if not owner.active or owner.version != current_token.version or current_token.is_expired():
@@ -212,7 +253,7 @@ def import_fields(subject, fields):
         abort(401)
     permitted = db.session.execute(select(Membership.account_subject).join(
         Client, Client.client_id == Membership.client_id,
-    ).where(Membership.account_subject == subject, Membership.client_id == 'csupor',
+    ).where(Membership.account_subject == subject, Membership.client_id == client_id,
             Client.active.is_(True)).with_for_update()).scalar_one_or_none()
     token_exists = db.session.execute(select(AccessToken.token_hash).where(
         AccessToken.token_hash == current_token.token_hash).with_for_update()).scalar_one_or_none()
@@ -271,16 +312,18 @@ def register_profile_api(bp, protect):
     def read_csupor_profiles():
         # This server-only read keeps CSUPOR's existing employee records current
         # after central admin edits. It cannot enumerate or modify identities.
+        client_id = require_integration_client('csupor')
         auth = request.authorization
         if not throttle('profile-service-ip', request.remote_addr or '', limit=600, window=60):
             return jsonify(error='temporarily_unavailable'), 429
-        client = db.session.get(Client, 'csupor')
-        if (auth is None or auth.type != 'basic' or auth.username != 'csupor'
+        client = db.session.get(Client, client_id)
+        if (auth is None or auth.type != 'basic' or auth.username != client_id
                 or client is None or not client.active or not client.check_client_secret(auth.password)):
             response = jsonify(error='invalid_client')
             response.status_code = 401
             response.headers['WWW-Authenticate'] = 'Basic realm="CSUPOR profile sync"'
             return response
+        observed_hash = client.secret_hash
         payload = request.get_json(silent=True)
         subjects = payload.get('subjects') if isinstance(payload, dict) else None
         if (not isinstance(payload, dict) or set(payload) != {'subjects'}
@@ -288,10 +331,16 @@ def register_profile_api(bp, protect):
                 or any(not isinstance(subject, str) or not 1 <= len(subject) <= 36 for subject in subjects)
                 or len(set(subjects)) != len(subjects)):
             return jsonify(error='invalid_request'), 400
+        active_client = db.session.execute(select(Client.client_id).where(
+            Client.client_id == client_id, Client.active.is_(True), Client.secret_hash == observed_hash,
+        ).with_for_update()).scalar_one_or_none()
+        if active_client is None:
+            db.session.rollback()
+            return jsonify(error='invalid_client'), 401
         permitted = db.session.execute(select(Account.subject).join(
             Membership, Membership.account_subject == Account.subject,
         ).join(AccountProfile, AccountProfile.subject == Account.subject).where(
             Account.subject.in_(subjects), Account.active.is_(True),
-            Membership.client_id == 'csupor', AccountProfile.legacy_imported.is_(True),
+            Membership.client_id == client_id, AccountProfile.legacy_imported.is_(True),
         )).scalars().all()
         return jsonify(profiles=[profile_payload(subject) for subject in permitted])

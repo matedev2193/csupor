@@ -11,6 +11,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from .importing import ImportValidationError, MAX_TRANSFER_BYTES, apply_import, decrypt_transfer, validate_payload
+from .integration_config import integration_client_id, integration_status
 from .models import Account, AccessToken, AuthorizationCode, Client, Membership, db
 from .security import current_account, login_account, require_csrf, throttle
 
@@ -91,7 +92,8 @@ def is_account_admin():
 
 @admin.app_context_processor
 def admin_context():
-    return {'is_account_admin': is_account_admin(), 'account_setup_available': setup_available()}
+    return {'is_account_admin': is_account_admin(), 'account_setup_available': setup_available(),
+            'integration_settings': {role: integration_status(role) for role in ('csupor', 'safety')}}
 
 
 def admin_required(view):
@@ -140,6 +142,9 @@ def setup():
     if request.method == 'GET':
         return render_template('setup.html')
     require_csrf()
+    csupor_client_id = integration_client_id('csupor')
+    if csupor_client_id is None:
+        return _setup_failure('CLIENT_CONFIG', integration_status('csupor')['message'], status=503)
     # throttle commits its counters: keep every limit before the business
     # transaction, including the singleton claim and account/client inserts.
     identifier = request.form.get('admin_login', '').strip()
@@ -176,7 +181,7 @@ def setup():
                 or urlsplit(callback).path != '/auth/callback' or urlsplit(callback).query):
             raise SetupValidationError('CALLBACK', 'A CSUPOR-visszatérési cím teljes HTTPS-cím legyen, '
                                        '/auth/callback végződéssel, kérdőjel és # rész nélkül. '
-                                       'Például: https://csupor.matedev.hu/auth/callback')
+                                       'Például: https://csupor.example.hu/auth/callback')
         if not 32 <= len(secret) <= 1024:
             raise SetupValidationError('CLIENT_SECRET', 'Az új CSUPOR-összekapcsolási kulcs 32–1024 karakter '
                                        'hosszú legyen. Használd a „Véletlen kulcs készítése” gombot, '
@@ -191,9 +196,9 @@ def setup():
         if db.session.execute(select(AccountAdmin.account_subject).limit(1).with_for_update()).first():
             db.session.commit()
             abort(404)
-        client = db.session.execute(select(Client).where(Client.client_id == 'csupor').with_for_update()).scalar_one_or_none()
+        client = db.session.execute(select(Client).where(Client.client_id == csupor_client_id).with_for_update()).scalar_one_or_none()
         if client is None:
-            client = Client(client_id='csupor', name='CSUPOR', redirect_uris=[callback], allow_registration=False, active=True)
+            client = Client(client_id=csupor_client_id, name='CSUPOR', redirect_uris=[callback], allow_registration=False, active=True)
             client.set_secret(secret)
             db.session.add(client)
             db.session.flush()
@@ -201,7 +206,7 @@ def setup():
             raise SetupValidationError('CLIENT_CONFLICT', 'A fiókkezelőben már létezik CSUPOR-alkalmazás, '
                                        'amelynek állapota, visszatérési címe vagy összekapcsolási kulcsa eltér. '
                                        'A meglévő alkalmazás beállításaival folytasd az átvezetést.')
-        apply_import(data, 'csupor', current_app.config['ACCOUNTS_ISSUER'])
+        apply_import(data, csupor_client_id, current_app.config['ACCOUNTS_ISSUER'])
         owner = db.session.get(Account, owner_subject)
         if owner is None or not owner.active:
             raise SetupValidationError('OWNER_INACTIVE', 'A kiválasztott fiók a központi fiókkezelőben '
@@ -231,16 +236,33 @@ def setup():
 @admin.get('/admin')
 @admin_required
 def index():
-    return render_template('admin_index.html', clients=Client.query.order_by(Client.name).all(), account_count=Account.query.count())
+    clients = Client.query.order_by(Client.name).all()
+    return render_template('admin_index.html', clients=clients, client_ids={client.client_id for client in clients},
+                           account_count=Account.query.count())
 
 
 @admin.route('/admin/clients/new', methods=['GET', 'POST'])
 @admin_required
 def client_new():
     error = None
+    requested_role = request.values.get('integration_role', '')
+    role = requested_role if requested_role in {'csupor', 'safety'} else None
+    suggested_id = integration_client_id(role) if role else None
+    # Keep old explicit links useful only when their exact ID is configured.
+    if role is None:
+        candidate = request.args.get('client_id')
+        role = next((name for name in ('csupor', 'safety')
+                     if candidate and candidate == integration_client_id(name)), None)
+        suggested_id = integration_client_id(role) if role else None
     if request.method == 'POST':
         client_id = request.form.get('client_id', '').strip()
         try:
+            if requested_role and not role:
+                raise ValueError('Ismeretlen alkalmazáskapcsolat.')
+            if role and not suggested_id:
+                raise ValueError(integration_status(role)['message'])
+            if role and client_id != suggested_id:
+                raise ValueError('Az alkalmazásazonosító nem egyezik a fiókkezelő környezeti beállításával. Frissítsd az oldalt.')
             values, secret, _rotate = _client_values(client_id)
             if db.session.get(Client, client_id):
                 raise ValueError('Ez az alkalmazásazonosító már létezik. A meglévő beállítások nem változtak.')
@@ -254,17 +276,26 @@ def client_new():
             db.session.rollback()
             error = str(exc) if isinstance(exc, ValueError) else 'A mentés nem sikerült. A korábbi adatok megmaradtak.'
     return render_template('admin_client.html', client=None, error=error,
-                           suggested_id='munkavedelem' if request.args.get('client_id') == 'munkavedelem' else '', env_values=[])
+                           suggested_id=suggested_id or '', integration_role=role,
+                           suggested_name={'csupor': 'CSUPOR', 'safety': 'Tűz- és munkavédelem'}.get(role, ''),
+                           env_values=[], secret_env_key=(('SAFETY_' if role == 'safety' else '')
+                                                          + 'OIDC_CLIENT_SECRET') if role else None)
+
+
+def _client_role(client):
+    return next((role for role in ('csupor', 'safety')
+                 if client.client_id == integration_client_id(role)), None)
 
 
 def _env_values(client):
-    prefix = 'SAFETY_' if client.client_id == 'munkavedelem' else ''
-    if client.client_id not in {'csupor', 'munkavedelem'}:
+    role = _client_role(client)
+    if role is None:
         return []
+    prefix = 'SAFETY_' if role == 'safety' else ''
     values = [(prefix + 'OIDC_ISSUER', current_app.config['ACCOUNTS_ISSUER']),
               (prefix + 'OIDC_CLIENT_ID', client.client_id),
               (prefix + 'OIDC_REDIRECT_URI', client.redirect_uris[0])]
-    if client.client_id == 'csupor':
+    if role == 'csupor':
         values.insert(0, ('AUTH_MODE', 'oidc'))
     return values
 
@@ -291,7 +322,11 @@ def client_edit(client_id):
         except (ValueError, SQLAlchemyError) as exc:
             db.session.rollback()
             error = str(exc) if isinstance(exc, ValueError) else 'A mentés nem sikerült. A korábbi adatok megmaradtak.'
-    return render_template('admin_client.html', client=client, error=error, suggested_id='', env_values=_env_values(client))
+    role = _client_role(client)
+    secret_env_key = ('SAFETY_' if role == 'safety' else '') + 'OIDC_CLIENT_SECRET' if role else None
+    return render_template('admin_client.html', client=client, error=error, suggested_id='',
+                           integration_role=role, suggested_name='', env_values=_env_values(client),
+                           secret_env_key=secret_env_key)
 
 
 @admin.get('/admin/accounts')

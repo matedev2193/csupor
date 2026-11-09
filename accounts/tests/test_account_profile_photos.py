@@ -33,6 +33,7 @@ def app(tmp_path, pem):
         'TESTING': True, 'ACCOUNTS_DATABASE_URL': 'sqlite:///' + str(tmp_path / 'accounts.db'),
         'ACCOUNTS_SECRET_KEY': 'independent-private-photo-test-secret',
         'ACCOUNTS_ISSUER': ISSUER, 'ACCOUNTS_SIGNING_KEY_FILE': str(key),
+        'OIDC_CLIENT_ID': 'csupor', 'SAFETY_OIDC_CLIENT_ID': 'safety',
     })
     app.config.update(PHOTO_OWNER=str(uuid4()), PHOTO_OTHER=str(uuid4()))
     with app.app_context():

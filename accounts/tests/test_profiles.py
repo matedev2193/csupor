@@ -40,7 +40,7 @@ def test_factory_registers_new_profile_tables_before_bootstrap(tmp_path):
     from accounts import create_app
     instance = create_app({'TESTING': True, 'ACCOUNTS_DATABASE_URL': 'sqlite:///' + str(tmp_path / 'fresh.db'),
                            'ACCOUNTS_SECRET_KEY': 'fresh-profile-secret-at-least-32-characters',
-                           'ACCOUNTS_ISSUER': ISSUER})
+                           'ACCOUNTS_ISSUER': ISSUER, 'OIDC_CLIENT_ID': 'csupor', 'SAFETY_OIDC_CLIENT_ID': 'safety'})
     with instance.app_context():
         assert db.session.execute(db.select(AccountProfile)).scalars().all() == []
         from accounts.photo_models import AccountPhoto

@@ -36,7 +36,8 @@ def test_browser_cutover_preserves_existing_users_and_grants_second_app():
             db.session.commit()
             owner_id = owner.id
             before = {u.id: (u.password_hash, u.privilege, u.profile.full_name) for u in User.query.all()}
-        case.provider.config['ACCOUNTS_SETUP_TOKEN'] = setup_token
+        case.provider.config.update(ACCOUNTS_SETUP_TOKEN=setup_token,
+                                    OIDC_CLIENT_ID='csupor', SAFETY_OIDC_CLIENT_ID='munkavedelem')
         with case.provider.app_context():
             account_db.drop_all()
             account_db.create_all()

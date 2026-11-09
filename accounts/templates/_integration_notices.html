@@ -1,0 +1,3 @@
+{% for role, setting in integration_settings.items() %}
+{% if not setting.client_id %}<div class="notice error" role="status"><strong>{{ 'CSUPOR' if role == 'csupor' else 'Tűz- és munkavédelem' }} kapcsolat</strong><p>{{ setting.message }}</p><p>A fiókkezelő DigitalOcean-alkalmazásában állítsd be: <code>{{ setting.env_key }}</code>. Az érték egyezzen a kapcsolódó alkalmazás ugyanilyen nevű változójával. Mentés után várd meg az új deploymentet.</p><small>Hibakód: {{ setting.code }}</small></div>{% endif %}
+{% endfor %}

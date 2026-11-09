@@ -101,6 +101,17 @@ Az **Environment Variables** mezőket **Run Time** hatókörrel töltsd ki:
 | `ACCOUNTS_SETUP_TOKEN` | Másik, legalább 32 karakteres véletlen kulcs az első beállításhoz | igen |
 | `ACCOUNTS_ISSUER` | `https://fiok.matedev.hu` | nem |
 | `ACCOUNTS_PROXY_HOPS` | `1` | nem |
+| `OIDC_CLIENT_ID` | A CSUPOR alkalmazás meglévő `OIDC_CLIENT_ID` értéke; ebben a telepítésben `csupor` | nem |
+| `SAFETY_OIDC_CLIENT_ID` | Az oktatórendszer meglévő `SAFETY_OIDC_CLIENT_ID` értéke; ebben a telepítésben `tuzesmunkavedelem` | nem |
+
+**Már működő fiókkezelő frissítése előtt** vedd fel az utolsó két változót
+annak saját DigitalOcean-alkalmazásában. A külön appok környezeti változói
+nem közösek. Mindig a tényleges, meglévő kliensazonosítót másold át; a fenti
+nevek erre a telepítésre vonatkoznak, a kód nem tartalmaz ilyen alapértéket.
+A két értéknek különböznie kell. Hiányzó vagy hibás beállításnál a közös
+bejelentkezés működik, de az érintett profil-/telephelykapcsolat letiltódik,
+és az adminfelület megnevezi a javítandó változót. A meglévő klienskulcsokat,
+fiókokat és hozzáféréseket tartsd meg; új setup nem szükséges.
 
 A kulcsokat jelszókezelővel is generálhatod. Az adatbázis-URL-ben a speciális
 karakterek legyenek URL-kódolva.
@@ -257,22 +268,24 @@ központi fiókmódosításokat és egyeztesd az adatállapotokat.
 
 ## 6. A tűz- és munkavédelem csatlakoztatása
 
-A `https://fiok.matedev.hu/admin` oldalon hozz létre új alkalmazást:
+A fiókkezelő `SAFETY_OIDC_CLIENT_ID` változóját állítsd az oktatórendszer
+meglévő kliensazonosítójára. Ha még nincs ilyen kliens, a
+`https://fiok.matedev.hu/admin` oldalon hozz létre új alkalmazást:
 
 | Mező | Érték |
 | --- | --- |
-| Kliensazonosító | `munkavedelem` |
+| Kliensazonosító | A fiókkezelő `SAFETY_OIDC_CLIENT_ID` értéke; itt `tuzesmunkavedelem` |
 | Név | `Tűz- és munkavédelem` |
 | Visszatérési cím | Az oktatórendszer tényleges HTTPS-címe + `/auth/callback` |
 | Klienskulcs | Külön generált kulcs; őrizd meg az oktatórendszer beállításához |
 | Nyilvános regisztráció | kikapcsolva |
 
-A fiókoknál engedélyezd magadnak és a kollégáknak a `munkavedelem` hozzáférést.
+A fiókoknál engedélyezd magadnak és a kollégáknak az oktatórendszerhez tartozó hozzáférést.
 Az **oktatórendszer** környezeti változói:
 
 ```text
 SAFETY_OIDC_ISSUER=https://fiok.matedev.hu
-SAFETY_OIDC_CLIENT_ID=munkavedelem
+SAFETY_OIDC_CLIENT_ID=tuzesmunkavedelem
 ```
 
 A `SAFETY_OIDC_CLIENT_SECRET` az ehhez a klienshez választott titok;

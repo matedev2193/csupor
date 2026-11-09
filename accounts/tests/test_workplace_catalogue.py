@@ -13,11 +13,13 @@ from accounts.tests.test_end_session import app, pem, bearer, TOKENS, ISSUER
 
 ROWS = [{'id': 17, 'name': 'Óvoda – Első utca 1.', 'address': 'Első utca 1.'}]
 SAFETY_TOKEN = 'workplace-reader-token'
-SAFETY_TOKENS = {'munkavedelem': SAFETY_TOKEN, 'tuzesmunkavedelem': 'live-safety-client-reader-token'}
+SAFETY_TOKENS = {'munkavedelem': SAFETY_TOKEN, 'tuzesmunkavedelem': 'live-safety-client-reader-token',
+                 'training-tenant-42': 'configured-safety-reader-token'}
 
 
 @pytest.fixture
 def configured(app):
+    app.config['SAFETY_OIDC_CLIENT_ID'] = 'munkavedelem'
     with app.app_context():
         db.session.get(Client, 'csupor').set_secret('existing-secret')
         for client_id, token in SAFETY_TOKENS.items():
@@ -50,6 +52,7 @@ def read(app, token=SAFETY_TOKEN):
 
 @pytest.mark.parametrize('client_id', SAFETY_TOKENS)
 def test_published_catalogue_is_minimal_and_readable_only_by_safety(configured, client_id):
+    configured.config['SAFETY_OIDC_CLIENT_ID'] = client_id
     assert read(configured, SAFETY_TOKENS[client_id]).status_code == 503
     response = publish(configured)
     assert response.status_code == 200
@@ -59,6 +62,9 @@ def test_published_catalogue_is_minimal_and_readable_only_by_safety(configured, 
     assert response.json['published_at'].endswith('+00:00')
     assert response.json['workplaces'] == ROWS
     assert read(configured, SAFETY_TOKENS[client_id]).json == response.json
+    for other_id, token in SAFETY_TOKENS.items():
+        if other_id != client_id:
+            assert read(configured, token).status_code == 403
     assert read(configured, TOKENS['csupor']).status_code == 403
     assert read(configured, TOKENS['safety']).status_code == 403
     assert read(configured, 'invalid-token').status_code == 401
@@ -118,6 +124,7 @@ def test_generation_order_and_idempotency_preserve_latest_snapshot(configured):
 @pytest.mark.parametrize('reason', ['profile-scope', 'openid-scope', 'inactive', 'membership', 'expired'])
 @pytest.mark.parametrize('client_id', SAFETY_TOKENS)
 def test_safety_requires_live_membership_and_both_scopes(configured, reason, client_id):
+    configured.config['SAFETY_OIDC_CLIENT_ID'] = client_id
     publish(configured)
     with configured.app_context():
         token = db.session.get(AccessToken, sha256(SAFETY_TOKENS[client_id].encode()).hexdigest())
@@ -133,6 +140,23 @@ def test_safety_requires_live_membership_and_both_scopes(configured, reason, cli
             token.expires_at = int(time.time()) - 1
         db.session.commit()
     assert read(configured, SAFETY_TOKENS[client_id]).status_code in {401, 403}
+
+
+def test_configured_writer_id_replaces_literal_csupor_authority(configured):
+    client_id = 'staff-tenant-17'
+    configured.config['OIDC_CLIENT_ID'] = client_id
+    with configured.app_context():
+        client = Client(client_id=client_id, name='Configured application',
+                        redirect_uris=['https://work.example.invalid/auth/callback'])
+        client.set_secret('configured-secret')
+        db.session.add(client)
+        db.session.commit()
+    assert publish(configured).status_code == 401
+    assert publish(configured, headers=basic(client_id, 'configured-secret')).status_code == 200
+    with configured.app_context():
+        db.session.get(Client, client_id).active = False
+        db.session.commit()
+    assert publish(configured, headers=basic(client_id, 'configured-secret')).status_code == 401
 
 
 def test_body_limit_allows_valid_unicode_directory_and_blocks_larger_requests(configured):

@@ -38,7 +38,8 @@ meglévő saját kliensazonosítójával és titkával. Ez nem enged írást.
 
 A személyes mezők, TAJ-, adó-, bankszámla- és egészségügyi adatok nem
 kerülnek az OIDC tokenbe vagy az általános `/userinfo` válaszába.
-A profil API kizárólag a `csupor` kliens számára érhető el; a tűz- és
+A profil API kizárólag a fiókkezelő `OIDC_CLIENT_ID` környezeti változójával
+kijelölt kliens számára érhető el; a tűz- és
 munkavédelmi alkalmazás nem kapja meg ezeket az adatokat.
 A képforrást csak a tulajdonos szerkesztheti. A CSUPOR a megjelenítéshez
 a kis profilkép másolatát használja.

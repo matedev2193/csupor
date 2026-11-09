@@ -89,6 +89,7 @@ class SharedAccountsEndToEndTests(unittest.TestCase):
             "ACCOUNTS_DATABASE_URL": "sqlite:///" + str(Path(self.directory.name) / "accounts.db"),
             "ACCOUNTS_SECRET_KEY": "accounts-test-secret-" + "a" * 40,
             "ACCOUNTS_ISSUER": self.issuer,
+            "OIDC_CLIENT_ID": "csupor", "SAFETY_OIDC_CLIENT_ID": "work-safety",
             "ACCOUNTS_SIGNING_KEY_FILE": str(key_path),
             "ACCOUNTS_ALLOW_HTTP": True,
         })
