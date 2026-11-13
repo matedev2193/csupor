@@ -726,3 +726,20 @@ CREATE TABLE IF NOT EXISTS external_login_sessions (
   KEY ix_external_login_sessions_expires_at (expires_at),
   FOREIGN KEY (identity_id) REFERENCES external_identities(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
+
+-- Keep intentionally deleted legacy qualifications from being re-imported.
+CREATE TABLE IF NOT EXISTS qualification_legacy_deletions (
+  legacy_source VARCHAR(40) NOT NULL,
+  legacy_id INT NOT NULL,
+  deleted_at DATETIME NOT NULL,
+  PRIMARY KEY (legacy_source, legacy_id)
+) ENGINE=InnoDB;
+
+-- Persist the workplace catalogue generation published to the account service.
+CREATE TABLE IF NOT EXISTS shared_workplace_exports (
+  id INT NOT NULL,
+  generation BIGINT NOT NULL,
+  revision VARCHAR(64) NOT NULL,
+  workplaces JSON NOT NULL,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB;
