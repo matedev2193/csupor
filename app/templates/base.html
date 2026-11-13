@@ -26,7 +26,7 @@
   <body class="{{ 'portal-page' if current_user.is_authenticated else 'public-page' }}">
     {% set workspace_pages = ['dashboard', 'edit_profile', 'manage_dependents', 'add_dependent', 'edit_dependent', 'qualifications.index'] %}
     {% set management_pages = ['qualifications.manage', 'qualifications.edit', 'qualifications.new', 'qualification_reports.index', 'qualification_reports.employees', 'qualification_reports.employee', 'manage_user_profiles', 'edit_user_profile', 'manage_contracts', 'create_contract', 'edit_contract', 'manage_legal_entities', 'create_legal_entity', 'edit_legal_entity', 'manage_places_of_work', 'create_place_of_work', 'edit_place_of_work', 'select_contract_employee', 'manage_leadership', 'manage_leave_limits', 'manage_working_days', 'manage_leaves', 'leave_approval_settings', 'gyap.manage_forms', 'worktime.management', 'worktime.groups', 'worktime.group_new', 'worktime.group_edit'] %}
-    {% set settings_pages = ['manage_privileges', 'page_access.settings', 'mail_settings.settings', 'mail_settings.initialise_key'] %}
+    {% set settings_pages = ['manage_privileges', 'page_access.settings', 'mail_settings.settings', 'mail_settings.initialise_key', 'account_transfer.settings'] %}
     <a class="skip-link" href="#main-content">{{ _('Skip to content') }}</a>
     {% if current_user.is_authenticated %}
     <aside class="sidebar" id="main-navigation" aria-label="{{ _('Main navigation') }}">
@@ -60,7 +60,7 @@
             {{ icon('briefcase', 'nav-group-icon') }}<span>{{ _('Management') }}</span>{{ icon('chevron', 'nav-group-chevron') }}
           </summary>
           <div class="nav-group-menu" id="management-menu" aria-labelledby="management-trigger">
-            {{ nav_item('manage_user_profiles', _('User profiles'), 'users', ['edit_user_profile']) }}
+            {{ nav_item('manage_user_profiles', 'Dolgozói nyilvántartás' if shared_accounts_enabled else _('User profiles'), 'users', ['edit_user_profile']) }}
             {{ nav_item('qualifications.manage', _('Qualification processing'), 'graduate', ['qualifications.edit', 'qualifications.new']) }}
             {{ nav_item('qualification_reports.index', _('Qualification reports'), 'graduate', ['qualification_reports.employees', 'qualification_reports.employee']) }}
             {{ nav_item('manage_contracts', _('Contracts'), 'briefcase', ['create_contract', 'edit_contract', 'select_contract_employee']) }}
@@ -85,14 +85,22 @@
           <div class="nav-group-menu" id="settings-menu" aria-labelledby="settings-trigger">
             {{ nav_item('manage_privileges', _('Privileges'), 'lock') }}
             {{ nav_item('page_access.settings', _('Page access'), 'lock') }}
-            {{ nav_item('mail_settings.settings', _('Email settings'), 'settings', ['mail_settings.initialise_key']) }}
+            {{ nav_item('mail_settings.settings', 'CSUPOR e-mail-beállításai' if shared_accounts_enabled else _('Email settings'), 'settings', ['mail_settings.initialise_key']) }}
+            {% if accounts_transfer_available and current_user.privilege.value == 'developer' %}
+            {{ nav_item('account_transfer.settings', 'Közös fiókok átállítása', 'lock') }}
+            {% endif %}
           </div>
         </details>
         {% endif %}
       </nav>
       <div class="sidebar-footer">
-        {{ nav_item('change_password', _('Change password'), 'lock') }}
-        {{ nav_item('logout', _('Logout'), 'logout') }}
+        {% if shared_accounts_enabled %}<a class="nav-link" href="{{ shared_account_url }}">{{ icon('user') }}<span>Közös fiók és alkalmazások</span></a>{% else %}{{ nav_item('change_password', _('Change password'), 'lock') }}{% endif %}
+        {% if shared_accounts_enabled %}
+        <form class="sidebar-logout-form" action="{{ url_for('logout') }}" method="post">
+          <input type="hidden" name="csrf_token" value="{{ shared_logout_csrf() }}">
+          <button type="submit" class="nav-link">{{ icon('logout') }}<span>{{ _('Logout') }}</span></button>
+        </form>
+        {% else %}{{ nav_item('logout', _('Logout'), 'logout') }}{% endif %}
         {% set account_photo_url = profile_photo_url(current_user) %}
         {% set account_profile_link = can_access_endpoint('edit_profile') %}
         {% if account_profile_link %}<a class="sidebar-account" href="{{ url_for('edit_profile') }}" title="{{ _('My profile') }}"{% if request.endpoint == 'edit_profile' %} aria-current="page"{% endif %}>{% else %}<div class="sidebar-account">{% endif %}
@@ -139,6 +147,9 @@
         </div>
       </header>
       <main id="main-content" class="main-content" tabindex="-1">
+        {% if shared_profile_cache_stale %}
+        <div class="flash flash-error" role="status">A közös profiladatok frissítése most nem érhető el. A CSUPOR a korábban mentett adatokat mutatja; később újrapróbálja a frissítést.</div>
+        {% endif %}
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
           <div class="flash-stack">

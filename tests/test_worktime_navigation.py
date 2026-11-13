@@ -179,7 +179,7 @@ class WorktimeNavigationTests(unittest.TestCase):
                 self.assertEqual(self.client.post("/leaves").status_code, 403)
 
     def test_settings_menu_groups_only_allowed_settings_and_tracks_active_page(self):
-        endpoints = ("manage_privileges", "page_access.settings", "mail_settings.settings")
+        endpoints = ("manage_privileges", "page_access.settings", "mail_settings.settings", "account_transfer.settings")
         self.login("developer")
         for active in endpoints:
             response = self.client.get(self.path(active))
@@ -195,12 +195,23 @@ class WorktimeNavigationTests(unittest.TestCase):
                 links = nav.matching(self.path(endpoint))
                 self.assertEqual(len(links), 1)
                 self.assertEqual(links[0].get("aria-current") == "page", endpoint == active)
+        # Authentication is covered separately; this checks the menu rendered
+        # for an authenticated developer after the application switches modes.
+        g.pop("_login_user", None)
+        with patch.dict(self.app.config, {"AUTH_MODE": "oidc", "OIDC_ISSUER": "https://accounts.example.test"}), patch(
+            "app.shared_auth.load_oidc_user", return_value=self.users["developer"],
+        ):
+            nav = self.sidebar(self.path("page_access.settings"))
+            settings = [urlsplit(link["href"]).path for link in nav.links if "settings-menu" in link["ancestors"]]
+            self.assertEqual(settings, [self.path(endpoint) for endpoint in endpoints[:-1]])
+            self.assertFalse(nav.matching(self.path("account_transfer.settings")))
         self.login("hr")
         nav = self.sidebar()
         self.assertIn("settings-menu", nav.ids)
         self.assertIn("settings-menu", nav.matching(self.path("manage_privileges"))[0]["ancestors"])
         self.assertFalse(nav.matching(self.path("page_access.settings")))
         self.assertFalse(nav.matching(self.path("mail_settings.settings")))
+        self.assertFalse(nav.matching(self.path("account_transfer.settings")))
         self.rule("manage_privileges", "hr", False)
         self.assertNotIn("settings-menu", self.sidebar().ids)
 

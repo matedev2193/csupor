@@ -49,6 +49,15 @@ def delete_user_account(user):
 
     PasswordResetToken.query.filter_by(user_id=user.id).delete(synchronize_session="fetch")
 
+    # Preserve a disabled identity tombstone: another application may still use
+    # the shared account, but a later SSO login must not recreate these HR data.
+    from .shared_auth_models import ExternalIdentity, ExternalLoginSession
+    for identity in ExternalIdentity.query.filter_by(user_id=user.id).all():
+        ExternalLoginSession.query.filter_by(identity_id=identity.id).delete(synchronize_session="fetch")
+        identity.disabled = True
+        identity.user = None
+        identity.user_id = None
+
     # Explicit model cascades include profile/photo, dependents, qualifications,
     # professional exam, unified records/documents, own leave requests,
     # contracts, limits and leadership.

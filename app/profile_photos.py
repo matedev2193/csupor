@@ -200,6 +200,9 @@ def inject_profile_photo_context():
 @profile_photos.route("/profile/photo", methods=["POST"])
 @login_required
 def upload_photo():
+    from .shared_auth import oidc_enabled
+    if oidc_enabled():
+        abort(403, description="A profilképet a közös fiókban szerkesztheted.")
     if request.content_length and request.content_length > MAX_PHOTO_BYTES + 64 * 1024:
         return _photo_error(_("The profile photo must be no larger than 5 MB."))
     try:
@@ -315,6 +318,9 @@ def upload_photo():
 @profile_photos.route("/profile/photo/editor")
 @login_required
 def photo_editor():
+    from .shared_auth import oidc_enabled, provider_url
+    if oidc_enabled():
+        return redirect(provider_url("/profile/photo/editor"))
     photo = db.session.get(ProfilePhoto, current_user.id)
     if photo is None:
         return _private_json({"error": _("Upload a profile photo before editing it.")}, 404)
@@ -325,6 +331,9 @@ def photo_editor():
 @profile_photos.route("/profile/photo/source")
 @login_required
 def photo_source():
+    from .shared_auth import oidc_enabled, provider_url
+    if oidc_enabled():
+        return redirect(provider_url("/profile/photo/source"))
     # No user identifier is accepted: original sources belong only to the owner,
     # including when HR/CEO can see the smaller avatar in personnel records.
     photo = db.session.get(ProfilePhoto, current_user.id)

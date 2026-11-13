@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Regisztráció · Micimackó-fiók{% endblock %}
+{% block content %}
+<span class="eyebrow">Kezdjük együtt</span>
+<h2 id="page-title">Fiók létrehozása</h2>
+<p class="lead">A regisztrációval hozzáférést kapsz ehhez a rendszerhez: <strong>{{ client.name }}</strong>.</p>
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="client_id" value="{{ client.client_id }}">
+  <input type="hidden" name="next" value="{{ next_url }}">
+  <label for="username">Felhasználónév</label>
+  <input id="username" name="username" autocomplete="username" maxlength="50" value="{{ request.form.get('username', '') }}" required autofocus>
+  <label for="email">E-mail-cím</label>
+  <input id="email" name="email" type="email" autocomplete="email" maxlength="120" value="{{ request.form.get('email', '') }}" required>
+  <label for="password">Jelszó</label>
+  <input id="password" name="password" type="password" autocomplete="new-password" minlength="12" maxlength="1024" aria-describedby="password-help" required>
+  <p id="password-help" class="help">Legalább 12 karaktert használj. Egy hosszabb jelmondatot könnyebb megjegyezni.</p>
+  <label for="password-confirm">Jelszó még egyszer</label>
+  <input id="password-confirm" name="password_confirm" type="password" autocomplete="new-password" minlength="12" maxlength="1024" required>
+  <button type="submit">Fiók létrehozása <span aria-hidden="true">→</span></button>
+</form>
+<p class="form-footer">Van már fiókod? <a href="{{ url_for('web.login', next=next_url, client_id=client.client_id) }}">Bejelentkezés</a></p>
+{% endblock %}

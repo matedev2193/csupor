@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Fiókok és hozzáférések · Micimackó-fiók{% endblock %}
+{% block content %}
+<span class="eyebrow">Központi adminisztráció</span><h2 id="page-title">Fiókok és hozzáférések</h2>
+<p class="lead">Fiókonként jelöld be az elérhető alkalmazásokat. A visszavont hozzáférést a rendszer a következő ellenőrzéskor érvényesíti.</p>
+<p><a href="{{ url_for('account_admin.index') }}">← Fiókkezelés</a></p>
+<p><a href="{{ url_for('account_admin.account_new') }}">Új közös fiók létrehozása →</a></p>
+{% for person in accounts %}
+<form method="post" action="{{ url_for('account_admin.account_access', subject=person.subject) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <fieldset><legend>{{ person.username }}{% if not person.active %} · Inaktív fiók{% endif %}</legend><p>{{ person.email }}</p><small>Fiókazonosító: {{ person.subject }}</small>
+  <p><a href="/admin/accounts/{{ person.subject }}/profile">Személyes profil szerkesztése</a></p>
+  {% for client in clients %}<label><input type="checkbox" name="client_ids" value="{{ client.client_id }}" {% if (person.subject, client.client_id) in memberships %}checked{% endif %}> {{ client.name }}{% if not client.active %} · Szüneteltetve{% endif %}</label>{% else %}<p>Előbb adj hozzá alkalmazást.</p>{% endfor %}
+  <button type="submit">Hozzáférések mentése</button></fieldset>
+</form>
+<form method="post" action="{{ url_for('account_admin.account_status', subject=person.subject) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="account_version" value="{{ person.version }}">
+  <input type="hidden" name="active" value="{{ 'false' if person.active else 'true' }}">
+  {% if person.subject == account.subject %}<p class="help">A saját fiókod aktív marad, hogy a fiókkezelést továbbra is elérd.</p>{% else %}
+  <p class="help">{% if person.active %}A fiók letiltása minden alkalmazásból kijelentkezteti a felhasználót. A profilja és munkaügyi adatai megmaradnak.{% else %}Az újraaktiválás után a korábban engedélyezett alkalmazásokba ismét bejelentkezhet.{% endif %}</p>
+  <button type="submit">{{ 'Fiók letiltása' if person.active else 'Fiók újraaktiválása' }}</button>
+  {% endif %}
+</form>
+{% else %}<p>Még nincs fiók.</p>{% endfor %}
+{% endblock %}

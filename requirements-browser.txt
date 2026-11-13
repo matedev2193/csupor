@@ -1,0 +1,4 @@
+# Optional local/CI verification; never part of the production web build.
+-r requirements.txt
+pytest>=8,<10
+playwright>=1.51,<2

@@ -175,8 +175,13 @@
         {% if not manager_mode %}
         <div class="field field-full">
           <label for="account-email">{{ _('Email address') }}</label>
+          {% if shared_accounts_enabled %}
+          <input id="account-email" type="email" value="{{ current_user.email }}" readonly aria-describedby="account-email-help">
+          <small class="help-text" id="account-email-help">Az e-mail-címedet és jelszavadat a közös fiókban kezelheted. <a href="{{ shared_account_url }}">Közös fiók megnyitása</a></small>
+          {% else %}
           <input id="account-email" type="email" name="email" autocomplete="email" maxlength="120" value="{{ profile_values.get('email', current_user.email) }}" data-original-email="{{ current_user.email }}" aria-describedby="account-email-help" required>
           <small class="help-text" id="account-email-help">{{ _('Password reset links and notifications will be sent to this address.') }}</small>
+          {% endif %}
         </div>
         {% endif %}
         <div class="field field-full">
@@ -217,7 +222,7 @@
       </div>
     </form>
 
-    {% if not manager_mode %}
+    {% if not manager_mode and not shared_accounts_enabled %}
     <dialog class="email-confirmation" id="profile-email-confirmation" aria-labelledby="email-confirmation-title" aria-describedby="email-confirmation-help" {% if email_confirmation_required %}open data-confirmation-required{% endif %}>
       <h2 id="email-confirmation-title">{{ _('Confirm email address change') }}</h2>
       <p class="help-text" id="email-confirmation-help">{{ _('Enter your current password to save your profile with the new email address.') }}</p>

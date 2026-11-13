@@ -76,3 +76,13 @@ class QualificationDocument(db.Model):
 
     record = db.relationship("QualificationRecord", back_populates="documents")
     uploaded_by = db.relationship("User", foreign_keys=[uploaded_by_id])
+
+
+class QualificationLegacyDeletion(db.Model):
+    """Remember intentional removals without changing the archived source rows."""
+
+    __tablename__ = "qualification_legacy_deletions"
+
+    legacy_source = db.Column(db.String(40), primary_key=True)
+    legacy_id = db.Column(db.Integer, primary_key=True)
+    deleted_at = db.Column(db.DateTime, nullable=False, default=utc_now)

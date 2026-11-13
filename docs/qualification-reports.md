@@ -9,7 +9,8 @@ HR/CEO accounts with the separate **Qualification processing** permission can
 open an editor from an employee's record. See [document processing](qualification-workflow.md).
 
 The **Employees** view lists accounts and their recorded qualifications,
-professional exams, teacher training and other courses, including uploaded records
+professional exams, teacher training, other courses and teacher assessments,
+including uploaded records
 awaiting processing and ongoing studies. Opening an employee shows stored metadata
 and completion dates. Records remain visible even if an account has no current
 contract, so a change of employment status does not erase its qualification
@@ -43,6 +44,15 @@ supplied study and award classifications, training topic, organiser, funding,
 hours, attendance mode and digital pedagogy. Overlapping classifications display
 distinct employees and record counts and must not be added as if they were
 disjoint groups.
+
+Teacher assessments (for example **Pedagógus I.**) have their own count and
+record-category filter. They appear in overall completions and in the school-year,
+month, type and name breakdowns, while qualification, professional-exam and course
+counts remain separate. The employee directory also shows a separate assessment
+column. Like other records, assessments need a full date to be assigned to a
+school year or month; a year-only record remains available in the unknown-date
+group. Assessments are excluded from **all KSH award and participation statistics**,
+even if stale study or award classifications remain on an imported record.
 
 Reports now read only `qualification_records` and account/profile names. Startup
 imports the retained legacy qualification and exam tables into that register

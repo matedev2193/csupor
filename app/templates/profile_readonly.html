@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{{ target_user.username }} · Személyes adatok{% endblock %}
+{% block content %}
+<section class="form-page">
+  <aside class="form-sidebar">
+    <span class="eyebrow">Munkaügyi nyilvántartás</span>
+    <h2>{{ profile.full_name or target_user.username }}</h2>
+    <p>A személyes adatok szerkesztése a közös fiókkezelőbe került. Itt a CSUPOR munkaügyi feladataihoz használt másolat látható.</p>
+    <p>A közös fiókkezelőben történő adminisztrátori szerkesztéshez külön fiókkezelői adminisztrátori jogosultság szükséges.</p>
+  </aside>
+  <section class="form-shell">
+    <h2>Személyes adatok</h2>
+    <dl class="profile-details">
+    {% for field, label in [
+      ('full_name', 'Teljes név'), ('name_at_birth', 'Születési név'),
+      ('date_of_birth', 'Születési idő'), ('place_of_birth', 'Születési hely'),
+      ('gender', 'Nem'), ('mothers_maiden_name', 'Anyja születési neve'),
+      ('citizenships', 'Állampolgárság'), ('phone_number', 'Telefonszám'),
+      ('social_security_number', 'TAJ-szám'), ('tax_number', 'Adóazonosító jel'),
+      ('education_number', 'Oktatási azonosító'), ('teacher_id_card_number', 'Pedagógusigazolvány száma'),
+      ('permanent_residence', 'Állandó lakcím'), ('temporary_address', 'Tartózkodási hely'),
+      ('bank_account_number', 'Bankszámlaszám'), ('marital_status', 'Családi állapot'),
+      ('disability', 'Fogyatékosság, tartós betegség')
+    ] %}
+      {% set value = profile|attr(field) %}
+      <dt>{{ label }}</dt><dd>{{ enum_label(value) if value and field in ['gender', 'marital_status'] else (value or '—') }}</dd>
+    {% endfor %}
+    </dl>
+    <div class="button-row">
+      {% if account_profile_url %}<a class="button button-primary" href="{{ account_profile_url }}">Szerkesztés a közös fiókkezelőben</a>{% endif %}
+      <a class="button button-secondary" href="{{ url_for('manage_user_profiles') }}">Vissza a dolgozókhoz</a>
+    </div>
+  </section>
+</section>
+{% endblock %}

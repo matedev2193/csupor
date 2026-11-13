@@ -1,6 +1,9 @@
 /* Native disclosures remain usable if JavaScript is unavailable. */
 .sidebar-nav { min-height: 0; }
 .sidebar-nav > .nav-link { min-height: 49px; margin: 6px 0; padding: 12px; gap: 11px; font-weight: 600; }
+.sidebar-logout-form .nav-link { width: 100%; justify-content: flex-start; padding: 10px 14px; gap: 12px; border: 0; background: transparent; color: #606977; box-shadow: none; font-weight: 500; text-align: left; }
+.sidebar-logout-form .nav-link:hover { background: var(--surface-muted); color: var(--text); }
+.sidebar-logout-form .nav-link .icon { width: 19px; height: 19px; }
 .nav-group { margin: 6px 0; }
 .nav-group > .nav-group-trigger {
   display: flex;

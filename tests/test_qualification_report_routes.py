@@ -7,7 +7,7 @@ from datetime import date
 from html.parser import HTMLParser
 from unittest.mock import patch
 
-from flask import g
+from flask import g, template_rendered
 
 from app import create_app, db
 from app.models import EducationalQualification, User, UserPrivilege, UserProfile
@@ -256,6 +256,47 @@ class QualificationReportRouteTests(unittest.TestCase):
         self.assertIn("Courses", directory)
         report = self.client.get(REPORT_ROOT, query_string={"year": "all", "kind": "teacher_training"}).get_data(as_text=True)
         self.assertIn("No records match the selected filters.", report)
+
+    def test_teacher_assessments_render_separately_in_reports_directory_and_detail(self):
+        assessment = QualificationRecord(
+            user=self.users["other"], status="processed", kind="teacher_assessment",
+            qualification_name="Pedagógus I.", completion_state="completed",
+            year_obtained=2026, date_obtained=date(2026, 2, 21),
+        )
+        db.session.add(assessment)
+        db.session.commit()
+        self.login("hr")
+        contexts = []
+
+        def capture(sender, template, context, **extra):
+            contexts.append(context)
+
+        with template_rendered.connected_to(capture, self.app):
+            response = self.client.get(REPORT_ROOT, query_string={"year": "2025"})
+            self.assertEqual(response.status_code, 200)
+            self.assertIn("Teacher assessments", response.get_data(as_text=True))
+            self.assertEqual(contexts[-1]["totals"]["teacher_assessments"], 1)
+            self.assertEqual(contexts[-1]["totals"]["qualifications"], 2)
+            self.assertEqual(contexts[-1]["totals"]["exams"], 2)
+            self.assertEqual(contexts[-1]["totals"]["total"], 5)
+
+            response = self.client.get(REPORT_ROOT, query_string={"year": "2025", "kind": "teacher_assessment"})
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual([row["id"] for row in contexts[-1]["records"]], [assessment.id])
+            self.assertIn('value="teacher_assessment" selected', response.get_data(as_text=True))
+
+            response = self.client.get(f"{REPORT_ROOT}/employees", query_string={"q": "other"})
+            self.assertEqual(response.status_code, 200)
+            person = contexts[-1]["users"][0]
+            self.assertEqual((person["qualification_count"], person["exam_count"],
+                              person["training_count"], person["teacher_assessment_count"]), (1, 1, 0, 1))
+            self.assertIn("Teacher assessments", response.get_data(as_text=True))
+
+            response = self.client.get(self.detail_path())
+            self.assertEqual(response.status_code, 200)
+            self.assertIn("Pedagógus I.", response.get_data(as_text=True))
+            self.assertIn("Teacher assessment", response.get_data(as_text=True))
+            self.assertEqual(contexts[-1]["totals"]["teacher_assessments"], 1)
 
     def test_uploaded_record_text_is_escaped_in_manager_detail(self):
         malicious = '<script>alert("record")</script>'

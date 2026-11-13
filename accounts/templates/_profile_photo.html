@@ -1,0 +1,62 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='profile_photo.css') }}">
+<section class="profile-photo-section" aria-labelledby="profile-photo-heading">
+  <span class="profile-photo-preview" aria-hidden="true">
+    {% if central_photo_url %}<img src="{{ central_photo_url }}" alt="" width="80" height="80">{% else %}{{ account.username[:1]|upper }}{% endif %}
+  </span>
+  <form class="profile-photo-form" action="{{ url_for('account_photos.upload_photo') }}" method="post" enctype="multipart/form-data"
+    data-photo-editor-form data-editor-url="{{ url_for('account_photos.photo_editor') }}"
+    data-loading-label="Kép betöltése…" data-saving-label="Kép mentése…"
+    data-saved-label="A profilkép módosult." data-load-error="A képet nem sikerült megnyitni. Próbáld újra."
+    data-save-error="A képet nem sikerült menteni. Próbáld újra."
+    data-type-error="JPEG-, PNG- vagy WebP-képet tölts fel."
+    data-size-error="A profilkép legfeljebb 5 MB lehet."
+    data-pixels-error="A kép túl nagy. Legfeljebb 20 megapixeles, oldalanként 10 000 képpontos képet válassz."
+    data-max-bytes="{{ profile_photo_max_mb * 1024 * 1024 }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="photo_version" value="{{ central_photo_version }}">
+    <h3 id="profile-photo-heading">Profilkép</h3>
+    <label for="profile-photo-file">Kép kiválasztása</label>
+    <input id="profile-photo-file" type="file" name="photo" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" aria-describedby="profile-photo-help" required>
+    <p class="help" id="profile-photo-help">JPEG, PNG vagy WebP, legfeljebb {{ profile_photo_max_mb }} MB.</p>
+    <div class="profile-photo-actions">
+      <button type="submit" class="button button-secondary" data-photo-plain-upload>Kép feltöltése</button>
+      <button type="button" class="button button-secondary" data-photo-edit hidden>Kép szerkesztése</button>
+    </div>
+    <p class="help profile-photo-feedback" data-photo-feedback role="status" aria-live="polite" hidden></p>
+  </form>
+</section>
+<dialog class="photo-editor" id="profile-photo-editor" aria-labelledby="photo-editor-title" aria-describedby="photo-editor-instructions">
+  <div class="photo-editor-heading">
+    <div><span class="eyebrow">Profilkép</span><h2 id="photo-editor-title">Kép szerkesztése</h2></div>
+    <button type="button" class="icon-button" data-photo-close aria-label="Képszerkesztő bezárása">×</button>
+  </div>
+  <p class="help-text" id="photo-editor-instructions">Húzd a képet a megfelelő helyre. A csúszkával vagy az egér görgőjével nagyíthatsz.</p>
+  <p class="sr-only" id="photo-editor-keyboard">A nyílbillentyűkkel mozgathatod a képet. A Shift nyomva tartásával nagyobb lépésekben haladhatsz.</p>
+  <p class="photo-editor-status help-text" data-photo-status role="status" aria-live="polite"></p>
+  <div class="photo-editor-workspace" data-photo-workspace aria-busy="true">
+    <div class="photo-crop-surface" data-photo-surface tabindex="0" role="group" aria-label="Képkivágás területe" aria-describedby="photo-editor-instructions photo-editor-keyboard" aria-disabled="true">
+      <canvas data-photo-canvas width="640" height="640" aria-hidden="true"></canvas>
+      <span class="photo-crop-mask" aria-hidden="true"></span>
+    </div>
+    <div class="photo-editor-tools">
+      <div class="photo-zoom-field">
+        <div class="photo-zoom-label"><label for="photo-editor-zoom">Nagyítás</label><output for="photo-editor-zoom" data-photo-zoom-value>100%</output></div>
+        <input id="photo-editor-zoom" data-photo-zoom type="range" min="1" max="8" step="0.01" value="1" disabled>
+      </div>
+      <div class="photo-pan-buttons" role="group" aria-label="Kép helyzete">
+        <button type="button" class="icon-button" data-photo-pan="left" aria-label="Kép mozgatása balra" disabled>←</button>
+        <button type="button" class="icon-button" data-photo-pan="up" aria-label="Kép mozgatása felfelé" disabled>↑</button>
+        <button type="button" class="icon-button" data-photo-pan="down" aria-label="Kép mozgatása lefelé" disabled>↓</button>
+        <button type="button" class="icon-button" data-photo-pan="right" aria-label="Kép mozgatása jobbra" disabled>→</button>
+      </div>
+      <button type="button" class="button button-secondary" data-photo-reset disabled>Alaphelyzet</button>
+      <div class="photo-editor-preview"><canvas data-photo-avatar width="128" height="128" aria-hidden="true"></canvas><span>Előnézet</span></div>
+    </div>
+  </div>
+  <p class="photo-editor-error" data-photo-error role="alert" hidden></p>
+  <div class="photo-editor-actions">
+    <button type="button" class="button button-secondary" data-photo-cancel>Mégse</button>
+    <button type="button" class="button button-primary" data-photo-save disabled>Kép mentése</button>
+  </div>
+</dialog>
+<script defer src="{{ url_for('static', filename='profile_photo_editor.js') }}"></script>

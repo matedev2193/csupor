@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}{% if manager_mode %}{{ owner.username }} profilja{% else %}Profilom{% endif %} · Micimackó-fiók{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{{ url_for('static', filename='profile.css') }}">{% endblock %}
+{% block content %}
+<div class="profile-editor">
+  <span class="eyebrow">{% if manager_mode %}Fiókkezelés{% else %}A közös profilod{% endif %}</span>
+  <h2 id="page-title">{% if manager_mode %}{{ owner.username }} profilja{% else %}Személyes adataim{% endif %}</h2>
+  <p class="lead">Itt szerkesztheted a személyes adatokat. A CSUPOR a mentett adatokat használja a munkaügyi nyilvántartásban.</p>
+  {% if manager_mode %}<p class="help">Fiók: {{ owner.username }} · {{ owner.email }}</p>{% endif %}
+  {% if pending_import %}
+    <div class="notice" role="status">
+      {% if integration_problem %}
+      <strong>A profilszerkesztéshez a CSUPOR-kapcsolat beállítása szükséges.</strong>
+      <p>{{ integration_problem.message }}</p>
+      <p>A korábbi profiladatok védelmében a szerkesztés a kapcsolat beállításáig és az adatok betöltéséig szünetel. Kérd az üzemeltető segítségét.</p>
+      <p class="help">Hibakód: {{ integration_problem.code }}</p>
+      {% else %}
+      <strong>A korábbi profiladatok betöltése szükséges.</strong>
+      {% if manager_mode %}
+      <p>A felhasználó következő CSUPOR-belépésekor a meglévő adatai automatikusan átkerülnek ide. Ezt követően itt szerkeszthetők.</p>
+      {% else %}
+      <p>Nyisd meg egyszer a CSUPOR profiloldalát. A meglévő adataid automatikusan betöltődnek, majd visszatérsz ide.</p>
+      {% if csupor_url %}<a class="button" href="{{ csupor_url }}">Meglévő adataim betöltése</a>{% else %}<p>Az alkalmazás eléréséhez kérd az üzemeltető segítségét.</p>{% endif %}
+      {% endif %}
+      {% endif %}
+    </div>
+  {% else %}
+    {% if not manager_mode %}{% include '_profile_photo.html' %}{% endif %}
+    <form method="post" class="personal-profile-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="profile_version" value="{{ profile_version }}">
+      {% for heading, names in [
+        ('Személyes adatok', ['full_name', 'name_at_birth', 'date_of_birth', 'place_of_birth', 'gender', 'mothers_maiden_name', 'citizenships', 'phone_number']),
+        ('Hivatalos azonosítók', ['social_security_number', 'tax_number', 'education_number', 'teacher_id_card_number']),
+        ('Lakcím és további adatok', ['permanent_residence', 'temporary_address', 'bank_account_number', 'marital_status', 'disability'])
+      ] %}
+      <fieldset>
+        <legend>{{ heading }}</legend>
+        <div class="profile-grid">
+        {% for name in names %}
+          <div class="profile-field{% if name in ['permanent_residence', 'temporary_address', 'disability'] %} profile-field-wide{% endif %}">
+            <label for="{{ name }}">{{ fields[name][0] }}{% if name in ['social_security_number', 'tax_number', 'education_number'] %} ({{ fields[name][1] }} számjegy){% endif %}</label>
+            {% if name in ['permanent_residence', 'temporary_address'] %}
+            <textarea id="{{ name }}" name="{{ name }}" rows="2" maxlength="{{ fields[name][1] }}">{{ profile_values.get(name) or '' }}</textarea>
+            {% elif name in ['gender', 'marital_status'] %}
+            <select id="{{ name }}" name="{{ name }}">
+              <option value="">Nincs megadva</option>
+              {% for value, label in (genders if name == 'gender' else marital_statuses) %}<option value="{{ value }}" {% if profile_values.get(name) == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select>
+            {% else %}
+            <input id="{{ name }}" name="{{ name }}" type="{{ 'date' if name == 'date_of_birth' else 'tel' if name == 'phone_number' else 'text' }}" maxlength="{{ fields[name][1] }}" value="{{ profile_values.get(name) or '' }}"{% if name == 'date_of_birth' %} max="9999-12-31"{% endif %}{% if name in ['social_security_number', 'tax_number', 'education_number'] %} inputmode="numeric" pattern="[0-9]{{ '{' }}{{ fields[name][1] }}{{ '}' }}"{% endif %}>
+            {% endif %}
+            {% if name == 'disability' %}<p class="help">Ha nincs, hagyd üresen.</p>{% endif %}
+          </div>
+        {% endfor %}
+        </div>
+      </fieldset>
+      {% endfor %}
+      <div class="profile-actions"><button type="submit">Profil mentése</button><a href="{{ '/admin/accounts' if manager_mode else url_for('web.account_page') }}">Mégse</a></div>
+    </form>
+  {% endif %}
+  {% if not manager_mode %}
+  <div class="divider"></div>
+  <h3>Belépési adatok</h3>
+  <p>{{ owner.email }} · <a href="{{ url_for('web.account_page') }}">E-mail-cím módosítása</a> · <a href="{{ url_for('web.password') }}">Jelszó módosítása</a></p>
+  {% if csupor_url and not pending_import %}<p><a href="{{ csupor_url.rsplit('/profile', 1)[0] }}">Vissza a CSUPOR-ba</a></p>{% endif %}
+  {% endif %}
+</div>
+{% endblock %}

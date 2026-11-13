@@ -55,9 +55,18 @@
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <h2 id="delete-user-title">{{ _('Delete this user?') }}</h2>
     <p class="profile-delete-person" data-delete-user-name></p>
+    {% if shared_accounts_enabled %}
+    <p id="delete-user-description">Ez véglegesen törli a felhasználó CSUPOR-profilját és a hozzá tartozó személyügyi adatokat, valamint megszünteti a CSUPOR-hozzáférését. A közös fiókja és más rendszerekhez való hozzáférése megmarad. A törlés nem vonható vissza.</p>
+    {% else %}
     <p id="delete-user-description">{{ _('This permanently deletes the account, profile and photo, dependents, qualifications, professional exam, contracts, leadership assignments and leave requests belonging to this user. The user will no longer be able to sign in. This cannot be undone.') }}</p>
+    {% endif %}
     <p>{{ _("Other users' records and shared GYÁP forms will be kept. References to this user as approver or uploader will be cleared.") }}</p>
+    {% if shared_accounts_enabled %}
+    <input id="delete-manager-password" type="hidden">
+    <p>A folytatáshoz újra be kell jelentkezned a közös fiókodba. Ezután külön megerősítheted a törlést.</p>
+    {% else %}
     <div class="field"><label for="delete-manager-password">{{ _('Your own password') }}</label><input id="delete-manager-password" name="manager_password" type="password" autocomplete="current-password" required><small>{{ _('Confirm with the password of your currently signed-in HR or CEO account.') }}</small></div>
+    {% endif %}
     <div class="button-row"><button type="button" class="button button-secondary" data-close-delete-dialog>{{ _('Cancel') }}</button><button type="submit" class="button profile-delete-confirm">{{ _('Permanently delete user') }}</button></div>
   </form>
 </dialog>

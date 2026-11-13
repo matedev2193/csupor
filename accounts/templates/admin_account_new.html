@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Új fiók · Micimackó-fiók{% endblock %}
+{% block content %}
+<span class="eyebrow">Központi adminisztráció</span><h2 id="page-title">Új közös fiók</h2>
+<p class="lead">A fiókhoz külön jelöld be az elérhető alkalmazásokat. A munkaügyi szerepköröket és oldalhozzáféréseket továbbra is az adott alkalmazás kezeli.</p>
+<p><a href="{{ url_for('account_admin.accounts') }}">← Fiókok és hozzáférések</a></p>
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label for="username">Felhasználónév</label><input id="username" name="username" maxlength="50" autocomplete="off" value="{{ request.form.get('username', '') }}" required>
+  <label for="email">E-mail-cím</label><input id="email" name="email" type="email" maxlength="120" value="{{ request.form.get('email', '') }}" autocomplete="off" required>
+  <label for="password">Jelszó</label><input id="password" name="password" type="password" minlength="12" maxlength="1024" autocomplete="new-password" required>
+  <label for="password-confirm">Jelszó újra</label><input id="password-confirm" name="password_confirm" type="password" minlength="12" maxlength="1024" autocomplete="new-password" required>
+  <fieldset><legend>Elérhető alkalmazások</legend>
+  {% for client in clients %}<label><input type="checkbox" name="client_ids" value="{{ client.client_id }}" {% if client.client_id in request.form.getlist('client_ids') %}checked{% endif %}> {{ client.name }}</label>{% else %}<p>Jelenleg nincs aktív alkalmazás. Hozzáférést később is adhatsz.</p>{% endfor %}
+  </fieldset>
+  <p class="help">Az új fiók nem kap központi adminisztrátori jogosultságot. A rendszer nem küld automatikusan e-mailt vagy jelszót.</p>
+  <button type="submit">Fiók létrehozása</button>
+</form>
+{% endblock %}

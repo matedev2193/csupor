@@ -87,7 +87,8 @@ class QualificationReportDataTests(unittest.TestCase):
 
     def test_each_group_counts_distinct_people_separately_from_completions(self):
         report = self.report([self.record(), self.record(), self.record(user=2), self.record(kind="exam")])
-        self.assertEqual(report["totals"], {"employees": 2, "total": 4, "qualifications": 3, "exams": 1, "teacher_training": 0, "other_courses": 0})
+        self.assertEqual(report["totals"], {"employees": 2, "total": 4, "qualifications": 3, "exams": 1,
+                                           "teacher_training": 0, "other_courses": 0, "teacher_assessments": 0})
         self.assertEqual(report["by_month"][0]["employees"], 2)
         self.assertEqual(report["by_month"][0]["total"], 4)
         certificate = next(row for row in report["by_type"] if row["value"] == "qualification:certificate")
@@ -146,7 +147,7 @@ class QualificationReportDataTests(unittest.TestCase):
                    self.record(kind="teacher_training"), self.record(kind="other_course")]
         report = self.report(records)
         self.assertEqual(report["totals"], {"employees": 1, "total": 3, "qualifications": 1, "exams": 0,
-                                           "teacher_training": 1, "other_courses": 1})
+                                           "teacher_training": 1, "other_courses": 1, "teacher_assessments": 0})
         self.assertEqual({row["kind"] for row in report["records"]}, {"qualification", "teacher_training", "other_course"})
         for kind in ("teacher_training", "other_course"):
             filters = _parse_filters(MultiDict({"kind": kind}), self.users, _type_options(records), self.today)
@@ -205,6 +206,54 @@ class QualificationReportDataTests(unittest.TestCase):
         self.assertEqual(report["totals"]["total"], 2)
         self.assertEqual(self.report(records, year="unknown")["totals"]["total"], 1)
 
+    def test_teacher_assessments_have_separate_counts_and_can_be_filtered(self):
+        assessments = [self.record(kind="teacher_assessment", qualification_name="Pedagógus I."),
+                       self.record(kind="teacher_assessment", qualification_name="Pedagógus II.", user=2)]
+        records = assessments + [self.record(), self.record(kind="exam"),
+                                 self.record(kind="teacher_training"), self.record(kind="other_course"),
+                                 self.record(kind="teacher_assessment", status="uploaded"),
+                                 self.record(kind="teacher_assessment", completion_state="in_progress")]
+        report = self.report(records)
+        self.assertEqual(report["totals"], {"employees": 2, "total": 6, "qualifications": 1, "exams": 1,
+                                           "teacher_training": 1, "other_courses": 1, "teacher_assessments": 2})
+        filters = _parse_filters(MultiDict({"kind": "teacher_assessment"}), self.users,
+                                 _type_options(records), self.today)
+        filtered = self.report(records, **filters)
+        self.assertEqual(filtered["records"], assessments)
+        self.assertEqual(filtered["totals"]["teacher_assessments"], 2)
+        self.assertEqual(filtered["by_type"][0]["label"], "Teacher assessment")
+        self.assertEqual(filtered["by_month"][0]["teacher_assessments"], 2)
+        self.assertEqual(filtered["by_year"][0]["teacher_assessments"], 2)
+
+    def test_teacher_assessments_keep_school_year_boundaries_and_unknown_dates(self):
+        records = [self.record(date(2026, 8, 31), kind="teacher_assessment"),
+                   self.record(date(2026, 9, 1), kind="teacher_assessment"),
+                   self.record(None, kind="teacher_assessment", year_obtained=2026)]
+        for year in ("2025", "2026", "unknown"):
+            report = self.report(records, year=year)
+            self.assertEqual(report["totals"]["teacher_assessments"], 1)
+        all_years = self.report(records, year="all")
+        self.assertEqual(all_years["totals"]["teacher_assessments"], 3)
+        self.assertEqual(sum(row["teacher_assessments"] for row in all_years["by_month"]), 2)
+
+    def test_teacher_assessments_never_affect_any_ksh_dimension_even_with_stale_tags(self):
+        # Defensive exclusion also covers old/bypassed writes and unknown dates.
+        fields = dict(kind="teacher_assessment", study_categories=["master", "level_raising"],
+                      award_categories=["professional_exam", "master"], funding_type="self",
+                      training_topic="digital_culture", organiser_type="higher_education",
+                      attendance_mode="blended", duration_hours=30, digital_pedagogy=True)
+        assessments = [self.record(study_start_date=date(2026, 9, 1),
+                                   study_end_date=date(2026, 9, 2), **fields),
+                       self.record(None, **fields),
+                       self.record(None, completion_state="in_progress",
+                                   study_start_date=date(2026, 9, 1), **fields)]
+        legitimate = [self.record(kind="teacher_training", study_start_date=date(2026, 9, 1),
+                                  study_end_date=date(2026, 9, 2), award_categories=["it"],
+                                  study_categories=["bachelor"], duration_hours=60)]
+        for year in ("2026", "all", "unknown"):
+            with self.subTest(year=year):
+                self.assertEqual(self.report(legitimate + assessments, year=year)["ksh"],
+                                 self.report(legitimate, year=year)["ksh"])
 
     def test_invalid_filters_are_rejected_instead_of_silently_changing_report(self):
         options = _type_options([self.record()])

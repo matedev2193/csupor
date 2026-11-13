@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Kijelentkezés · Micimackó-fiók{% endblock %}
+{% block content %}
+<span class="eyebrow">Viszlát legközelebb</span>
+<h2 id="page-title">Kijelentkezés</h2>
+<p class="lead">Lezárod a közös fiókod bejelentkezéseit. A csatlakoztatott rendszerek a következő ellenőrzésükkor új bejelentkezést kérnek.</p>
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button type="submit">Kijelentkezés a közös fiókból</button>
+</form>
+{% if account %}<p class="form-footer"><a href="{{ url_for('web.account_page') }}">Maradok bejelentkezve</a></p>{% endif %}
+{% endblock %}

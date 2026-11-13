@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Közös fiók · CSUPOR{% endblock %}
+{% block content %}
+<section class="form-shell">
+  <h1>Közös fiók</h1>
+  <p role="alert">{{ message }}</p>
+  <a class="button" href="{{ url_for('login') }}">Bejelentkezés újra</a>
+</section>
+{% endblock %}

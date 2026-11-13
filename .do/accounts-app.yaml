@@ -1,0 +1,54 @@
+name: micimacko-fiok
+services:
+  - name: accounts
+    github:
+      repo: matedev2193/csupor
+      branch: main
+      deploy_on_push: true
+    source_dir: /
+    dockerfile_path: accounts/Dockerfile
+    run_command: python -m accounts.start
+    http_port: 8080
+    instance_count: 1
+    health_check:
+      http_path: /healthz
+      initial_delay_seconds: 15
+      period_seconds: 10
+      failure_threshold: 6
+    envs:
+      - key: ACCOUNTS_DATABASE_URL
+        scope: RUN_TIME
+        type: SECRET
+        value: ""
+      - key: ACCOUNTS_DATABASE_CA_CERT
+        scope: RUN_TIME
+        value: ""
+      - key: ACCOUNTS_DATABASE_TLS_MODE
+        scope: RUN_TIME
+        # For Nethely without TLS explicitly change to disabled.
+        # disabled overrides the old URL's ssl-mode=REQUIRED and skips CA setup.
+        value: "required"
+      - key: ACCOUNTS_SECRET_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: ""
+      - key: ACCOUNTS_SETUP_TOKEN
+        scope: RUN_TIME
+        type: SECRET
+        value: ""
+      - key: ACCOUNTS_ISSUER
+        scope: RUN_TIME
+        # First deploy starts the domain-setup page. After adding the domain,
+        # set its permanent HTTPS origin here, then deploy the account service.
+        value: ""
+      # Copy each exact registered ID from the corresponding app before deploy.
+      # App environments are separate; no default identity is trusted.
+      - key: OIDC_CLIENT_ID
+        scope: RUN_TIME
+        value: ""
+      - key: SAFETY_OIDC_CLIENT_ID
+        scope: RUN_TIME
+        value: ""
+      - key: ACCOUNTS_PROXY_HOPS
+        scope: RUN_TIME
+        value: "1"

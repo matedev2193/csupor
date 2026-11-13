@@ -69,13 +69,14 @@ for _parent, _children in {
     "qualification_reports.index": ("qualification_reports.employees", "qualification_reports.employee"),
     "manage_dependents": ("add_dependent", "edit_dependent"),
     "add_qualification": ("qualifications.index", "edit_qualification", "professional_exam"),
-    "qualifications.manage": ("qualifications.new", "qualifications.edit"),
+    "qualifications.manage": ("qualifications.new", "qualifications.edit", "qualifications.delete"),
     "manage_contracts": ("select_contract_employee", "create_contract", "edit_contract"),
     "manage_legal_entities": ("create_legal_entity", "edit_legal_entity"),
     "manage_places_of_work": ("create_place_of_work", "edit_place_of_work"),
     "worktime.groups": ("worktime.group_new", "worktime.group_edit", "worktime.legacy_groups"),
     "worktime.management": ("worktime.generate", "worktime.confirm", "worktime.edit_entry", "worktime.merge"),
     "mail_settings.settings": ("mail_settings.initialise_key",),
+    "page_access.settings": ("account_transfer.settings",),
 }.items():
     _ENDPOINT_PAGES.update({endpoint: _parent for endpoint in _children})
 
@@ -84,6 +85,7 @@ for _parent, _children in {
 UTILITY_ENDPOINTS = frozenset({
     "static", "index", "login", "logout", "register", "set_language", "page_access.unavailable",
     "password_reset.request_reset", "password_reset.reset_password",
+    "shared_auth.login", "shared_auth.callback", "account_transfer.health",
 })
 SPECIAL_ENDPOINTS = frozenset({"profile_photos.show_photo", "gyap.download_form", "worktime.export", "qualifications.document"})
 

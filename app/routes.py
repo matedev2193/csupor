@@ -3,7 +3,7 @@ from functools import wraps
 from secrets import compare_digest, token_urlsafe
 from urllib.parse import urlsplit
 
-from flask import abort, current_app, flash, redirect, render_template, request, session, url_for
+from flask import abort, current_app, flash, g, redirect, render_template, request, session, url_for
 from flask_babel import _
 from flask_login import current_user, login_required, login_user, logout_user
 from sqlalchemy.orm import joinedload
@@ -11,6 +11,8 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from werkzeug.security import generate_password_hash
 
 from . import SUPPORTED_LOCALES, db, get_locale
+from .shared_auth import (begin_login, clear_local_session, deletion_reauthenticated,
+                          end_shared_session, oidc_enabled, provider_url, require_logout_csrf)
 
 from .working_calendar import HungaryCalendar
 from .i18n import enum_label
@@ -1288,6 +1290,8 @@ def init_routes(app):
 
     @app.route("/register", methods=["GET", "POST"])
     def register():
+        if oidc_enabled():
+            return begin_login(register=True)
         if request.method == "POST":
             email = request.form.get("email", "").strip().lower()
             username = request.form.get("username", "").strip()
@@ -1318,6 +1322,8 @@ def init_routes(app):
 
     @app.route("/login", methods=["GET", "POST"])
     def login():
+        if oidc_enabled():
+            return begin_login()
         if request.method == "POST":
             login_identifier = request.form.get("login", "").strip()
             password = request.form.get("password", "")
@@ -1336,9 +1342,20 @@ def init_routes(app):
 
         return render_template("login.html")
 
-    @app.route("/logout")
-    @login_required
+    @app.route("/logout", methods=["GET", "POST"])
     def logout():
+        if oidc_enabled():
+            if request.method == "GET":
+                return render_template("shared_logout.html", incomplete=False)
+            require_logout_csrf()
+            completed = end_shared_session()
+            clear_local_session()
+            if completed:
+                return redirect(provider_url("/logout"))
+            return render_template("shared_logout.html", incomplete=True,
+                                   account_logout_url=provider_url("/logout")), 503
+        if not current_user.is_authenticated:
+            return redirect(url_for("login"))
         logout_user()
         flash(_("Logged out."), "success")
         return redirect(url_for("login"))
@@ -1656,6 +1673,8 @@ def init_routes(app):
     @app.route("/password", methods=["GET", "POST"])
     @login_required
     def change_password():
+        if oidc_enabled():
+            return redirect(provider_url("/password"))
         session.setdefault("change_password_csrf_token", token_urlsafe(32))
         if request.method == "POST":
             if not compare_digest(session["change_password_csrf_token"].encode(), request.form.get("csrf_token", "").encode()):
@@ -1699,12 +1718,24 @@ def init_routes(app):
     @app.route("/profile", methods=["GET", "POST"])
     @login_required
     def edit_profile():
+        if oidc_enabled():
+            if request.method == "POST":
+                abort(403, description="A személyes adataidat a közös fiókban szerkesztheted.")
+            if not getattr(g, "shared_profile_ready", False):
+                return render_template("shared_auth_error.html", message="A közös profilszerkesztő jelenleg nem érhető el. A meglévő adataid megmaradtak. Próbáld újra később."), 503
+            return redirect(provider_url("/profile"))
         profile = current_user.profile or UserProfile(user_id=current_user.id)
         if request.method == "POST":
+            if oidc_enabled():
+                csrf_token = session.get("profile_email_csrf_token", "")
+                if not csrf_token or not compare_digest(csrf_token.encode(), request.form.get("csrf_token", "").encode()):
+                    abort(400)
             email_changed = False
             observed_email = current_user.email
             observed_password_hash = current_user.password_hash
-            if "email" in request.form:
+            if oidc_enabled() and "email" in request.form and request.form.get("email", "").strip().lower() != observed_email.lower():
+                abort(400, description="Az e-mail-címet a közös fiók oldalán módosíthatod.")
+            if "email" in request.form and not oidc_enabled():
                 from .mail_settings import _has_control, _valid_email
 
                 csrf_token = session.get("profile_email_csrf_token", "")
@@ -1772,6 +1803,8 @@ def init_routes(app):
     @app.post("/profile/email")
     @login_required
     def change_account_email():
+        if oidc_enabled():
+            return redirect(provider_url("/account"))
         from .mail_settings import _has_control, _valid_email
 
         csrf_token = session.get("profile_email_csrf_token", "")
@@ -1868,7 +1901,9 @@ def init_routes(app):
         csrf_token = session.get("profile_delete_csrf_token")
         if not csrf_token or not compare_digest(csrf_token.encode(), request.form.get("csrf_token", "").encode()):
             abort(400)
-        if not current_user.check_password(request.form.get("manager_password", "")):
+        if oidc_enabled() and not deletion_reauthenticated(user_id):
+            return begin_login(deletion_target=user_id)
+        if not oidc_enabled() and not current_user.check_password(request.form.get("manager_password", "")):
             flash(_("Your password is incorrect. The user was not deleted."), "error")
             return redirect(url_for("manage_user_profiles"))
         if user_id == current_user.id:
@@ -1907,6 +1942,17 @@ def init_routes(app):
             return redirect(url_for("manage_user_profiles"))
 
         profile = target_user.profile or UserProfile(user_id=target_user.id)
+        if oidc_enabled():
+            if request.method == "POST":
+                abort(403, description="A személyes adatokat a közös fiókkezelőben lehet módosítani.")
+            from .shared_auth_models import ExternalIdentity
+            identity = ExternalIdentity.query.filter_by(
+                user_id=target_user.id, issuer=current_app.config["OIDC_ISSUER"], disabled=False,
+            ).first()
+            from urllib.parse import quote
+            account_profile_url = provider_url("/admin/accounts/" + quote(identity.subject, safe="") + "/profile") if identity else None
+            return render_template("profile_readonly.html", target_user=target_user, profile=profile,
+                                   account_profile_url=account_profile_url)
         if request.method == "POST":
             errors = _save_profile_from_form(profile)
             if errors:
@@ -2040,6 +2086,8 @@ def init_routes(app):
                 entity.om_id, entity.tax_number = om_id, tax_number
                 db.session.add(entity)
                 db.session.commit()
+                from .shared_workplaces import publish_workplaces
+                publish_workplaces(force=True)
                 flash(_("Legal entity updated.") if editing else _("Legal entity saved."), "success")
                 return redirect(url_for("manage_legal_entities"))
         return render_template(
@@ -2080,6 +2128,8 @@ def init_routes(app):
                 place.legal_entity_id, place.address = legal_entity_id, address
                 db.session.add(place)
                 db.session.commit()
+                from .shared_workplaces import publish_workplaces
+                publish_workplaces(force=True)
                 flash(_("Place of work updated.") if editing else _("Place of work saved."), "success")
                 return redirect(url_for("manage_places_of_work"))
         entities = LegalEntity.query.order_by(LegalEntity.name.asc()).all()

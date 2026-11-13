@@ -68,6 +68,7 @@ def create_app() -> Flask:
         "EMAIL_WORKER_ENABLED", "true" if worker_default else "false",
     ).lower() in {"1", "true", "yes", "on"}
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"hide_parameters": True}
     app.config["BABEL_DEFAULT_LOCALE"] = DEFAULT_LOCALE
     app.config["BABEL_TRANSLATION_DIRECTORIES"] = "translations"
     # Bound multipart parsing even for chunked requests without Content-Length;
@@ -77,6 +78,17 @@ def create_app() -> Flask:
     db.init_app(app)
     babel.init_app(app, locale_selector=get_locale)
     login_manager.init_app(app)
+
+    from .account_transfer import init_account_transfer
+
+    init_account_transfer(app)
+
+    from .shared_auth import init_shared_auth
+
+    init_shared_auth(app)
+    from .account_migration import init_account_migration
+
+    init_account_migration(app)
 
     from . import routes  # noqa: F401
 
@@ -118,6 +130,10 @@ def create_app() -> Flask:
     from .page_access import init_page_access
 
     init_page_access(app)
+
+    from .shared_workplaces import init_shared_workplaces
+
+    init_shared_workplaces(app)
 
     with app.app_context():
         from .bootstrap import initialise_database

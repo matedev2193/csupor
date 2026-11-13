@@ -2,6 +2,24 @@
 
 Flask-based login and personnel data management system backed by MySQL schema `csupor`.
 
+The independent **Micimackó-fiók** service in `accounts/` supports shared
+OpenID Connect sign-in across CSUPOR and other applications, using separate
+identity storage and preserving each application's permissions. Existing
+installations remain in local authentication mode until migrated.
+For browser-only setup, encrypted migration and application access management,
+see the [DigitalOcean guide without console commands](docs/shared-accounts-digitalocean.md).
+See also the [shared accounts deployment and migration guide](docs/shared-accounts.md)
+before enabling `AUTH_MODE=oidc`. The account service can be deployed from this
+repository without importing or accessing CSUPOR's personnel application.
+
+Central administrators can create or deactivate accounts, assign application
+access and configure recovery email through the account service. Application
+names on the account page open their registered sites. See the
+[central profile and administration guide](docs/central-profile.md).
+The [shared workplace catalogue](docs/shared-workplaces.md) lets the independent
+safety application import CSUPOR workplace names and addresses while keeping
+training records and permissions in its own database.
+
 ## Features
 
 - Login using **e-mail or username + password**.
@@ -92,6 +110,8 @@ The login page links to **Forgot your password?**. Recovery links expire after 3
 HR and director accounts can search user profiles and filter by active/inactive contracts or profile completeness. Active status uses inclusive contract dates in Europe/Budapest. The existing completion checklist determines whether details are complete; whitespace-only fields do not count, and incomplete profiles show a yellow status.
 
 Deleting a user requires access to User profiles and the signed-in user's own password in a confirmation dialog. This permanently removes the account and its owned records, including contracts, leave requests and profile photo. Other users' records and shared annual GYÁP forms remain, with references to the deleted approver/uploader cleared. Self-deletion and deletion of the final director account are blocked. Deletion is transactional, CSRF-protected, and rolls back on failure.
+
+In shared-account (`AUTH_MODE=oidc`) mode, **My profile** opens the complete personal-details and photo editor in the account service. Existing CSUPOR details and editable photo sources are transferred automatically on each user's first visit after the update, without overwriting later central edits. CSUPOR retains its HR records and refreshes its personal-data mirror through a separate, CSUPOR-only API. Deploy the account service before CSUPOR; no new environment variables or setup import are required. See [central profile ownership and migration](docs/central-profile.md). The following local editor details also continue to apply in local-login mode.
 
 Users can upload their own JPEG, PNG or WebP profile photo (up to 5 MiB). Photos are decoded, oriented, stripped of metadata and resized before database storage. The new `profile_photos` table is created automatically at startup using the existing MySQL identifier compatibility handling; no existing table columns change. Install the updated requirements for Pillow support. Only the owner and users with User profiles access can retrieve a photo. The sidebar account link shows the name and newest active contract's job title, with username and privilege fallbacks.
 

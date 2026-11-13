@@ -6,8 +6,8 @@
   {% if rows %}
   <div class="table-wrap" tabindex="0" role="region" aria-label="{{ title }}">
     <table class="qualification-summary-table">
-      <thead><tr><th scope="col">{{ label }}</th><th scope="col">{{ _('Employees') }}</th><th scope="col">{{ _('Qualifications') }}</th><th scope="col">{{ _('Professional exams') }}</th><th scope="col">{{ _('Teacher training') }}</th><th scope="col">{{ _('Other courses') }}</th><th scope="col">{{ _('Total') }}</th></tr></thead>
-      <tbody>{% for row in rows %}<tr><th scope="row">{{ row.label }}</th><td>{{ row.employees }}</td><td>{{ row.qualifications }}</td><td>{{ row.exams }}</td><td>{{ row.teacher_training }}</td><td>{{ row.other_courses }}</td><td><strong>{{ row.total }}</strong></td></tr>{% endfor %}</tbody>
+      <thead><tr><th scope="col">{{ label }}</th><th scope="col">{{ _('Employees') }}</th><th scope="col">{{ _('Qualifications') }}</th><th scope="col">{{ _('Professional exams') }}</th><th scope="col">{{ _('Teacher training') }}</th><th scope="col">{{ _('Other courses') }}</th><th scope="col">{{ _('Teacher assessments') }}</th><th scope="col">{{ _('Total') }}</th></tr></thead>
+      <tbody>{% for row in rows %}<tr><th scope="row">{{ row.label }}</th><td>{{ row.employees }}</td><td>{{ row.qualifications }}</td><td>{{ row.exams }}</td><td>{{ row.teacher_training }}</td><td>{{ row.other_courses }}</td><td>{{ row.teacher_assessments }}</td><td><strong>{{ row.total }}</strong></td></tr>{% endfor %}</tbody>
     </table>
   </div>
   {% else %}<div class="empty-state">{{ _('No records match the selected filters.') }}</div>{% endif %}
@@ -28,7 +28,7 @@
   <header class="qualification-page-heading">
     <span class="eyebrow">{{ _('Management') }}</span>
     <h1>{{ _('Qualification reports') }}</h1>
-    <p>{{ _('Compare completed qualifications, professional exams and courses, and review study participation.') }}</p>
+    <p>{{ _('Compare completed qualifications, professional exams, courses and teacher assessments, and review study participation.') }}</p>
   </header>
   <nav class="qualification-tabs" aria-label="{{ _('Qualification report views') }}">
     <a class="qualification-tab active" href="{{ url_for('qualification_reports.index') }}" aria-current="page">{{ icon('graduate') }}{{ _('Overview') }}</a>
@@ -61,6 +61,7 @@
     <div class="stat-card"><span class="qualification-stat-label">{{ _('Professional exams') }}</span><strong class="qualification-stat-value">{{ totals.exams }}</strong></div>
     <div class="stat-card"><span class="qualification-stat-label">{{ _('Teacher training') }}</span><strong class="qualification-stat-value">{{ totals.teacher_training }}</strong></div>
     <div class="stat-card"><span class="qualification-stat-label">{{ _('Other courses') }}</span><strong class="qualification-stat-value">{{ totals.other_courses }}</strong></div>
+    <div class="stat-card"><span class="qualification-stat-label">{{ _('Teacher assessments') }}</span><strong class="qualification-stat-value">{{ totals.teacher_assessments }}</strong></div>
   </section>
 
   <p class="qualification-count-note muted">{{ _('The same employee may appear in several groups. Employee counts must not be added together.') }}</p>
@@ -68,12 +69,13 @@
     {{ summary_table('by-type-title', _('By type'), _('Level or type'), by_type) }}
     {{ summary_table('by-year-title', _('By school year'), _('School year'), by_year) }}
     {{ summary_table('by-month-title', _('By month'), _('Month'), by_month) }}
-    {{ summary_table('by-name-title', _('By qualification or exam'), _('Qualification name'), by_name) }}
+    {{ summary_table('by-name-title', _('By record name'), _('Qualification name'), by_name) }}
   </div>
 
 
   <section class="qualification-ksh" aria-labelledby="ksh-title">
     <div class="section-heading"><div><h2 id="ksh-title">{{ _('KSH classifications') }}</h2><p>{{ _('Award categories use the acquisition date. Participation uses the recorded study period overlapping the selected school year; ongoing studies may have no end date.') }}</p></div></div>
+    <p class="qualification-count-note muted">{{ _('Teacher assessments are counted separately and excluded from KSH qualification and training statistics.') }}</p>
     <p class="qualification-count-note muted">{{ _('One record may have several KSH classifications. Neither record counts nor employee counts can be added across categories.') }}</p>
     <div class="qualification-summary-grid">
       {{ classification_table('by-award-title', _('Qualifications obtained by KSH category'), ksh.by_award) }}
@@ -102,7 +104,7 @@
   </section>
 
   <section class="table-card" aria-labelledby="matching-records-title">
-    <div class="section-heading"><div><h2 id="matching-records-title">{{ _('Matching records') }}</h2><p>{{ _('Open an employee to see their qualifications, exams, courses and documents awaiting processing.') }}</p></div></div>
+    <div class="section-heading"><div><h2 id="matching-records-title">{{ _('Matching records') }}</h2><p>{{ _('Open an employee to see their qualifications, exams, courses, teacher assessments and documents awaiting processing.') }}</p></div></div>
     {% if records %}
     <div class="table-wrap" tabindex="0" role="region" aria-label="{{ _('Matching records') }}">
       <table class="qualification-records-table"><thead><tr><th scope="col">{{ _('Employee') }}</th><th scope="col">{{ _('Qualification name') }}</th><th scope="col">{{ _('Level or type') }}</th><th scope="col">{{ _('Date obtained') }}</th><th scope="col">{{ _('School year') }}</th></tr></thead>

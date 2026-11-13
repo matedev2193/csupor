@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Bejelentkezés · Micimackó-fiók{% endblock %}
+{% block content %}
+<span class="eyebrow">Örülünk, hogy itt vagy</span>
+<h2 id="page-title">Bejelentkezés</h2>
+<p class="lead">Add meg a közös fiókod belépési adatait.</p>
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="next" value="{{ next_url }}">
+  <label for="login">E-mail-cím vagy felhasználónév</label>
+  <input id="login" name="login" autocomplete="username" maxlength="120" value="{{ request.form.get('login', '') }}" required autofocus>
+  <label for="password">Jelszó</label>
+  <input id="password" name="password" type="password" autocomplete="current-password" maxlength="1024" required>
+  <a class="secondary-link" href="{{ url_for('web.forgot_password') }}">Elfelejtetted a jelszavad?</a>
+  <button type="submit">Bejelentkezés <span aria-hidden="true">→</span></button>
+</form>
+{% if registration_client %}<p class="form-footer">Még nincs fiókod? <a href="{{ url_for('web.register', client_id=registration_client.client_id, next=next_url) }}">Regisztráció</a></p>{% endif %}
+{% endblock %}
